@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-03-01 09:14+0000\n"
-"PO-Revision-Date: 2023-03-23 17:26+0800\n"
+"PO-Revision-Date: 2023-03-23 18:24+0800\n"
 "Last-Translator: archblue <phrc001@gmail.com>\n"
 "Language-Team: en_US\n"
 "Language: zh_CN\n"
@@ -56,7 +56,7 @@ msgstr "转码提示：Videos标签页中的视频支持多种显示方式"
 
 #: .././mainapp.py:2250
 msgid "_Basic list"
-msgstr "简单列表"
+msgstr "简单列表(_B)"
 
 #: .././mainapp.py:2255
 msgid "Basic list with _container names"
@@ -64,27 +64,27 @@ msgstr "带容器名称的简单列表"
 
 #: .././mainapp.py:2260
 msgid "_Thumbnails"
-msgstr "缩略图"
+msgstr "缩略图(_T)"
 
 #: .././mainapp.py:2265
 msgid "Thumbnails and _extra labels"
-msgstr "带超大标签的缩略图"
+msgstr "带超大标签的缩略图(_E)"
 
 #: .././mainapp.py:2270
 msgid "T_humbnails and container names"
-msgstr "带容器名称的缩略图"
+msgstr "带容器名称的缩略图(_H)"
 
 #: .././mainapp.py:2275
 msgid "Th_umbnails, container names and extra labels"
-msgstr "带超大标签和容器名称的缩略图"
+msgstr "带超大标签和容器名称的缩略图(_U)"
 
 #: .././mainapp.py:2280
 msgid "_Grid"
-msgstr "网格视图"
+msgstr "网格视图(_G)"
 
 #: .././mainapp.py:2285
 msgid "G_rid with extra labels"
-msgstr "带超大标签的网格视图"
+msgstr "带超大标签的网格视图(_R)"
 
 #: .././mainapp.py:3493
 msgid ""
@@ -1003,19 +1003,19 @@ msgstr ""
 #. File column
 #: .././mainwin.py:1334 .././config.py:11060
 msgid "_File"
-msgstr "_文件"
+msgstr "文件(_F)"
 
 #: .././mainwin.py:1341
 msgid "_Database preferences..."
-msgstr "_数据加选项..."
+msgstr "数据加选项(_D)..."
 
 #: .././mainwin.py:1347
 msgid "_Check database integrity"
-msgstr "_检查数据库完整性"
+msgstr "检查数据库完整性(_C)"
 
 #: .././mainwin.py:1356
 msgid "_Save database"
-msgstr "_保存数据库"
+msgstr "保存数据库(_S)"
 
 #: .././mainwin.py:1362
 msgid "Save _all"
@@ -1028,235 +1028,235 @@ msgstr "关闭到托盘"
 #. Quit
 #: .././mainwin.py:1376 .././mainwin.py:27942
 msgid "_Quit"
-msgstr "_退出"
+msgstr "退出(_Q)"
 
 #. Edit column
 #: .././mainwin.py:1381
 msgid "_Edit"
-msgstr "_编辑"
+msgstr "编辑(_E)"
 
 #: .././mainwin.py:1388
 msgid "_System preferences..."
-msgstr "_首选项..."
+msgstr "首选项(_S)..."
 
 #: .././mainwin.py:1394
 msgid "_General download options..."
-msgstr "_全局下载选项..."
+msgstr "全局下载选项(_G)..."
 
 #: .././mainwin.py:1402
 msgid "_System"
-msgstr "_系统"
+msgstr "系统(_S)"
 
 #: .././mainwin.py:1409
 msgid "Open _MSYS2 terminal..."
-msgstr "打开_MSYS2终端..."
+msgstr "打开MSYS2终端(_M)..."
 
 #: .././mainwin.py:1418
 msgid "Show Tartube _install folder"
-msgstr "显示Tartube安装文件夹"
+msgstr "显示Tartube安装文件夹(_I)"
 
 #: .././mainwin.py:1426
 msgid "Show Tartube _script folder"
-msgstr "显示Tartube脚本文件夹"
+msgstr "显示Tartube脚本文件夹(_S)"
 
 #: .././mainwin.py:1435
 msgid "_Change theme..."
-msgstr "_更换主题..."
+msgstr "更换主题(_C)..."
 
 #. Media column
 #: .././mainwin.py:1443 .././config.py:19171
 msgid "_Media"
-msgstr "_媒体"
+msgstr "媒体(_M)"
 
 #: .././mainwin.py:1450
 msgid "Add _videos..."
-msgstr "添加_视频..."
+msgstr "添加视频(_V)..."
 
 #: .././mainwin.py:1456
 msgid "Add _channel..."
-msgstr "添加_频道..."
+msgstr "添加频道(_C)..."
 
 #: .././mainwin.py:1462
 msgid "Add _playlist..."
-msgstr "添加_播放列表..."
+msgstr "添加播放列表(_P)..."
 
 #: .././mainwin.py:1468
 msgid "Add _folder..."
-msgstr "添加_文件夹..."
+msgstr "添加文件夹(_F)..."
 
 #: .././mainwin.py:1477
 msgid "_Add many channels/playlists..."
-msgstr "_批量添加频道/播放列表..."
+msgstr "批量添加频道/播放列表(_A)..."
 
 #: .././mainwin.py:1483
 msgid "_Reset channel/playlist names..."
-msgstr "_重置频道/播放列表名称..."
+msgstr "重置频道/播放列表名称(_R)..."
 
 #: .././mainwin.py:1496
 msgid "_Export from database..."
-msgstr "_从数据库导出..."
+msgstr "从数据库导出(_E)..."
 
 #: .././mainwin.py:1502
 msgid "_Import into database..."
-msgstr "导入到数据库..."
+msgstr "导入到数据库(_I)..."
 
 #: .././mainwin.py:1511
 msgid "Import _YouTube subscriptions..."
-msgstr "导入YouTube订阅..."
+msgstr "导入YouTube订阅(_Y)..."
 
 #: .././mainwin.py:1519
 msgid "_Export/import"
-msgstr "_导出/导入"
+msgstr "导出/导入(_E)"
 
 #: .././mainwin.py:1552
 msgid "_Switch between views"
-msgstr "切换视图"
+msgstr "切换视图(_S)"
 
 #: .././mainwin.py:1562
 msgid "_Hide (most) system folders"
-msgstr "隐藏（大多数）系统文件夹"
+msgstr "隐藏（大多数）系统文件夹(_H)"
 
 #: .././mainwin.py:1571
 msgid "_Show hidden folders"
-msgstr "显示隐藏文件夹"
+msgstr "显示隐藏文件夹(_S)"
 
 #: .././mainwin.py:1577
 msgid "S_how/hide"
-msgstr "显示/隐藏"
+msgstr "显示/隐藏(_H)"
 
 #: .././mainwin.py:1584
 msgid "_Switch profile"
-msgstr "切换配置文件"
+msgstr "切换配置文件(_S)"
 
 #: .././mainwin.py:1592
 msgid "_Remember last profile"
-msgstr "记住最后的配置文件"
+msgstr "记住最后的配置文件(_R)"
 
 #: .././mainwin.py:1606
 msgid "_Create profile"
-msgstr "创建配置文件"
+msgstr "创建配置文件(_C)"
 
 #: .././mainwin.py:1614
 msgid "_Delete profile"
-msgstr "删除配置文件"
+msgstr "删除配置文件(_D)"
 
 #: .././mainwin.py:1626
 msgid "_Mark all for download"
-msgstr "全部标记为下载"
+msgstr "全部标记为下载(_M)"
 
 #: .././mainwin.py:1635
 msgid "_Unmark all for download"
-msgstr "全部取消标记不下载"
+msgstr "全部取消标记不下载(_U)"
 
 #: .././mainwin.py:1643
 msgid "Pr_ofiles"
-msgstr "配置文件"
+msgstr "配置文件(_O)"
 
 #: .././mainwin.py:1656
 msgid "Ad_d test media"
-msgstr "添加测试视频"
+msgstr "添加测试视频(_D)"
 
 #: .././mainwin.py:1664
 msgid "Run _test code"
-msgstr "运行测试代码"
+msgstr "运行测试代码(_T)"
 
 #. Operations column
 #. Add this tab...
 #: .././mainwin.py:1670 .././config.py:23422
 msgid "_Operations"
-msgstr "操作"
+msgstr "操作(_O)"
 
 #. Check all
 #: .././mainwin.py:1677 .././mainwin.py:27913
 msgid "_Check all"
-msgstr "全部检查"
+msgstr "全部检查(_C)"
 
 #. Download all
 #: .././mainwin.py:1683 .././mainwin.py:27920
 msgid "_Download all"
-msgstr "全部下载"
+msgstr "全部下载(_D)"
 
 #: .././mainwin.py:1688
 msgid "C_ustom download all"
-msgstr "全部自定义下载"
+msgstr "全部自定义下载(_U)"
 
 #: .././mainwin.py:1698
 msgid "_Refresh database..."
-msgstr "刷新数据库中..."
+msgstr "刷新数据库中(_R)..."
 
 #: .././mainwin.py:1708
 msgid "U_pdate"
-msgstr "更新"
+msgstr "更新(_P)"
 
 #: .././mainwin.py:1714 .././mainwin.py:5706
 msgid "_Test"
-msgstr "测试"
+msgstr "测试(_T)"
 
 #: .././mainwin.py:1725
 msgid "Install _FFmpeg..."
-msgstr "安装FFmpeg..."
+msgstr "安装FFmpeg(_F)..."
 
 #: .././mainwin.py:1733
 msgid "Install _matplotlib..."
-msgstr "安装matplotlib..."
+msgstr "安装matplotlib(_M)..."
 
 #: .././mainwin.py:1741
 msgid "Install _streamlink..."
-msgstr "安装streamlink..."
+msgstr "安装streamlink(_S)..."
 
 #: .././mainwin.py:1752
 msgid "Tidy up _files..."
-msgstr "清理文件..."
+msgstr "清理文件(_F)..."
 
 #: .././mainwin.py:1763 .././mainwin.py:27931
 msgid "_Stop current operation"
-msgstr "停止当前操作"
+msgstr "停止当前操作(_S)"
 
 #: .././mainwin.py:1771
 msgid "Stop _after current videos"
-msgstr "在当前视频处理完成后停止"
+msgstr "在当前视频处理完成后停止(_A)"
 
 #. Livestreams column
 #: .././mainwin.py:1779
 msgid "_Livestreams"
-msgstr "直播"
+msgstr "直播(_L)"
 
 #: .././mainwin.py:1786
 msgid "_Livestream preferences..."
-msgstr "直播选项..."
+msgstr "直播选项(_L)..."
 
 #: .././mainwin.py:1795
 msgid "_Update existing livestreams"
-msgstr "更新现有直播"
+msgstr "更新现有直播(_U)"
 
 #: .././mainwin.py:1800
 msgid "_Cancel all livestream alerts"
-msgstr "取消所有直播提醒"
+msgstr "取消所有直播提醒(_C)"
 
 #. Help column
 #: .././mainwin.py:1805
 msgid "_Help"
-msgstr "帮助"
+msgstr "帮助(_H)"
 
 #: .././mainwin.py:1811
 msgid "_About..."
-msgstr "关于..."
+msgstr "关于(_A)..."
 
 #: .././mainwin.py:1819
 msgid "Show _tutorial..."
-msgstr "显示教程..."
+msgstr "显示教程(_T)..."
 
 #: .././mainwin.py:1828
 msgid "Check for _updates"
-msgstr "检查更新"
+msgstr "检查更新(_U)"
 
 #: .././mainwin.py:1834
 msgid "Go to _website"
-msgstr "访问官网"
+msgstr "访问官网(_W)"
 
 #: .././mainwin.py:1843
 msgid "Send _feedback"
-msgstr "提交反馈"
+msgstr "提交反馈(_F)"
 
 #: .././mainwin.py:1859
 msgid "TRANSLATOR'S NOTE: Main window toolbar starts here"
@@ -1375,27 +1375,27 @@ msgstr ""
 #: .././mainwin.py:2165 .././config.py:5014 .././config.py:12828
 #: .././config.py:21028 .././config.py:22249
 msgid "_Videos"
-msgstr "视频"
+msgstr "视频(_V)"
 
 #: .././mainwin.py:2173
 msgid "_Progress"
-msgstr "进度"
+msgstr "进度(_P)"
 
 #: .././mainwin.py:2181
 msgid "_Classic Mode"
-msgstr "经典模式"
+msgstr "经典模式(_C)"
 
 #: .././mainwin.py:2190
 msgid "_Drag and Drop"
-msgstr "拖放"
+msgstr "拖放(_D)"
 
 #: .././mainwin.py:2199
 msgid "_Output"
-msgstr "输出"
+msgstr "输出(_O)"
 
 #: .././mainwin.py:2208 .././config.py:16131 .././config.py:17452
 msgid "_Errors / Warnings"
-msgstr "错误/警告"
+msgstr "错误/警告(_E)"
 
 #: .././mainwin.py:2224 .././mainwin.py:4487 .././mainwin.py:4750
 #: .././mainwin.py:5244 .././mainwin.py:5459 .././mainwin.py:5574
@@ -1997,55 +1997,55 @@ msgstr ""
 
 #: .././mainwin.py:6072
 msgid "_Check channel"
-msgstr "检查频道"
+msgstr "检查频道(_C)"
 
 #: .././mainwin.py:6074
 msgid "_Check playlist"
-msgstr "检查播放列表"
+msgstr "检查播放列表(_C)"
 
 #: .././mainwin.py:6076
 msgid "_Check folder"
-msgstr "检查文件夹"
+msgstr "检查文件夹(_C)"
 
 #: .././mainwin.py:6102
 msgid "_Download channel"
-msgstr "下载频道"
+msgstr "下载频道(_D)"
 
 #: .././mainwin.py:6104
 msgid "_Download playlist"
-msgstr "下载播放列表"
+msgstr "下载播放列表(_D)"
 
 #: .././mainwin.py:6106
 msgid "_Download folder"
-msgstr "下载文件夹"
+msgstr "下载文件夹(_D)"
 
 #: .././mainwin.py:6132
 msgid "C_ustom download channel"
-msgstr "自定义下载频道"
+msgstr "自定义下载频道(_U)"
 
 #: .././mainwin.py:6134
 msgid "C_ustom download playlist"
-msgstr "自定义下载播放列表"
+msgstr "自定义下载播放列表(_U)"
 
 #: .././mainwin.py:6136
 msgid "C_ustom download folder"
-msgstr "自定义下载文件夹"
+msgstr "自定义下载文件夹(_U)"
 
 #: .././mainwin.py:6193
 msgid "_Empty folder"
-msgstr "清空文件夹"
+msgstr "清空文件夹(_E)"
 
 #: .././mainwin.py:6205
 msgid "_All contents"
-msgstr "所有内容"
+msgstr "所有内容(_A)"
 
 #: .././mainwin.py:6223
 msgid "_Remove videos"
-msgstr "删除视频"
+msgstr "删除视频(_R)"
 
 #: .././mainwin.py:6235
 msgid "_Just folder videos"
-msgstr "仅文件夹中视频"
+msgstr "仅文件夹中视频(_J)"
 
 #: .././mainwin.py:6241
 msgid "Channel c_ontents"
@@ -2061,71 +2061,71 @@ msgstr "文件夹内容"
 
 #: .././mainwin.py:6257
 msgid "_Move to top level"
-msgstr "移到顶层"
+msgstr "移到顶层(_M)"
 
 #: .././mainwin.py:6276
 msgid "_Hide folder"
-msgstr "隐藏文件夹"
+msgstr "隐藏文件夹(_H)"
 
 #: .././mainwin.py:6286
 msgid "_Rename channel..."
-msgstr "重命名频道..."
+msgstr "重命名频道(_R)..."
 
 #: .././mainwin.py:6288
 msgid "_Rename playlist..."
-msgstr "重命名播放列表..."
+msgstr "重命名播放列表(_R)..."
 
 #: .././mainwin.py:6290
 msgid "_Rename folder..."
-msgstr "重命名文件夹..."
+msgstr "重命名文件夹(_R)..."
 
 #: .././mainwin.py:6307
 msgid "Set _nickname..."
-msgstr "设置别名..."
+msgstr "设置别名(_N)..."
 
 #: .././mainwin.py:6322
 msgid "Set _URL..."
-msgstr "设置链接..."
+msgstr "设置链接(_U)..."
 
 #: .././mainwin.py:6339
 msgid "_Insert videos..."
-msgstr "插入视频..."
+msgstr "插入视频.(_I).."
 
 #: .././mainwin.py:6354
 msgid "_Export channel..."
-msgstr "导出频道..."
+msgstr "导出频道(_E)..."
 
 #: .././mainwin.py:6356
 msgid "_Export playlist..."
-msgstr "导出播放列表..."
+msgstr "导出播放列表(_E)..."
 
 #: .././mainwin.py:6358
 msgid "_Export folder..."
-msgstr "导出文件夹..."
+msgstr "导出文件夹(_E)..."
 
 #: .././mainwin.py:6371
 msgid "Re_fresh channel"
-msgstr "刷新频道"
+msgstr "刷新频道(_F)"
 
 #: .././mainwin.py:6373
 msgid "Re_fresh playlist"
-msgstr "刷新播放列表"
+msgstr "刷新播放列表(_F)"
 
 #: .././mainwin.py:6375
 msgid "Re_fresh folder"
-msgstr "刷新文件夹"
+msgstr "刷新文件夹(_F)"
 
 #: .././mainwin.py:6392
 msgid "_Tidy up channel"
-msgstr "清理频道"
+msgstr "清理频道(_T)"
 
 #: .././mainwin.py:6394
 msgid "_Tidy up playlist"
-msgstr "清理播放列表"
+msgstr "清理播放列表(_T)"
 
 #: .././mainwin.py:6396
 msgid "_Tidy up folder"
-msgstr "清理文件夹"
+msgstr "清理文件夹(_T)"
 
 #: .././mainwin.py:6417
 msgid "_Convert to playlist"
@@ -2133,108 +2133,108 @@ msgstr "转换为播放列表"
 
 #: .././mainwin.py:6419
 msgid "_Convert to channel"
-msgstr "转换为频道"
+msgstr "转换为频道(_C)"
 
 #: .././mainwin.py:6437 .././mainwin.py:7121 .././mainwin.py:7793
 #: .././mainwin.py:8417
 msgid "Add to C_lassic Mode tab"
-msgstr "添加到“经典模式”选项卡"
+msgstr "添加到“经典模式”选项卡(_L)"
 
 #: .././mainwin.py:6451
 msgid "Channel _actions"
-msgstr "频道操作"
+msgstr "频道操作(_A)"
 
 #: .././mainwin.py:6453
 msgid "Playlist _actions"
-msgstr "播放列表操作"
+msgstr "播放列表操作(_A)"
 
 #: .././mainwin.py:6455
 msgid "Folder _actions"
-msgstr "文件夹操作"
+msgstr "文件夹操作(_A)"
 
 #: .././mainwin.py:6475 .././mainwin.py:7320
 msgid "_Apply download options..."
-msgstr "应用下载选项..."
+msgstr "应用下载选项(_A)..."
 
 #: .././mainwin.py:6493 .././mainwin.py:7334
 msgid "_Remove download options"
-msgstr "删除下载选项"
+msgstr "删除下载选项(_R)"
 
 #: .././mainwin.py:6509 .././mainwin.py:7346
 msgid "_Edit download options..."
-msgstr "编辑下载选项..."
+msgstr "编辑下载选项(_E)..."
 
 #: .././mainwin.py:6525
 msgid "Add to _scheduled download..."
-msgstr "添加到计划下载..."
+msgstr "添加到计划下载(_S)..."
 
 #: .././mainwin.py:6535
 msgid "Set _download destination..."
-msgstr "设置下载目的文件夹..."
+msgstr "设置下载目的文件夹(_D)..."
 
 #: .././mainwin.py:6550
 msgid "Show system _command..."
-msgstr "显示系统命令..."
+msgstr "显示系统命令(_C)..."
 
 #: .././mainwin.py:6569
 msgid "Set _removal time..."
-msgstr "设置删除时间..."
+msgstr "设置删除时间(_R)..."
 
 #: .././mainwin.py:6582
 msgid "_Mark for checking/downloading"
-msgstr "标记检查/下载"
+msgstr "标记检查/下载(_M)"
 
 #: .././mainwin.py:6600
 msgid "_Don't add videos to Tartube's database"
-msgstr "不要将视频添加到Tartube的数据库中"
+msgstr "不要将视频添加到Tartube的数据库中(_D)"
 
 #: .././mainwin.py:6612
 msgid "D_isable checking/downloading"
-msgstr "禁用检查/下载"
+msgstr "禁用检查/下载(_I)"
 
 #: .././mainwin.py:6624
 msgid "_Just disable downloading"
-msgstr "仅禁用下载"
+msgstr "仅禁用下载(_J)"
 
 #: .././mainwin.py:6645
 msgid "Down_loads"
-msgstr "下载"
+msgstr "下载(_L)"
 
 #: .././mainwin.py:6656
 msgid "Channel _properties..."
-msgstr "频道属性..."
+msgstr "频道属性(_P)..."
 
 #: .././mainwin.py:6658
 msgid "Playlist _properties..."
-msgstr "播放列表属性..."
+msgstr "播放列表属性(_P)..."
 
 #: .././mainwin.py:6660
 msgid "Folder _properties..."
-msgstr "文件夹属性..."
+msgstr "文件夹属性(_P)..."
 
 #: .././mainwin.py:6676
 msgid "_Default location"
-msgstr "默认位置"
+msgstr "默认位置(_D)"
 
 #: .././mainwin.py:6689
 msgid "_Actual location"
-msgstr "实际位置"
+msgstr "实际位置(_A)"
 
 #: .././mainwin.py:6703
 msgid "_Show"
-msgstr "显示"
+msgstr "显示(_S)"
 
 #: .././mainwin.py:6712
 msgid "D_elete channel"
-msgstr "删除频道"
+msgstr "删除频道(_E)"
 
 #: .././mainwin.py:6714
 msgid "D_elete playlist"
-msgstr "删除播放列表"
+msgstr "删除播放列表(_E)"
 
 #: .././mainwin.py:6716
 msgid "D_elete folder"
-msgstr "删除文件夹"
+msgstr "删除文件夹(_E)"
 
 #: .././mainwin.py:6754
 msgid ""
@@ -2244,50 +2244,50 @@ msgstr ""
 
 #: .././mainwin.py:6818
 msgid "_Check video"
-msgstr "检查视频"
+msgstr "检查视频(_C)"
 
 #: .././mainwin.py:6842
 msgid "_Download video"
-msgstr "下载视频"
+msgstr "下载视频(_D)"
 
 #: .././mainwin.py:6865
 msgid "Re-_download this video"
-msgstr "重新下载此视频"
+msgstr "重新下载此视频(_D)"
 
 #: .././mainwin.py:6881
 msgid "C_ustom download video"
-msgstr "自定义下载视频"
+msgstr "自定义下载视频(_U)"
 
 #: .././mainwin.py:6910 .././mainwin.py:7282 .././mainwin.py:7866
 #: .././mainwin.py:8486
 msgid "Download and _watch"
-msgstr "下载并观看"
+msgstr "下载并观看(_W)"
 
 #: .././mainwin.py:6930 .././mainwin.py:8921
 msgid "Watch in _player"
-msgstr "在播放器中观看"
+msgstr "在播放器中观看(_P)"
 
 #: .././mainwin.py:6948 .././mainwin.py:6969 .././mainwin.py:8952
 msgid "_Watch on website"
-msgstr "在网页中观看"
+msgstr "在网页中观看(_W)"
 
 #: .././mainwin.py:6958 .././mainwin.py:6982 .././mainwin.py:8262
 #: .././mainwin.py:8965
 #, python-brace-format
 msgid "_Watch on {0}"
-msgstr "在{0}中观看"
+msgstr "在{0}中观看(_W)"
 
 #: .././mainwin.py:6996 .././mainwin.py:8979
 msgid "_YouTube"
-msgstr "Youtube"
+msgstr "Youtube(_Y)"
 
 #: .././mainwin.py:7006 .././mainwin.py:8989
 msgid "_HookTube"
-msgstr "HookTube"
+msgstr "HookTube(_H)"
 
 #: .././mainwin.py:7016 .././mainwin.py:8999
 msgid "_Invidious"
-msgstr "Invidious"
+msgstr "Invidious(_I)"
 
 #: .././mainwin.py:7026 .././mainwin.py:9009
 msgid "TRANSLATOR'S NOTE: Watch on YouTube, Watch on HookTube, etc"
@@ -2295,11 +2295,11 @@ msgstr ""
 
 #: .././mainwin.py:7031 .././mainwin.py:9014
 msgid "W_atch on"
-msgstr "继续观看"
+msgstr "继续观看(_A)"
 
 #: .././mainwin.py:7045
 msgid "_Create video clip..."
-msgstr "创建视频剪辑..."
+msgstr "创建视频剪辑(_C)..."
 
 #: .././mainwin.py:7051
 msgid "Download video clip..."
@@ -2307,137 +2307,137 @@ msgstr "下载视频剪辑..."
 
 #: .././mainwin.py:7067
 msgid "_Remove video slices..."
-msgstr "Remove video slices..."
+msgstr "Remove video slices(_R)..."
 
 #: .././mainwin.py:7082 .././mainwin.py:7755 .././mainwin.py:8404
 msgid "_Process with FFmpeg..."
-msgstr "使用FFmpeg处理..."
+msgstr "使用FFmpeg处理(_P)..."
 
 #: .././mainwin.py:7099 .././mainwin.py:7771
 msgid "_Reload metadata"
-msgstr "重新加载元数据"
+msgstr "重新加载元数据(_R)"
 
 #: .././mainwin.py:7111 .././mainwin.py:7783
 msgid "_Special"
-msgstr "特别的"
+msgstr "特别的(_S)"
 
 #: .././mainwin.py:7142
 msgid "Auto _notify"
-msgstr "自动提醒"
+msgstr "自动提醒(_N)"
 
 #: .././mainwin.py:7158
 msgid "Auto _sound alarm"
-msgstr "自动声音报警"
+msgstr "自动声音报警(_S)"
 
 #: .././mainwin.py:7173
 msgid "Auto _open"
-msgstr "自动打开"
+msgstr "自动打开(_O)"
 
 #: .././mainwin.py:7186
 msgid "_Download on start"
-msgstr "启动时下载"
+msgstr "启动时下载(_D)"
 
 #: .././mainwin.py:7201
 msgid "Download on _stop"
-msgstr "停止时下载"
+msgstr "停止时下载(_S)"
 
 #: .././mainwin.py:7219
 msgid "Not a _livestream"
-msgstr "不是直播"
+msgstr "不是直播(_L)"
 
 #: .././mainwin.py:7229
 msgid "_Finalise livestream"
-msgstr "完成直播"
+msgstr "完成直播(_F)"
 
 #: .././mainwin.py:7248 .././mainwin.py:7833 .././mainwin.py:8452
 msgid "_Livestream"
-msgstr "直播"
+msgstr "直播(_L)"
 
 #: .././mainwin.py:7261 .././mainwin.py:7844 .././mainwin.py:8464
 msgid "_Mark for download"
-msgstr "标记为下载"
+msgstr "标记为下载(_M)"
 
 #: .././mainwin.py:7272 .././mainwin.py:7856 .././mainwin.py:8476
 msgid "_Download"
-msgstr "下载"
+msgstr "下载(_D)"
 
 #: .././mainwin.py:7292 .././mainwin.py:7877 .././mainwin.py:8497
 #: .././config.py:21720
 msgid "_Temporary"
-msgstr "缓存"
+msgstr "缓存(_T)"
 
 #: .././mainwin.py:7362
 msgid "_Show system command"
-msgstr "显示系统命令"
+msgstr "显示系统命令(_S)"
 
 #: .././mainwin.py:7372
 msgid "_Test system command"
-msgstr "测试系统命令"
+msgstr "测试系统命令(_T)"
 
 #: .././mainwin.py:7387
 msgid "_Disable downloads"
-msgstr "禁用下载"
+msgstr "禁用下载(_D)"
 
 #: .././mainwin.py:7405
 msgid "D_ownloads"
-msgstr "下载"
+msgstr "下载(_O)"
 
 #: .././mainwin.py:7420
 msgid "Video is _archived"
-msgstr "已存档视频"
+msgstr "已存档视频(_A)"
 
 #: .././mainwin.py:7433
 msgid "Video is _bookmarked"
-msgstr "已添加书签视频"
+msgstr "已添加书签视频(_B)"
 
 #: .././mainwin.py:7444
 msgid "Video is _favourite"
-msgstr "已收藏视频"
+msgstr "已收藏视频(_F)"
 
 #: .././mainwin.py:7455
 msgid "Video is _missing"
-msgstr "已丢失视频"
+msgstr "已丢失视频(_M)"
 
 #: .././mainwin.py:7471
 msgid "Video is _new"
-msgstr "新增视频"
+msgstr "新增视频(_N)"
 
 #: .././mainwin.py:7484
 msgid "Video is in _waiting list"
-msgstr "等待名单中视频"
+msgstr "等待名单中视频(_W)"
 
 #: .././mainwin.py:7495
 msgid "_Mark video"
-msgstr "标记视频"
+msgstr "标记视频(_M)"
 
 #: .././mainwin.py:7506
 msgid "_Location"
-msgstr "目的文件夹"
+msgstr "目的文件夹(_L)"
 
 #: .././mainwin.py:7518
 msgid "_Properties..."
-msgstr "属性..."
+msgstr "属性(_P)..."
 
 #: .././mainwin.py:7530
 msgid "S_how video"
-msgstr "显示视频"
+msgstr "显示视频(_H)"
 
 #: .././mainwin.py:7539
 msgid "Available _formats"
-msgstr "可用格式"
+msgstr "可用格式(_F)"
 
 #: .././mainwin.py:7549
 msgid "Available _subtitles"
-msgstr "可用订阅"
+msgstr "可用订阅(_S)"
 
 #: .././mainwin.py:7559
 msgid "_Fetch"
-msgstr "抓取"
+msgstr "抓取(_F)"
 
 #. Delete video
 #: .././mainwin.py:7570
 msgid "D_elete video"
-msgstr "删除视频"
+msgstr "删除视频(_E)"
 
 #: .././mainwin.py:7603
 msgid ""
@@ -2448,84 +2448,84 @@ msgstr ""
 #. Check/download videos
 #: .././mainwin.py:7682
 msgid "_Check videos"
-msgstr "检查视频"
+msgstr "检查视频(_C)"
 
 #: .././mainwin.py:7702
 msgid "_Download videos"
-msgstr "下载视频"
+msgstr "下载视频(_D)"
 
 #: .././mainwin.py:7725
 msgid "C_ustom download videos"
-msgstr "自定义下载视频"
+msgstr "自定义下载视频(_U)"
 
 #: .././mainwin.py:7813 .././mainwin.py:8432
 msgid "Mark as _not livestreams"
-msgstr "标记为非直播"
+msgstr "标记为非直播(_N)"
 
 #: .././mainwin.py:7823 .././mainwin.py:8442
 msgid "_Finalise livestreams"
-msgstr "完成直播"
+msgstr "完成直播(_F)"
 
 #: .././mainwin.py:7898
 msgid "_Archived"
-msgstr "已归档"
+msgstr "已归档(_A)"
 
 #: .././mainwin.py:7909
 msgid "Not a_rchived"
-msgstr "未存档"
+msgstr "未存档(_R)"
 
 #: .././mainwin.py:7923
 msgid "_Bookmarked"
-msgstr "已添加书签"
+msgstr "已添加书签(_B)"
 
 #: .././mainwin.py:7934
 msgid "Not b_ookmarked"
-msgstr "未添加书签"
+msgstr "未添加书签(_O)"
 
 #: .././mainwin.py:7948
 msgid "_Favourite"
-msgstr "已添加收藏"
+msgstr "已添加收藏(_F)"
 
 #: .././mainwin.py:7959
 msgid "Not fa_vourite"
-msgstr "未添加收藏"
+msgstr "未添加收藏(_V)"
 
 #: .././mainwin.py:7973
 msgid "_Missing"
-msgstr "已丢失"
+msgstr "已丢失(_M)"
 
 #: .././mainwin.py:7986
 msgid "Not m_issing"
-msgstr "未丢失"
+msgstr "未丢失(_I)"
 
 #: .././mainwin.py:8002
 msgid "_New"
-msgstr "新视频"
+msgstr "新视频(_N)"
 
 #: .././mainwin.py:8013
 msgid "Not n_ew"
-msgstr "旧视频"
+msgstr "旧视频(_E)"
 
 #: .././mainwin.py:8027
 msgid "In _waiting list"
-msgstr "已在等候名单中"
+msgstr "已在等候名单中(_W)"
 
 #: .././mainwin.py:8038
 msgid "Not in w_aiting list"
-msgstr "未在等候名单中"
+msgstr "未在等候名单中(_A)"
 
 #: .././mainwin.py:8049
 msgid "_Mark videos"
-msgstr "已标记视频"
+msgstr "已标记视频(_M)"
 
 #: .././mainwin.py:8058
 msgid "Show p_roperties..."
-msgstr "显示属性..."
+msgstr "显示属性(_R)..."
 
 #. Delete videos
 #: .././mainwin.py:8073
 msgid "D_elete videos"
-msgstr "删除视频"
+msgstr "删除视频(_E)"
 
 #: .././mainwin.py:8107
 msgid ""
@@ -2536,47 +2536,47 @@ msgstr ""
 #. Stop check/download
 #: .././mainwin.py:8158
 msgid "_Stop now"
-msgstr "立即停止"
+msgstr "立即停止(_S)"
 
 #: .././mainwin.py:8175
 msgid "Stop checking _videos"
-msgstr "停止检查视频"
+msgstr "停止检查视频(_V)"
 
 #: .././mainwin.py:8177
 msgid "Completely stop after this _video"
-msgstr "此视频后完全停止"
+msgstr "此视频后完全停止(_V)"
 
 #: .././mainwin.py:8179
 msgid "Stop after this _video"
-msgstr "在此视频之后停止"
+msgstr "在此视频之后停止(_V)"
 
 #: .././mainwin.py:8198
 msgid "Completely stop after these v_ideos"
-msgstr "这些视频后完全停止"
+msgstr "这些视频后完全停止(_I)"
 
 #: .././mainwin.py:8213
 msgid "Download _next"
-msgstr "下载下一个"
+msgstr "下载下一个(_N)"
 
 #: .././mainwin.py:8225
 msgid "Download _last"
-msgstr "下载最后一个"
+msgstr "下载最后一个(_L)"
 
 #: .././mainwin.py:8249
 msgid "_Watch on Website"
-msgstr "在网页上观看"
+msgstr "在网页上观看(_W)"
 
 #: .././mainwin.py:8274
 msgid "_Watch on YouTube"
-msgstr "在YouTube上观看"
+msgstr "在YouTube上观看(_W)"
 
 #: .././mainwin.py:8284
 msgid "Watch on _HookTube"
-msgstr "在HookTube上观看"
+msgstr "在HookTube上观看(_H)"
 
 #: .././mainwin.py:8294
 msgid "Watch on _Invidious"
-msgstr "在Invidious上观看"
+msgstr "在Invidious上观看(_I)"
 
 #: .././mainwin.py:8327
 msgid ""
@@ -2586,11 +2586,11 @@ msgstr ""
 
 #: .././mainwin.py:8390 .././mainwin.py:8722
 msgid "_Open destination(s)"
-msgstr "打开目的文件夹"
+msgstr "打开目的文件夹(_O)"
 
 #: .././mainwin.py:8515
 msgid "_Delete video(s)"
-msgstr "删除视频"
+msgstr "删除视频(_D)"
 
 #: .././mainwin.py:8540
 msgid ""
@@ -2600,39 +2600,39 @@ msgstr ""
 
 #: .././mainwin.py:8550
 msgid "_Enable automatic copy/paste"
-msgstr "启用自动复制/粘贴"
+msgstr "启用自动复制/粘贴(_E)"
 
 #: .././mainwin.py:8562
 msgid "E_nable one-click downloads"
-msgstr "启用一键下载"
+msgstr "启用一键下载(_N)"
 
 #: .././mainwin.py:8574
 msgid "_Remember un-downloaded URLs"
-msgstr "记住未下载的链接"
+msgstr "记住未下载的链接(_R)"
 
 #: .././mainwin.py:8589
 msgid "_Set download options..."
-msgstr "设置下载选项..."
+msgstr "设置下载选项(_S)..."
 
 #: .././mainwin.py:8600
 msgid "Use _default download options"
-msgstr "使用默认下载选项"
+msgstr "使用默认下载选项(_D)"
 
 #: .././mainwin.py:8612
 msgid "Edit download _options..."
-msgstr "编辑下载选项..."
+msgstr "编辑下载选项(_O)..."
 
 #: .././mainwin.py:8626
 msgid "Enable _custom downloads"
-msgstr "启用自定义下载"
+msgstr "启用自定义下载(_C)"
 
 #: .././mainwin.py:8639
 msgid "Custom downloads _preferences..."
-msgstr "自定义下载选项..."
+msgstr "自定义下载选项(_P)..."
 
 #: .././mainwin.py:8654 .././config.py:21353
 msgid "_Update"
-msgstr "更新"
+msgstr "更新(_U)"
 
 #: .././mainwin.py:8693
 msgid ""
@@ -2643,44 +2643,44 @@ msgstr ""
 
 #: .././mainwin.py:8710
 msgid "_Play video"
-msgstr "播放视频"
+msgstr "播放视频(_P)"
 
 #: .././mainwin.py:8737
 msgid "_Re-download"
-msgstr "重新下载"
+msgstr "重新下载(_R)"
 
 #: .././mainwin.py:8749
 msgid "_Stop download"
-msgstr "停止下载"
+msgstr "停止下载(_S)"
 
 #: .././mainwin.py:8763
 msgid "Process with _FFmpeg"
-msgstr "FFmpeg处理中"
+msgstr "FFmpeg处理中(_F)"
 
 #: .././mainwin.py:8780
 msgid "_Copy file path"
-msgstr "复制文件路径"
+msgstr "复制文件路径(_C)"
 
 #. Copy URL
 #: .././mainwin.py:8792
 msgid "Copy UR_L"
-msgstr "复制链接"
+msgstr "复制链接(_L)"
 
 #: .././mainwin.py:8804
 msgid "Copy s_ystem command"
-msgstr "复制系统命令"
+msgstr "复制系统命令(_Y)"
 
 #: .././mainwin.py:8820
 msgid "Move _up"
-msgstr "上移"
+msgstr "上移(_U)"
 
 #: .././mainwin.py:8832
 msgid "Move _down"
-msgstr "下移"
+msgstr "下移(_D)"
 
 #: .././mainwin.py:8847
 msgid "Re_move from list"
-msgstr "从列表中删除"
+msgstr "从列表中删除(_M)"
 
 #: .././mainwin.py:8893
 msgid ""
@@ -2690,11 +2690,11 @@ msgstr ""
 
 #: .././mainwin.py:8901
 msgid "D_ownload and watch"
-msgstr "下载并观看"
+msgstr "下载并观看(_O)"
 
 #: .././mainwin.py:8933
 msgid "Watch on _website"
-msgstr "在网页上观看"
+msgstr "在网页上观看(_W)"
 
 #: .././mainwin.py:9070
 msgid ""
@@ -2724,51 +2724,51 @@ msgstr ""
 
 #: .././mainwin.py:9260
 msgid "Mark as _archived"
-msgstr "标记为已存档"
+msgstr "标记为已存档(_A)"
 
 #: .././mainwin.py:9271
 msgid "Mark as not a_rchived"
-msgstr "标记为未存档"
+msgstr "标记为未存档(_R)"
 
 #: .././mainwin.py:9285
 msgid "Mark as _bookmarked"
-msgstr "标记为已添加书签"
+msgstr "标记为已添加书签(_B)"
 
 #: .././mainwin.py:9297
 msgid "Mark as not b_ookmarked"
-msgstr "标记为未添加书签"
+msgstr "标记为未添加书签(_O)"
 
 #: .././mainwin.py:9310
 msgid "Mark as _favourite"
-msgstr "标记为已收藏"
+msgstr "标记为已收藏(_F)"
 
 #: .././mainwin.py:9323
 msgid "Mark as not fa_vourite"
-msgstr "标记为未收藏"
+msgstr "标记为未收藏(_V)"
 
 #: .././mainwin.py:9337
 msgid "Mark as _missing"
-msgstr "标记为已丢失"
+msgstr "标记为已丢失(_M)"
 
 #: .././mainwin.py:9350
 msgid "Mark as not m_issing"
-msgstr "标记为未丢失"
+msgstr "标记为未丢失(_I)"
 
 #: .././mainwin.py:9367
 msgid "Mark as _new"
-msgstr "标记为新视频"
+msgstr "标记为新视频(_N)"
 
 #: .././mainwin.py:9379
 msgid "Mark as not n_ew"
-msgstr "标记为旧视频"
+msgstr "标记为旧视频(_E)"
 
 #: .././mainwin.py:9393
 msgid "Mark as in _waiting list"
-msgstr "标记为已在等候列表中"
+msgstr "标记为已在等候列表中(_W)"
 
 #: .././mainwin.py:9405
 msgid "Mark as not in waiting _list"
-msgstr "标记为未在等候列表中"
+msgstr "标记为未在等候列表中(_L)"
 
 #: .././mainwin.py:10230
 msgid ""
@@ -2853,7 +2853,7 @@ msgstr "进程"
 
 #: .././mainwin.py:14402
 msgid "_Summary"
-msgstr "总计"
+msgstr "总计(_S)"
 
 #: .././mainwin.py:14786
 msgid "TRANSLATOR'S NOTE: Extra items for the Errors/Warnings tab"
@@ -2886,7 +2886,7 @@ msgstr "Tartube警告"
 
 #: .././mainwin.py:15337
 msgid "_Errors"
-msgstr "错误"
+msgstr "错误(_E)"
 
 #: .././mainwin.py:15341
 msgid "Warnings"
@@ -4965,7 +4965,7 @@ msgstr ""
 
 #: .././config.py:3118 .././config.py:4717 .././config.py:10952
 msgid "_Name"
-msgstr "名称"
+msgstr "名称(_N)"
 
 #: .././config.py:3140
 msgid "Usage"
@@ -5025,7 +5025,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:3280 .././config.py:7527
 msgid "_Subtitles"
-msgstr "字幕"
+msgstr "字幕(_S)"
 
 #: .././config.py:3293
 msgid "Subtitles settings"
@@ -5067,7 +5067,7 @@ msgstr ""
 
 #: .././config.py:3397 .././config.py:12330
 msgid "_Clips"
-msgstr "视频剪辑"
+msgstr "视频剪辑(_C)"
 
 #: .././config.py:3401
 msgid "Clip settings"
@@ -5083,7 +5083,7 @@ msgstr ""
 
 #: .././config.py:3429
 msgid "S_lices"
-msgstr "切片"
+msgstr "切片(_L)"
 
 #: .././config.py:3434
 msgid "Slice settings"
@@ -5119,7 +5119,7 @@ msgstr ""
 
 #: .././config.py:3574
 msgid "_Delays"
-msgstr "延迟"
+msgstr "延迟(_D)"
 
 #: .././config.py:3579
 msgid "Download delay settings"
@@ -5143,7 +5143,7 @@ msgstr ""
 
 #: .././config.py:3634 .././config.py:25412
 msgid "_Mirrors"
-msgstr "镜像"
+msgstr "镜像(_M)"
 
 #: .././config.py:3639
 msgid "Mirror settings"
@@ -5175,7 +5175,7 @@ msgstr ""
 
 #: .././config.py:3716
 msgid "L_ivestreams"
-msgstr "直播"
+msgstr "直播(_I)"
 
 #: .././config.py:3720
 msgid "Livestream settings"
@@ -5343,7 +5343,7 @@ msgstr ""
 
 #: .././config.py:5099 .././config.py:14941
 msgid "_Live"
-msgstr "直播"
+msgstr "直播(_L)"
 
 #: .././config.py:5106
 msgid "Livestream options"
@@ -5363,7 +5363,7 @@ msgstr ""
 
 #: .././config.py:5147
 msgid "_Playlists"
-msgstr "播放列表"
+msgstr "播放列表(_P)"
 
 #: .././config.py:5167 .././config.py:8487 .././config.py:8515
 #: .././config.py:8856 .././config.py:8911
@@ -5372,7 +5372,7 @@ msgstr ""
 
 #: .././config.py:5171
 msgid "L_imits"
-msgstr "限制"
+msgstr "限制(_I)"
 
 #: .././config.py:5194
 msgid "TRANSLATOR'S NOTE: Download options > Downloads > Merge"
@@ -5380,7 +5380,7 @@ msgstr ""
 
 #: .././config.py:5198
 msgid "_Merge"
-msgstr "合并"
+msgstr "合并(_M)"
 
 #: .././config.py:5204
 msgid "Video/audio merge options"
@@ -5400,7 +5400,7 @@ msgstr ""
 
 #: .././config.py:5241
 msgid "_Extractor"
-msgstr "提取"
+msgstr "提取(_E)"
 
 #: .././config.py:5248
 msgid "Extractor options"
@@ -5429,7 +5429,7 @@ msgstr ""
 
 #: .././config.py:5322
 msgid "_Filtering"
-msgstr "筛选"
+msgstr "筛选(_F)"
 
 #: .././config.py:5342 .././config.py:8597
 msgid "TRANSLATOR'S NOTE: Download options > Downloads > External"
@@ -5437,7 +5437,7 @@ msgstr ""
 
 #: .././config.py:5345
 msgid "E_xternal"
-msgstr "外部"
+msgstr "外部(_X)"
 
 #: .././config.py:5358
 msgid "TRANSLATOR'S NOTE: Download options > Files"
@@ -5446,7 +5446,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:5362 .././config.py:20457
 msgid "_Files"
-msgstr "文件"
+msgstr "文件(_F)"
 
 #: .././config.py:5393
 msgid "TRANSLATOR'S NOTE: Download options > Files > File names"
@@ -5454,7 +5454,7 @@ msgstr ""
 
 #: .././config.py:5397
 msgid "File _names"
-msgstr "文件名"
+msgstr "文件名(_N)"
 
 #: .././config.py:5404
 msgid "File name options"
@@ -5664,7 +5664,7 @@ msgstr ""
 
 #: .././config.py:5648
 msgid "_Override"
-msgstr "覆盖"
+msgstr "覆盖(_O)"
 
 #: .././config.py:5655
 msgid "List of output filename templates"
@@ -5702,7 +5702,7 @@ msgstr ""
 
 #: .././config.py:5791
 msgid "_Paths"
-msgstr "路径"
+msgstr "路径(_P)"
 
 #: .././config.py:5798
 msgid "List of output paths"
@@ -5722,7 +5722,7 @@ msgstr ""
 
 #: .././config.py:5938
 msgid "_Filesystem"
-msgstr "文件系统"
+msgstr "文件系统(_F)"
 
 #: .././config.py:5945 .././config.py:6050
 msgid "Filesystem options"
@@ -5778,7 +5778,7 @@ msgstr ""
 
 #: .././config.py:6146
 msgid "_Cookies"
-msgstr "Cookies"
+msgstr "Cookies(_C)"
 
 #: .././config.py:6153
 msgid "Cookies options"
@@ -5826,7 +5826,7 @@ msgstr ""
 
 #: .././config.py:6500
 msgid "_Shortcuts"
-msgstr "快捷键"
+msgstr "快捷键(_S)"
 
 #: .././config.py:6506
 msgid "Internet shortcut options"
@@ -5854,7 +5854,7 @@ msgstr ""
 
 #: .././config.py:6557
 msgid "_Write/move"
-msgstr "写入/移动"
+msgstr "写入/移动(_W)"
 
 #: .././config.py:6564
 msgid "File write options"
@@ -5908,7 +5908,7 @@ msgstr ""
 
 #: .././config.py:6654
 msgid "_Keep"
-msgstr "文件保留"
+msgstr "文件保留(_K)"
 
 #: .././config.py:6660
 msgid "Options during real (not simulated) downloads"
@@ -5941,7 +5941,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:6733
 msgid "F_ormats"
-msgstr "格式"
+msgstr "格式(_O)"
 
 #: .././config.py:6765
 msgid "TRANSLATOR'S NOTE: Download options > Formats > Preferred"
@@ -5981,7 +5981,7 @@ msgstr "如果文件后期处理时需要合并，请输出为为以下格式：
 
 #: .././config.py:6974
 msgid "_Preferred"
-msgstr "首选"
+msgstr "首选(_P)"
 
 #: .././config.py:6994
 msgid "TRANSLATOR'S NOTE: Download options > Formats > Advanced"
@@ -5990,7 +5990,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:6998 .././config.py:7774
 msgid "_Advanced"
-msgstr "高级"
+msgstr "高级(_A)"
 
 #: .././config.py:7006
 msgid "Multiple format options"
@@ -6053,7 +6053,7 @@ msgstr ""
 
 #: .././config.py:7158
 msgid "_Convert"
-msgstr "转换"
+msgstr "转换(_C)"
 
 #: .././config.py:7163
 msgid "Convert to video"
@@ -6099,7 +6099,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:7252
 msgid "_Post-processing"
-msgstr "后期处理"
+msgstr "后期处理(_P)"
 
 #: .././config.py:7270
 msgid "TRANSLATOR'S NOTE: Download options > Post-processing > General"
@@ -6109,7 +6109,7 @@ msgstr ""
 #: .././config.py:7274 .././config.py:14662 .././config.py:17054
 #: .././config.py:18081 .././config.py:18725 .././config.py:20175
 msgid "_General"
-msgstr "全局"
+msgstr "全局(_G)"
 
 #: .././config.py:7282 .././config.py:7451 .././config.py:7738
 msgid "Post-processing options"
@@ -6213,7 +6213,7 @@ msgstr ""
 
 #: .././config.py:7444
 msgid "_yt-dlp"
-msgstr "_yt-dlp"
+msgstr "_yt-dlp(_Y)"
 
 #: .././config.py:7456
 msgid "Remux video into another container if necessary"
@@ -6269,7 +6269,7 @@ msgstr ""
 
 #: .././config.py:7712
 msgid "_More options"
-msgstr "更多选项"
+msgstr "更多选项(_M)"
 
 #: .././config.py:7718
 msgid "Subtitle format options"
@@ -6297,7 +6297,7 @@ msgstr ""
 
 #: .././config.py:7805
 msgid "_Configurations"
-msgstr "配置"
+msgstr "配置(_C)"
 
 #: .././config.py:7812
 msgid "Configuration file options"
@@ -6321,7 +6321,7 @@ msgstr ""
 
 #: .././config.py:7889
 msgid "_Authentication"
-msgstr "认证"
+msgstr "认证(_A)"
 
 #: .././config.py:7896
 msgid "Authentication options"
@@ -6361,7 +6361,7 @@ msgstr ""
 
 #: .././config.py:7998
 msgid "._netrc"
-msgstr ".netrc"
+msgstr ".netrc(_N)"
 
 #: .././config.py:8005
 msgid ".netrc options"
@@ -6377,7 +6377,7 @@ msgstr ""
 
 #: .././config.py:8086
 msgid "N_etwork"
-msgstr "网络"
+msgstr "网络(_E)"
 
 #: .././config.py:8091
 msgid "Network options"
@@ -6411,7 +6411,7 @@ msgstr ""
 
 #: .././config.py:8163
 msgid "_Geo-restriction"
-msgstr "地理限制"
+msgstr "地理限制(_G)"
 
 #: .././config.py:8170
 msgid "Geo-restriction options"
@@ -6815,7 +6815,7 @@ msgstr ""
 
 #: .././config.py:11202
 msgid "_Settings"
-msgstr "配置"
+msgstr "配置(_S)"
 
 #: .././config.py:11215
 msgid "Downloaded video/audio"
@@ -7090,7 +7090,7 @@ msgstr ""
 
 #: .././config.py:12207
 msgid "_Optimisations"
-msgstr "优化"
+msgstr "优化(_O)"
 
 #: .././config.py:12212
 msgid ""
@@ -7152,7 +7152,7 @@ msgstr ""
 
 #: .././config.py:12546 .././config.py:15320
 msgid "_Slices"
-msgstr "切片"
+msgstr "切片(_S)"
 
 #: .././config.py:12553
 msgid "Remove slices from the video(s)"
@@ -7349,7 +7349,7 @@ msgstr ""
 
 #: .././config.py:15067
 msgid "_Description"
-msgstr "描述"
+msgstr "描述(_D)"
 
 #: .././config.py:15072
 msgid "Video description"
@@ -7369,7 +7369,7 @@ msgstr ""
 
 #: .././config.py:15136
 msgid "_Timestamps"
-msgstr "时间戳"
+msgstr "时间戳(_T)"
 
 #: .././config.py:15141
 msgid "Timestamps"
@@ -7405,7 +7405,7 @@ msgstr ""
 
 #: .././config.py:15509
 msgid "_Comments"
-msgstr "评论"
+msgstr "评论(_C)"
 
 #: .././config.py:15520
 msgid "Total comments:"
@@ -7612,7 +7612,7 @@ msgstr ""
 
 #: .././config.py:17329 .././config.py:18336 .././config.py:21963
 msgid "_History"
-msgstr "历史记录"
+msgstr "历史记录(_H)"
 
 #: .././config.py:17334 .././config.py:18341 .././config.py:21970
 msgid "Download history"
@@ -7628,7 +7628,7 @@ msgstr ""
 
 #: .././config.py:17380
 msgid "_RSS feed"
-msgstr "RSS订阅"
+msgstr "RSS订阅(_R)"
 
 #: .././config.py:17385
 msgid "RSS feed (used to detect livestreams)"
@@ -7799,7 +7799,7 @@ msgstr ""
 
 #: .././config.py:18183 .././config.py:21783
 msgid "_Statistics"
-msgstr "统计"
+msgstr "统计(_S)"
 
 #: .././config.py:18188 .././config.py:21790
 msgid "Statistics"
@@ -7885,7 +7885,7 @@ msgstr ""
 
 #: .././config.py:18827 .././config.py:23075
 msgid "_Start"
-msgstr "开始"
+msgstr "开始(_S)"
 
 #: .././config.py:18832
 msgid "Start conditions"
@@ -7933,7 +7933,7 @@ msgstr ""
 
 #: .././config.py:19105
 msgid "_Conflicts"
-msgstr "冲突"
+msgstr "冲突(_C)"
 
 #: .././config.py:19109
 msgid "Conflict settings"
@@ -7990,7 +7990,7 @@ msgstr ""
 
 #: .././config.py:19347 .././config.py:23461
 msgid "_Limits"
-msgstr "限制"
+msgstr "限制(_L)"
 
 #: .././config.py:19352 .././config.py:23468
 msgid "Performance limits"
@@ -8019,7 +8019,7 @@ msgstr ""
 
 #: .././config.py:19415
 msgid "_Other"
-msgstr "其他"
+msgstr "其他(_O)"
 
 #: .././config.py:19419
 msgid "Other settings"
@@ -8051,7 +8051,7 @@ msgstr ""
 
 #: .././config.py:20205
 msgid "_Application"
-msgstr "应用"
+msgstr "应用(_A)"
 
 #: .././config.py:20212
 msgid "Application details"
@@ -8083,7 +8083,7 @@ msgstr ""
 
 #: .././config.py:20342
 msgid "_Modules"
-msgstr "模块"
+msgstr "模块(_M)"
 
 #: .././config.py:20347
 msgid "Module availability"
@@ -8138,7 +8138,7 @@ msgstr ""
 
 #: .././config.py:20493
 msgid "_Device"
-msgstr "设备"
+msgstr "设备(_D)"
 
 #: .././config.py:20498
 msgid "Device preferences"
@@ -8167,7 +8167,7 @@ msgstr ""
 
 #: .././config.py:20622
 msgid "_Config"
-msgstr "配置"
+msgstr "配置(_C)"
 
 #: .././config.py:20626
 msgid "Configuration preferences"
@@ -8191,7 +8191,7 @@ msgstr ""
 
 #: .././config.py:20683
 msgid "D_atabase"
-msgstr "数据库"
+msgstr "数据库(_A)"
 
 #: .././config.py:20688
 msgid "Database preferences"
@@ -8285,7 +8285,7 @@ msgstr ""
 
 #: .././config.py:20910
 msgid "_Backups"
-msgstr "备份"
+msgstr "备份(_B)"
 
 #: .././config.py:20915
 msgid "Backup preferences"
@@ -8363,7 +8363,7 @@ msgstr ""
 
 #: .././config.py:21147
 msgid "D_elete"
-msgstr "删除"
+msgstr "删除(_E)"
 
 #: .././config.py:21154
 msgid "Automatic video deletion/removal preferences"
@@ -8479,7 +8479,7 @@ msgstr ""
 
 #: .././config.py:21484
 msgid "U_RLs"
-msgstr "URL"
+msgstr "URL(_R)"
 
 #: .././config.py:21491
 msgid "Update channel/playlist URLs"
@@ -8556,7 +8556,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:22017
 msgid "_Windows"
-msgstr "窗口"
+msgstr "窗口(_W)"
 
 #: .././config.py:22046
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Main Window"
@@ -8564,7 +8564,7 @@ msgstr ""
 
 #: .././config.py:22050
 msgid "_Main window"
-msgstr "主窗口"
+msgstr "主窗口(_M)"
 
 #: .././config.py:22057
 msgid "Main window preferences"
@@ -8702,7 +8702,7 @@ msgstr ""
 
 #: .././config.py:22410
 msgid "_Drag"
-msgstr "拖动"
+msgstr "拖动(_D)"
 
 #: .././config.py:22414
 msgid "Drag and drop preferences"
@@ -8734,7 +8734,7 @@ msgstr ""
 
 #: .././config.py:22475
 msgid "_Tray"
-msgstr "系统托盘"
+msgstr "系统托盘(_T)"
 
 #: .././config.py:22481
 msgid "System tray preferences"
@@ -8807,7 +8807,7 @@ msgstr ""
 
 #: .././config.py:22669
 msgid "_Colours"
-msgstr "颜色"
+msgstr "颜色(_C)"
 
 #: .././config.py:22676
 msgid "Video catalogue colour preferences"
@@ -8867,7 +8867,7 @@ msgstr ""
 
 #: .././config.py:22834
 msgid "_Errors/Warnings"
-msgstr "错误/警告"
+msgstr "错误/警告(_E)"
 
 #: .././config.py:22840
 msgid "Errors/Warnings tab preferences"
@@ -8879,7 +8879,7 @@ msgstr ""
 
 #: .././config.py:22944
 msgid "_Websites"
-msgstr "网站"
+msgstr "网站(_W)"
 
 #: .././config.py:22951
 msgid "YouTube error/warning preferences"
@@ -8926,7 +8926,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:23049
 msgid "_Scheduling"
-msgstr "计划"
+msgstr "计划(_S)"
 
 #: .././config.py:23072
 msgid "TRANSLATOR'S NOTE: System preferences > Scheduling > Start"
@@ -8971,7 +8971,7 @@ msgstr ""
 
 #: .././config.py:23275
 msgid "S_top"
-msgstr "停止"
+msgstr "停止(_T)"
 
 #: .././config.py:23280
 msgid "Scheduled stop preferences"
@@ -9029,7 +9029,7 @@ msgstr ""
 
 #: .././config.py:23708
 msgid "_Stop"
-msgstr "停止"
+msgstr "停止(_S)"
 
 #: .././config.py:23715
 msgid "Time-saving settings"
@@ -9181,7 +9181,7 @@ msgstr ""
 
 #: .././config.py:24149
 msgid "_Custom"
-msgstr "自定义"
+msgstr "自定义(_C)"
 
 #: .././config.py:24154
 msgid "Custom downloads"
@@ -9209,7 +9209,7 @@ msgstr ""
 
 #: .././config.py:24372
 msgid "_Archive"
-msgstr "归档"
+msgstr "归档(_A)"
 
 #: .././config.py:24380
 msgid "Archive file preferences"
@@ -9257,7 +9257,7 @@ msgstr ""
 
 #: .././config.py:24554
 msgid "Li_vestreams"
-msgstr "直播"
+msgstr "直播(_V)"
 
 #: .././config.py:24562
 msgid "Livestream preferences (compatible websites only)"
@@ -9340,7 +9340,7 @@ msgstr ""
 
 #: .././config.py:24854
 msgid "Ac_tions"
-msgstr "动作"
+msgstr "动作(_T)"
 
 #: .././config.py:24862
 msgid "Livestream actions (can be toggled for individual videos)"
@@ -9388,7 +9388,7 @@ msgstr ""
 
 #: .././config.py:25027
 msgid "Cli_ps"
-msgstr "视频剪辑"
+msgstr "视频剪辑(_P)"
 
 #: .././config.py:25034
 msgid "Video clips (requires FFmpeg)"
@@ -9499,7 +9499,7 @@ msgstr ""
 
 #: .././config.py:25234
 msgid "Slic_es"
-msgstr "切片"
+msgstr "切片(_E)"
 
 #: .././config.py:25241
 msgid "Video slices (requires FFmpeg)"
@@ -9537,7 +9537,7 @@ msgstr ""
 
 #: .././config.py:25329
 msgid "C_omments"
-msgstr "评论"
+msgstr "评论(_O)"
 
 #: .././config.py:25341
 msgid "When checking videos, store comments in the metadata file"
@@ -9592,7 +9592,7 @@ msgstr ""
 
 #: .././config.py:25489
 msgid "P_roxies"
-msgstr "代理服务器"
+msgstr "代理服务器(_R)"
 
 #: .././config.py:25495
 msgid "Proxies"
@@ -9610,7 +9610,7 @@ msgstr ""
 
 #: .././config.py:25532
 msgid "Pre_ferences"
-msgstr "选项"
+msgstr "选项(_F)"
 
 #: .././config.py:25539
 msgid "URL flexibility preferences"
@@ -9658,7 +9658,7 @@ msgstr ""
 
 #: .././config.py:25707
 msgid "_Forks"
-msgstr "分支"
+msgstr "分支(_F)"
 
 #: .././config.py:25713
 msgid "Forks of youtube-dl"
@@ -9698,7 +9698,7 @@ msgstr ""
 
 #: .././config.py:25913
 msgid "File _paths"
-msgstr "文件路径"
+msgstr "文件路径(_P)"
 
 #: .././config.py:25920
 msgid "Downloader file paths"
@@ -9778,7 +9778,7 @@ msgstr ""
 
 #: .././config.py:26203
 msgid "_streamlink"
-msgstr "streamlink"
+msgstr "streamlink(_S)"
 
 #: .././config.py:26210
 msgid "streamlink file path"
@@ -9798,7 +9798,7 @@ msgstr ""
 
 #: .././config.py:26296
 msgid "_Download options"
-msgstr "下载选项"
+msgstr "下载选项(_D)"
 
 #: .././config.py:26303
 msgid "List of download options"
@@ -9822,7 +9822,7 @@ msgstr ""
 
 #: .././config.py:26529
 msgid "_Preferences"
-msgstr "选项"
+msgstr "选项(_P)"
 
 #: .././config.py:26536
 msgid "Download options preferences"
@@ -9844,7 +9844,7 @@ msgstr ""
 
 #: .././config.py:26579
 msgid "_FFmpeg options"
-msgstr "FFmpeg选项"
+msgstr "FFmpeg选项(_F)"
 
 #: .././config.py:26586
 msgid "List of FFmpeg options managers"
@@ -9865,7 +9865,7 @@ msgstr ""
 #. Add this tab...
 #: .././config.py:26790
 msgid "O_utput"
-msgstr "输出"
+msgstr "输出(_U)"
 
 #: .././config.py:26814
 msgid "TRANSLATOR'S NOTE: System preferences > Output > Output tab"
@@ -9873,7 +9873,7 @@ msgstr ""
 
 #: .././config.py:26818
 msgid "_Output tab"
-msgstr "输出选项卡"
+msgstr "输出选项卡(_O)"
 
 #: .././config.py:26825
 msgid "Output tab preferences"
@@ -9930,7 +9930,7 @@ msgstr ""
 
 #: .././config.py:26990
 msgid "_Terminal window"
-msgstr "终端窗口"
+msgstr "终端窗口(_T)"
 
 #: .././config.py:26996
 msgid "Terminal window preferences"
@@ -9954,7 +9954,7 @@ msgstr ""
 
 #: .././config.py:27080
 msgid "_Both"
-msgstr "二者"
+msgstr "二者(_B)"
 
 #: .././config.py:27086
 msgid ""
