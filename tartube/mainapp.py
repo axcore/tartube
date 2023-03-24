@@ -4101,7 +4101,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-197)
-            200-299: mainwin.py     (in use: 201-271)
+            200-299: mainwin.py     (in use: 201-274)
             300-399: downloads.py   (in use: 301-318)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)

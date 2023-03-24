@@ -20316,8 +20316,7 @@ class SystemPrefWin(GenericPrefWin):
         combo2.add_attribute(renderer_text, 'text', 1)
 
         # !!! DEBUG
-        # Git 518: User reports .current_locale is set to 'en_MY', but I can't
-        #   reproduce it
+        # Git 518: User reports .current_locale is set to 'en_MY', but I can't reproduce it
         if self.app_obj.current_locale is None \
         or not self.app_obj.current_locale in formats.LOCALE_LIST:
             combo2.set_active(0)
@@ -22533,8 +22532,8 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_drag_error_separator_button_toggled,
         )
-
-
+        
+                
     def setup_windows_system_tray_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
@@ -26903,7 +26902,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>' + _('General preferences') + '</u>',
             0, 0, 1, 1,
         )
-
+        
         self.add_label(grid,
             '<i>' + _(
                 'Applies to Output tab, terminal window and downloader log',
@@ -29888,7 +29887,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_download_limit(int(text))
 
 
-    def on_drag_error_msg_button_toggled(self, checkbutton):
+    def on_drag_error_msg_button_toggled(self, checkbutton): 
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29909,7 +29908,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_msg_flag(False)
 
 
-    def on_drag_error_name_button_toggled(self, checkbutton):
+    def on_drag_error_name_button_toggled(self, checkbutton): 
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29931,7 +29930,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_name_flag(False)
 
 
-    def on_drag_error_path_button_toggled(self, checkbutton):
+    def on_drag_error_path_button_toggled(self, checkbutton): 
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29953,7 +29952,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_path_flag(False)
 
 
-    def on_drag_error_separator_button_toggled(self, checkbutton):
+    def on_drag_error_separator_button_toggled(self, checkbutton): 
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29975,7 +29974,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_separator_flag(False)
 
 
-    def on_drag_error_source_button_toggled(self, checkbutton):
+    def on_drag_error_source_button_toggled(self, checkbutton): 
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29997,7 +29996,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_source_flag(False)
 
 
-    def on_drag_msg_button_toggled(self, checkbutton):
+    def on_drag_msg_button_toggled(self, checkbutton): 
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -30081,7 +30080,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_video_path_flag(False)
 
 
-    def on_drag_separator_button_toggled(self, checkbutton):
+    def on_drag_separator_button_toggled(self, checkbutton):  
 
         """Called from callback in self.setup_windows_drag_tab().
 

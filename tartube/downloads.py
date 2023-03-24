@@ -3436,7 +3436,7 @@ class VideoDownloader(object):
         # ...and the downloader log (if required)
         if app_obj.ytdl_log_system_cmd_flag:
             app_obj.write_downloader_log(' '.join(cmd_list))
-
+            
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
         # ...and set up the PipeReader objects to read from the child process
@@ -4791,7 +4791,7 @@ class VideoDownloader(object):
             app_obj.write_downloader_log(
                 '[' + video_obj.parent_obj.name + '] <' \
                 + _('Simulated download of:') + ' \'' + filename + '\'>',
-            )
+            )            
 
         # If a new media.Video object was created (or if a video whose name is
         #   unknown, now has a name), register the simulated download with
@@ -6075,7 +6075,7 @@ class VideoDownloader(object):
 
             # Write output to the downloader log (if required)
             if app_obj.ytdl_log_stderr_flag:
-                app_obj.write_downloader_log(data)
+                app_obj.write_downloader_log(data)            
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()
@@ -6778,7 +6778,7 @@ class ClipDownloader(object):
             # ...and the downloader log (if required)
             if app_obj.ytdl_log_system_cmd_flag:
                 app_obj.write_downloader_log(' '.join(cmd_list))
-
+            
             # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
             #   translated)
@@ -7041,7 +7041,7 @@ class ClipDownloader(object):
             # ...and the downloader log (if required)
             if app_obj.ytdl_log_system_cmd_flag:
                 app_obj.write_downloader_log(' '.join(cmd_list))
-
+            
             # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
             #   translated)
@@ -7210,7 +7210,7 @@ class ClipDownloader(object):
                 # ...and the downloader log (if required)
                 if app_obj.ytdl_log_system_cmd_flag:
                     app_obj.write_downloader_log(' '.join(cmd_list))
-
+                    
                 # Create a new child process using that command...
                 self.create_child_process(cmd_list)
                 # ...and set up the PipeReader objects to read from the child
@@ -8036,7 +8036,7 @@ class ClipDownloader(object):
             # Write output to the downloader log (if required)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(data)
-
+                
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()
         return True
@@ -9293,7 +9293,7 @@ class StreamDownloader(object):
         # Display the message in the downloader log, if allowed
         if app_obj.ytdl_log_system_cmd_flag:
             app_obj.write_downloader_log(cmd)
-
+            
 
     def show_msg(self, msg):
 
@@ -9331,7 +9331,7 @@ class StreamDownloader(object):
         # Write the message to the downloader log, if allowed
         if app_obj.ytdl_log_stdout_flag:
             app_obj.write_downloader_log(msg)
-
+            
 
     def show_error(self, msg):
 
@@ -9370,7 +9370,7 @@ class StreamDownloader(object):
         # Write the message to the downloader log (if required)
         if app_obj.ytdl_log_stderr_flag:
             app_obj.write_downloader_log(msg)
-
+               
 
     def stop(self):
 

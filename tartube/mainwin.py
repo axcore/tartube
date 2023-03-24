@@ -10004,15 +10004,24 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.hidden_flag:
             return
 
-        # Update the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
-        model = tree_ref.get_model()
-        tree_path = tree_ref.get_path()
-        tree_iter = model.get_iter(tree_path)
-        model.set(tree_iter, 3, self.video_index_get_icon(media_data_obj))
+        # !!! DEBUG Git #523
+        try:
+            # Update the treeview row
+            tree_ref = self.video_index_row_dict[media_data_obj.dbid]
+            model = tree_ref.get_model()
+            tree_path = tree_ref.get_path()
+            tree_iter = model.get_iter(tree_path)
+            model.set(tree_iter, 3, self.video_index_get_icon(media_data_obj))
 
-        # Make the changes visible
-        self.video_index_treeview.show_all()
+            # Make the changes visible
+            self.video_index_treeview.show_all()
+
+        except:
+            return self.app_obj.system_error(
+                272,
+                'Video Index update row request failed because row missing' \
+                + ' from registry',
+            )
 
 
     def video_index_update_row_text(self, media_data_obj):
@@ -10047,22 +10056,31 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.hidden_flag:
             return
 
-        # Update the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
-        model = tree_ref.get_model()
-        tree_path = tree_ref.get_path()
-        tree_iter = model.get_iter(tree_path)
-        model.set(tree_iter, 5, self.video_index_get_text(media_data_obj))
+        # !!! DEBUG Git #523
+        try:
+            # Update the treeview row
+            tree_ref = self.video_index_row_dict[media_data_obj.dbid]
+            model = tree_ref.get_model()
+            tree_path = tree_ref.get_path()
+            tree_iter = model.get_iter(tree_path)
+            model.set(tree_iter, 5, self.video_index_get_text(media_data_obj))
 
-        style, weight, underline, strike \
-        = self.video_index_get_text_properties(media_data_obj)
-        model.set(tree_iter, 6, style)
-        model.set(tree_iter, 7, weight)
-        model.set(tree_iter, 8, underline)
-        model.set(tree_iter, 9, strike)
+            style, weight, underline, strike \
+            = self.video_index_get_text_properties(media_data_obj)
+            model.set(tree_iter, 6, style)
+            model.set(tree_iter, 7, weight)
+            model.set(tree_iter, 8, underline)
+            model.set(tree_iter, 9, strike)
 
-        # Make the changes visible
-        self.video_index_treeview.show_all()
+            # Make the changes visible
+            self.video_index_treeview.show_all()
+
+        except:
+            return self.app_obj.system_error(
+                273,
+                'Video Index update row request failed because row missing' \
+                + ' from registry',
+            )
 
 
     def video_index_update_row_tooltip(self, media_data_obj):
@@ -10097,22 +10115,31 @@ class MainWin(Gtk.ApplicationWindow):
         and media_data_obj.hidden_flag:
             return
 
-        # Update the treeview row
-        tree_ref = self.video_index_row_dict[media_data_obj.dbid]
-        model = tree_ref.get_model()
-        tree_path = tree_ref.get_path()
-        tree_iter = model.get_iter(tree_path)
-        model.set(
-            tree_iter,
-            2,
-            media_data_obj.fetch_tooltip_text(
-                self.app_obj,
-                self.tooltip_max_len,
-            ),
-        )
+        # !!! DEBUG Git #523
+        try:
+            # Update the treeview row
+            tree_ref = self.video_index_row_dict[media_data_obj.dbid]
+            model = tree_ref.get_model()
+            tree_path = tree_ref.get_path()
+            tree_iter = model.get_iter(tree_path)
+            model.set(
+                tree_iter,
+                2,
+                media_data_obj.fetch_tooltip_text(
+                    self.app_obj,
+                    self.tooltip_max_len,
+                ),
+            )
 
-        # Make the changes visible
-        self.video_index_treeview.show_all()
+            # Make the changes visible
+            self.video_index_treeview.show_all()
+
+        except:
+            return self.app_obj.system_error(
+                274,
+                'Video Index update row request failed because row missing' \
+                + ' from registry',
+            )
 
 
     def video_index_get_icon(self, media_data_obj):
@@ -17407,7 +17434,7 @@ class MainWin(Gtk.ApplicationWindow):
             if media_data_obj.source:
                 source_list.append(media_data_obj.source)
 
-        if media_data_obj.source:
+        if source_list:
 
             utils.add_links_to_textview(
                 self.app_obj,
@@ -17813,10 +17840,11 @@ class MainWin(Gtk.ApplicationWindow):
         else:
 
             # Delete the videos without prompting
-            self.app_obj.delete_video(
-                media_data_obj,
-                self.app_obj.delete_video_files_flag,
-            )
+            for media_data_obj in media_data_list:
+                self.app_obj.delete_video(
+                    media_data_obj,
+                    self.app_obj.delete_video_files_flag,
+                )
 
 
     def on_video_catalogue_dl_and_watch(self, menu_item, media_data_obj):
@@ -29941,7 +29969,7 @@ class AddPlaylistDialogue(Gtk.Dialog):
 
         # Store the combobox's selected item, so the calling function can
         #   retrieve it
-        self.parent_name = self.folder_list[0]
+        self.parent_dbid = self.folder_list[0]
 
         label4 = Gtk.Label(_('(Optional) Add this playlist inside a folder'))
         grid.attach(label4, 0, 6, 1, 1)
