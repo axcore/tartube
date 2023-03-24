@@ -44,6 +44,7 @@ locale_setup_list = [
     'nl_NL',    'Nederlands',
     'ru',       'русский',
     'tr',       'Türkçe',
+    'zh_CN',       '中文简体',
     'vi',       'Tiếng Việt',
 ]
 
