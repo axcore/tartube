@@ -168,18 +168,18 @@ class ProcessManager(threading.Thread):
             )
 
             default_flag = False
-            if self.app_obj.temp_stamp_list:
+            if video_obj.dbid in self.app_obj.temp_stamp_buffer_dict:
 
-                # Split the video into video clips, using the .stamp_list
+                # Split the video into video clips, using the timestamps
                 #   specified directly by the user (instead of the one
                 #   specified by the media.Video object)
                 dest_dir = self.split_video(video_obj)
 
-            elif self.app_obj.temp_slice_list:
+            elif video_obj.dbid in self.app_obj.temp_slice_buffer_dict:
 
                 # Produce a single output video with slices removed, using the
-                #   .slice_list specified directly by the user (instead of the
-                #   one specified by the media.Video object)
+                #   slices specified directly by the user (instead of the one
+                #   specified by the media.Video object)
                 dest_dir = self.slice_video(video_obj)
 
             elif self.options_obj.options_dict['output_mode'] == 'split':
@@ -598,7 +598,7 @@ class ProcessManager(threading.Thread):
         # Contact the SponsorBlock server to update the video's slice data, if
         #   allowed
         # (No point doing it, if the temporary buffer is set)
-        if not self.app_obj.temp_slice_list:
+        if not orig_video_obj.dbid in self.app_obj.temp_slice_buffer_dict:
 
             if self.app_obj.sblock_re_extract_flag \
             and not orig_video_obj.slice_list:
@@ -610,15 +610,18 @@ class ProcessManager(threading.Thread):
 
         # Import the correct slice list
         override_output_mode = None
-        if self.app_obj.temp_slice_list:
+        if orig_video_obj.dbid in self.app_obj.temp_slice_buffer_dict:
 
             override_output_mode = 'slice'
-
-            # Use the temporary buffer
-            slice_list = self.app_obj.temp_slice_list.copy()
             temp_flag = True
+            
+            # Use the temporary buffer
+            slice_list \
+            = self.app_obj.temp_slice_buffer_dict[orig_video_obj.dbid]
+            # The first entry in 'slice_list' is the value 'create'; remove it
+            slice_list.pop(0)        
             # (The temporary buffer, once used, must be emptied immediately)
-            self.app_obj.reset_temp_slice_list()
+            self.app_obj.del_temp_slice_buffer_dict(orig_video_obj.dbid)
 
         elif self.options_obj.options_dict['slice_mode'] == 'video' \
         and orig_video_obj.slice_list:
@@ -834,11 +837,11 @@ class ProcessManager(threading.Thread):
             The destination directory of the clips on success, None on failure
 
         """
-
+        
         # Re-extract timestamps from the video's .info.json or .description
         #   file, if allowed
         # (No point doing it, if the temporary buffer is set)
-        if not self.app_obj.temp_stamp_list:
+        if not orig_video_obj.dbid in self.app_obj.temp_stamp_buffer_dict:
 
             if self.app_obj.video_timestamps_re_extract_flag \
             and not orig_video_obj.stamp_list:
@@ -872,14 +875,17 @@ class ProcessManager(threading.Thread):
 
         # Import the correct timestamp list
         override_output_mode = None
-        if self.app_obj.temp_stamp_list:
+        if orig_video_obj.dbid in self.app_obj.temp_stamp_buffer_dict:
 
             override_output_mode = 'split'
 
             # Use the temporary buffer
-            stamp_list = self.app_obj.temp_stamp_list.copy()
-            # (The temporary buffer, once used, must be emptied immediately)
-            self.app_obj.reset_temp_stamp_list()
+            stamp_list \
+            = self.app_obj.temp_stamp_buffer_dict[orig_video_obj.dbid]
+            # The first entry in 'stamp_list' is the value 'create'; remove it
+            stamp_list.pop(0)                        
+            # The temporary buffer, once used, must be emptied immediately
+            self.app_obj.del_temp_stamp_buffer_dict(orig_video_obj.dbid)
 
         elif self.options_obj.options_dict['split_mode'] == 'video' \
         and orig_video_obj.stamp_list:

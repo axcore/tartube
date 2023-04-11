@@ -331,7 +331,7 @@ class TartubeApp(Gtk.Application):
         #   Classic Mode tabs, when the config file was last saved
         self.main_win_videos_slider_posn = self.paned_default_size
         self.main_win_progress_slider_posn = self.paned_default_size
-        self.main_win_classic_slider_posn = self.paned_default_size + 50
+        self.main_win_classic_slider_posn = self.paned_default_size + 75
         # Because of Gtk issues, resetting main window sliders to their default
         #   positions has to be done twice. Flag set to True if
         #   self.script_fast_timer_callback() should reset the position of
@@ -848,6 +848,8 @@ class TartubeApp(Gtk.Application):
         # Flag set to True, if the URL should be treated as a broadcasting
         #   livestream
         self.classic_livestream_flag = False
+        # Flag set to True, if SponsorBlock should be used with the URL
+        self.classic_sblock_flag = False
         # Flag set to True, if pending URLs (still visible in the top half of
         #   the Classic Mode tab, or not yet downloaded in the bottom half)
         #   should be saved when Tartube shuts down, and restored (to the top
@@ -1994,6 +1996,9 @@ class TartubeApp(Gtk.Application):
         #   should try to re-extract the timestamps from the metadata or
         #   description files (if none have been extracted so far)
         self.video_timestamps_re_extract_flag = False
+        # Timestamp download mode - 'downloader' to use yt-dlp's
+        #   --download-sections option, 'ffmpeg' to download using FFmpeg
+        self.video_timestamps_dl_mode = 'ffmpeg'
         # When splitting videos, the format for the name of the video clips:
         #   num                 Number
         #   clip                Clip Title
@@ -2031,6 +2036,9 @@ class TartubeApp(Gtk.Application):
         # Custom title (can be changed by the user. If an empty string, the
         #   generic title is used)
         self.split_video_custom_title = 'Video'
+        # Flag set to True to force keyframes at cuts (slower, but results in
+        #   few artefacts around cuts)
+        self.split_video_force_keyframe_flag = True
         # Flag set to True if the destination directory should be opened on
         #   the desktop, after splitting files
         self.split_video_auto_open_flag = False
@@ -2038,10 +2046,27 @@ class TartubeApp(Gtk.Application):
         #   splitting files. Does not apply to a video in a media.Channel or
         #   media.Playlist
         self.split_video_auto_delete_flag = False
-        # Temporary timestamp buffer, using the same format as
-        #   media.Video.stamp_List. Used when the user right-clicks a video and
-        #   selects 'Create video clip...' or 'Download video clip...'
-        self.temp_stamp_list = []
+
+        # Temporary timestamp buffer
+        # Entries are added by PrepareClipDialogue, and removed by code in
+        #   downloads.py or process.py as soon as the operation starts. (As a
+        #   safeguard, the buffer is completely emptied at the end of a
+        #   download/process operation)
+        # Dictionary in the form
+        #   temp_stamp_buffer_dict[dbid] = list
+        # ...where 'dbid' is the .dbid of a media.Video, and 'list' is in the
+        #   form:
+        #       [download_type, stamp_list, stamp_list...]
+        # ...where 'stamp_list' uses the same group-of-3 format as
+        #   media.Video.stamp_list, and 'download_type' is one of the following
+        #   values:
+        #       'chapters': Use yt-dlp's --split-chapters option. When set to
+        #           this value, any 'stamp_list' values are ignored
+        #       'downloader': Use yt-dlp's '--download-sections' options
+        #       'ffmpeg': Use FFmpeg
+        #       'create': Create clips from a video that's already been
+        #           downloaded, using FFmpeg
+        self.temp_stamp_buffer_dict = {}
 
         # Flag set to True if downloads.VideoDownloader should contact the
         #   SponsorBlock server, when checking/downloading videos
@@ -2057,13 +2082,31 @@ class TartubeApp(Gtk.Application):
         #   contact SponsorBlock again to update the video slice list (if it is
         #   currently empty)
         self.sblock_re_extract_flag = False
+        # Flag set to True to force keyframes at cuts (slower, but results in
+        #   few artefacts around cuts)
+        self.slice_video_force_keyframe_flag = True
         # Flag set to True if timestamps/slices should be removed from a video,
         #   after it is sliced (since they are then incorrect)
         self.slice_video_cleanup_flag = True
-        # Temporary marked slice buffer, using the same format as
-        #   media.Video.slice_List. Used when the user right-clicks a video
-        #   and selects 'Remove video slices...'
-        self.temp_slice_list = []
+
+        # Temporary video slice buffer
+        # Entries are added by PrepareSliceDialogue, and removed by code in
+        #   downloads.py or process.py as soon as the operation starts. (As a
+        #   safeguard, the buffer is completely emptied at the end of a
+        #   download/process operation)
+        # Dictionary in the form
+        #   temp_slice_buffer_dict[dbid] = list
+        # ...where 'dbid' is the .dbid of a media.Video, and 'list' is in the
+        #   form:
+        #       [download_type, slice_dict, slice_dict...]
+        # ...where 'slice_dict' uses the same form as items in
+        #   media.Video.slice_list, and 'download_type' is one of the following
+        #   values:
+        #       'default': Use FFmpeg to download clips, the concatenate them
+        #           together into a new video file
+        #       'create': Remove slices from a video that's already been
+        #           downloaded, again using FFmpeg
+        self.temp_slice_buffer_dict = {}
 
         # Flag set to True if download operations with yt-dlp should add the
         #   '--write-comments' option, downloading comments to the .info.json
@@ -2394,7 +2437,7 @@ class TartubeApp(Gtk.Application):
 
         # Dictionary of youtube-dl download options that are filtered out, when
         #   splitting video clips (in a call to
-        #   utils.generate_split_system_cmd())
+        #   utils.generate_ffmpeg_split_system_cmd(), etc)
         # The keys are youtube-dl download options; the corresponding values
         #   are False for a boolean option, or True for an option that takes
         #   an argument
@@ -3181,6 +3224,16 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(classic_dest_dir_open_action)
 
+        classic_add_clips_button_action = Gio.SimpleAction.new(
+            'classic_add_clips_button',
+            None,
+        )
+        classic_add_clips_button_action.connect(
+            'activate',
+            self.on_button_classic_add_clips,
+        )
+        self.add_action(classic_add_clips_button_action)
+
         classic_add_urls_button_action = Gio.SimpleAction.new(
             'classic_add_urls_button',
             None,
@@ -3240,6 +3293,16 @@ class TartubeApp(Gtk.Application):
             self.on_button_classic_archive,
         )
         self.add_action(classic_archive_button_action)
+
+        classic_clips_button_action = Gio.SimpleAction.new(
+            'classic_clips_button',
+            None,
+        )
+        classic_clips_button_action.connect(
+            'activate',
+            self.on_button_classic_clips,
+        )
+        self.add_action(classic_clips_button_action)
 
         classic_ffmpeg_button_action = Gio.SimpleAction.new(
             'classic_ffmpeg_button',
@@ -4577,6 +4640,8 @@ class TartubeApp(Gtk.Application):
             = json_dict['classic_resolution_selection']
         if version >= 2003586 and 'classic_livestream_flag' in json_dict:
             self.classic_livestream_flag = json_dict['classic_livestream_flag']
+        if version >= 2004332 and 'classic_sblock_flag' in json_dict:
+            self.classic_sblock_flag = json_dict['classic_sblock_flag']
         if version >= 2002129 and 'classic_pending_flag' in json_dict:
             self.classic_pending_flag = json_dict['classic_pending_flag']
             self.classic_pending_list = json_dict['classic_pending_list']
@@ -4983,6 +5048,12 @@ class TartubeApp(Gtk.Application):
             = json_dict['video_timestamps_replace_flag']
             self.video_timestamps_re_extract_flag \
             = json_dict['video_timestamps_re_extract_flag']
+        if version >= 2004292 \
+        and 'video_timestamps_dl_mode' in json_dict:
+            self.video_timestamps_dl_mode \
+            = json_dict['video_timestamps_dl_mode']
+        if version >= 2003181 \
+        and 'video_timestamps_extract_json_flag' in json_dict:
             self.split_video_name_mode = json_dict['split_video_name_mode']
             self.split_video_clips_dir_flag \
             = json_dict['split_video_clips_dir_flag']
@@ -4992,6 +5063,12 @@ class TartubeApp(Gtk.Application):
             = json_dict['split_video_copy_thumb_flag']
             self.split_video_custom_title \
             = json_dict['split_video_custom_title']
+        if version >= 2004328 \
+        and 'split_video_force_keyframe_flag' in json_dict:
+            self.split_video_force_keyframe_flag \
+            = json_dict['split_video_force_keyframe_flag']
+        if version >= 2003181 \
+        and 'video_timestamps_extract_json_flag' in json_dict:
             self.split_video_auto_open_flag \
             = json_dict['split_video_auto_open_flag']
             self.split_video_auto_delete_flag \
@@ -5003,6 +5080,10 @@ class TartubeApp(Gtk.Application):
         if version >= 2003257 and 'sblock_replace_flag' in json_dict:
             self.sblock_replace_flag = json_dict['sblock_replace_flag']
             self.sblock_re_extract_flag = json_dict['sblock_re_extract_flag']
+        if version >= 2004329 \
+        and 'slice_video_force_keyframe_flag' in json_dict:
+            self.slice_video_force_keyframe_flag \
+            = json_dict['slice_video_force_keyframe_flag']
         if version >= 2003250 and 'slice_video_cleanup_flag' in json_dict:
             self.slice_video_cleanup_flag \
             = json_dict['slice_video_cleanup_flag']
@@ -5751,6 +5832,7 @@ class TartubeApp(Gtk.Application):
             'classic_format_convert_flag': self.classic_format_convert_flag,
             'classic_resolution_selection': self.classic_resolution_selection,
             'classic_livestream_flag': self.classic_livestream_flag,
+            'classic_sblock_flag': self.classic_sblock_flag,
             'classic_pending_flag': self.classic_pending_flag,
             'classic_pending_list': self.classic_pending_list,
             'classic_duplicate_remove_flag': \
@@ -5923,12 +6005,16 @@ class TartubeApp(Gtk.Application):
             self.video_timestamps_replace_flag,
             'video_timestamps_re_extract_flag': \
             self.video_timestamps_re_extract_flag,
+            'video_timestamps_dl_mode': \
+            self.video_timestamps_dl_mode,
             'split_video_name_mode': self.split_video_name_mode,
             'split_video_clips_dir_flag': self.split_video_clips_dir_flag,
             'split_video_subdir_flag': self.split_video_subdir_flag,
             'split_video_add_db_flag': self.split_video_add_db_flag,
             'split_video_copy_thumb_flag': self.split_video_copy_thumb_flag,
             'split_video_custom_title': self.split_video_custom_title,
+            'split_video_force_keyframe_flag': \
+            self.split_video_force_keyframe_flag,
             'split_video_auto_open_flag': self.split_video_auto_open_flag,
             'split_video_auto_delete_flag': self.split_video_auto_delete_flag,
 
@@ -5936,6 +6022,8 @@ class TartubeApp(Gtk.Application):
             'sblock_obfuscate_flag': self.sblock_obfuscate_flag,
             'sblock_replace_flag': self.sblock_replace_flag,
             'sblock_re_extract_flag': self.sblock_re_extract_flag,
+            'slice_video_force_keyframe_flag': \
+            self.slice_video_force_keyframe_flag,
             'slice_video_cleanup_flag': self.slice_video_cleanup_flag,
 
             'check_comment_fetch_flag': self.check_comment_fetch_flag,
@@ -7959,6 +8047,13 @@ class TartubeApp(Gtk.Application):
             for media_data_obj in self.container_reg_dict.values():
                 if hasattr(media_data_obj, 'last_sort_mode'):
                     del media_data_obj.last_sort_mode
+
+        if version < 2004339:       # v2.4.339
+
+            # This version adds a new IV to all media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.dummy_sblock_flag = False
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -10966,8 +11061,8 @@ class TartubeApp(Gtk.Application):
                 'classic_sim' or 'classic_real'
 
                 For 'custom_real' and 'classic_real', not specified if
-                self.temp_stamp_list or self.temp_slice_list are specified
-                (because those values take priority)
+                self.temp_stamp_buffer_dict or self.temp_slice_buffer_dict have
+                been populated (because those values take priority)
 
                 For 'custom_real', not specified if media_data_list contains
                 media.Scheduled objects
@@ -11567,6 +11662,9 @@ class TartubeApp(Gtk.Application):
         # In any case, reset those IVs
         self.halt_after_operation_flag = False
         self.no_dialogue_this_time_flag = False
+        # Also reset temporary clip/slice buffers
+        self.temp_stamp_buffer_dict = {}
+        self.temp_slice_buffer_dict = {}
         # Also reset operation IVs
         self.operation_halted_flag = False
 
@@ -13176,6 +13274,9 @@ class TartubeApp(Gtk.Application):
 
         # Reset operation IVs
         self.operation_halted_flag = False
+        # Also reset temporary clip/slice buffers
+        self.temp_stamp_buffer_dict = {}
+        self.temp_slice_buffer_dict = {}
 
 
     # (Download operation support functions)
@@ -22520,13 +22621,32 @@ class TartubeApp(Gtk.Application):
         )
 
 
+    def on_button_classic_add_clips(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        In the Classic Mode tab, opens the usual 'Create video clips' dialogue,
+        tweaked for use with Classic Mode. Creates new dummy media.Video
+        objects for each item, and updates IVs.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        self.main_win_obj.on_video_catalogue_process_clip_classic_mode()
+
+
     def on_button_classic_add_urls(self, action, par):
 
         """Called from a callback in self.do_startup().
 
         In the Classic Mode tab, transfers URLs in the textview into the
         Classic Progress List, creating a new dummy media.Video object for each
-        URL, and updating IVs.
+        URL, and updates IVs.
 
         Args:
 
@@ -22699,6 +22819,61 @@ class TartubeApp(Gtk.Application):
                 'data': dbid_list,
             },
         )
+
+
+    def on_button_classic_clips(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Creates video clips using the selected videos.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        selection = self.main_win_obj.classic_progress_treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            # Nothing selected
+            return
+
+        # Get the the dummy media.Video objects for each selected row. Filter
+        #   out any whose filename is not known (so cannot be processed)
+        video_list = []
+        for path in path_list:
+
+            this_iter = model.get_iter(path)
+            dbid = model[this_iter][0]
+            video_obj = self.main_win_obj.classic_media_dict[dbid]
+            if video_obj.dummy_path is not None and video_obj.dummy_dl_flag:
+                video_list.append(video_obj)
+
+        if not video_list:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('Only downloaded videos can be used to create video clips'),
+                'error',
+                'ok',
+            )
+
+        elif len(video_list) > 1:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('You can create video clips from only one video at a time!'),
+                'error',
+                'ok',
+            )
+
+        else:
+
+            self.main_win_obj.on_video_catalogue_process_clip_classic_mode(
+                video_list[0],
+            )
 
 
     def on_button_classic_download(self, action, par):
@@ -26106,6 +26281,14 @@ class TartubeApp(Gtk.Application):
         self.classic_resolution_selection = value
 
 
+    def set_classic_sblock_flag(self, flag):
+
+        if not flag:
+            self.classic_sblock_flag = False
+        else:
+            self.classic_sblock_flag = True
+
+
     def set_classic_ytdl_archive_flag(self, flag):
 
         if not flag:
@@ -27355,6 +27538,14 @@ class TartubeApp(Gtk.Application):
             self.slice_video_cleanup_flag = True
 
 
+    def set_slice_video_force_keyframe_flag(self, flag):
+
+        if not flag:
+            self.slice_video_force_keyframe_flag = False
+        else:
+            self.slice_video_force_keyframe_flag = True
+
+
     def set_sound_custom(self, value):
 
         self.sound_custom = value
@@ -27403,6 +27594,14 @@ class TartubeApp(Gtk.Application):
     def set_split_video_custom_title(self, value):
 
         self.split_video_custom_title = value
+
+
+    def set_split_video_force_keyframe_flag(self, flag):
+
+        if not flag:
+            self.split_video_force_keyframe_flag = False
+        else:
+            self.split_video_force_keyframe_flag = True
 
 
     def set_split_video_name_mode(self, value):
@@ -27487,24 +27686,24 @@ class TartubeApp(Gtk.Application):
             self.system_warning_show_flag = True
 
 
-    def set_temp_slice_list(self, slice_list):
+    def add_temp_slice_buffer_dict(self, dbid, mini_list):
 
-        self.temp_slice_list = slice_list
-
-
-    def reset_temp_slice_list(self):
-
-        self.temp_slice_list = []
+        self.temp_slice_buffer_dict[dbid] = mini_list
 
 
-    def set_temp_stamp_list(self, stamp_list):
+    def del_temp_slice_buffer_dict(self, dbid):
 
-        self.temp_stamp_list = stamp_list
+        del self.temp_slice_buffer_dict[dbid]
 
 
-    def reset_temp_stamp_list(self):
+    def add_temp_stamp_buffer_dict(self, dbid, mini_list):
 
-        self.temp_stamp_list = []
+        self.temp_stamp_buffer_dict[dbid] = mini_list
+
+
+    def del_temp_stamp_buffer_dict(self, dbid):
+
+        del self.temp_stamp_buffer_dict[dbid]
 
 
     def set_thumb_size_custom(self, value):
@@ -27613,6 +27812,11 @@ class TartubeApp(Gtk.Application):
             )
 
         self.video_res_default = value
+
+
+    def set_video_timestamps_dl_mode(self, value):
+
+        self.video_timestamps_dl_mode = value
 
 
     def set_video_timestamps_extract_descrip_flag(self, flag):

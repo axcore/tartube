@@ -68,12 +68,12 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.260 (2 Mar 2023)**
 
-Development release: **v2.4.283 (24 Mar 2023)**
+Development release: **v2.4.346 (11 Apr 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
 - `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.260/install-tartube-2.4.260-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.260/tartube-2.4.260-64bit-portable.zip/download>`__ from Sourceforge
-- Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_
+- Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows`_
 - `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.260/python3-tartube_2.4.260.deb/download>`__ from Sourceforge
 - `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.260/tartube-2.4.260.rpm/download>`__ from Sourceforge
 
@@ -136,7 +136,7 @@ There is also a portable edition; use this if you want to install **Tartube** on
 
 Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
-Tartube is no longer supported on MS Windows (32-bit) - see `7.23 Doesn't work on 32-bit Windows`_.
+Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows`_.
 
 5.1.1 Manual installation - MS Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -795,7 +795,7 @@ Refreshing the database:
 
 Updating packages:
 
-- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. On MS Windows, also installs **FFmpeg** (see `6.4 Installing FFmpeg / AVConv`_), **matplotlib** (see `7.30 Graphs not visible`_) and `streamlink <https://streamlink.github.io/>`__ (see `6.24 Livestreams`_)
+- **Update** - Installs or updates **youtube-dl**, as described in `6.2 Updating the downloader`_. On MS Windows, also installs **FFmpeg** (see `6.4 Installing FFmpeg / AVConv`_), **matplotlib** (see `7.31 Graphs not visible`_) and `streamlink <https://streamlink.github.io/>`__ (see `6.24 Livestreams`_)
 - *Protip*: Do an **'Update'** operation before you do a **'Check'** or **'Download'** operation
 
 Fetching information:
@@ -2006,43 +2006,44 @@ You can now set the theme from Tartube's menu.
 ============================
 
 * `7.1 Tartube won't install/won't run/doesn't work`_
-* `7.2 "Download did not start" error`_
-* `7.3 Can't download a video`_
-* `7.4 Downloads never finish`_
-* `7.5 Videos are missing after a crash`_
-* `7.6 Tartube database is broken`_
-* `7.7 'Check all' button takes too long`_
-* `7.8 'Download all' button takes too long`_
-* `7.9 Channel downloads one video at a time`_
-* `7.10 Tartube database file is getting in the way`_
-* `7.11 Duplicate video names`_
-* `7.12 Convert video to audio`_
-* `7.13 Video is downloaded as separate video/audio files`_
-* `7.14 Too many folders in the main window`_
-* `7.15 Not enough videos in the main window`_
-* `7.16 Toolbar is too small`_
-* `7.17 Toolbar is too big`_
-* `7.18 YouTube name/password not accepted`_
-* `7.19 Georestriction workarounds don't work`_
-* `7.20 Video website blocks me`_
-* `7.21 Too many blocked videos`_
-* `7.22 MS Windows installer is too big`_
-* `7.23 Doesn't work on 32-bit Windows`_
-* `7.24 Tartube can't detect livestreams`_
-* `7.25 Livestream is already finished`_
-* `7.26 Can't hear livestream alarms`_
-* `7.27 Some icons not visible`_
-* `7.28 Video thumbnails not visible`_
-* `7.29 Video text not visible`_
-* `7.30 Graphs not visible`_
-* `7.31 Tartube is not visible in the system tray`_
-* `7.32 Tartube is not portable`_
-* `7.33 Run out of disk space`_
-* `7.34 Cannot embed thumbnails in videos`_
-* `7.35 Cannot install FFmpeg`_
-* `7.36 Annoying messages after downloads`_
-* `7.37 Japanese/Korean videos won't download`_
-* `7.38 No puedo hablar inglés`_
+* `7.2 Update Tartube on MS Windows`_
+* `7.3 "Download did not start" error`_
+* `7.4 Can't download a video`_
+* `7.5 Downloads never finish`_
+* `7.6 Videos are missing after a crash`_
+* `7.7 Tartube database is broken`_
+* `7.8 'Check all' button takes too long`_
+* `7.9 'Download all' button takes too long`_
+* `7.10 Channel downloads one video at a time`_
+* `7.11 Tartube database file is getting in the way`_
+* `7.12 Duplicate video names`_
+* `7.13 Convert video to audio`_
+* `7.14 Video is downloaded as separate video/audio files`_
+* `7.15 Too many folders in the main window`_
+* `7.16 Not enough videos in the main window`_
+* `7.17 Toolbar is too small`_
+* `7.18 Toolbar is too big`_
+* `7.19 YouTube name/password not accepted`_
+* `7.20 Georestriction workarounds don't work`_
+* `7.21 Video website blocks me`_
+* `7.22 Too many blocked videos`_
+* `7.23 MS Windows installer is too big`_
+* `7.24 Doesn't work on 32-bit Windows`_
+* `7.25 Tartube can't detect livestreams`_
+* `7.26 Livestream is already finished`_
+* `7.27 Can't hear livestream alarms`_
+* `7.28 Some icons not visible`_
+* `7.29 Video thumbnails not visible`_
+* `7.30 Video text not visible`_
+* `7.31 Graphs not visible`_
+* `7.32 Tartube is not visible in the system tray`_
+* `7.33 Tartube is not portable`_
+* `7.34 Run out of disk space`_
+* `7.35 Cannot embed thumbnails in videos`_
+* `7.36 Cannot install FFmpeg`_
+* `7.37 Annoying messages after downloads`_
+* `7.38 Japanese/Korean videos won't download`_
+* `7.39 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2051,13 +2052,7 @@ You can now set the theme from Tartube's menu.
 
 A: Tartube is known to fail on Windows 7 systems that have not been updated for some time. A possible solution is to install `this patch from Microsoft <https://www.microsoft.com/en-us/download/details.aspx?id=26767>`__. The simplest way to install the patch is to let Windows update itself, as normal.
 
-A: New installers for MS Windows are not released frequently, but small updates and fixes *are* uploaded frequently to `Github <https://github.com/axcore/tartube/>`__. You can update your Tartube installation quite easily.
-
-- Download the latest source code from `Github <https://github.com/axcore/tartube/>`__
-- In Tartube's main menu, select **System > Show Tartube script folder**
-- A folder opens containing files such as **setup.py** and **README.rst**
-- Copy the downloaded source code into this folder, replacing old files with new ones
-- Restart Tartube
+A: See also `7.2 Update Tartube on MS Windows`_
 
 A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
 
@@ -2077,14 +2072,27 @@ On MS Windows, this is how to run **Tartube** from inside a terminal window:
 
         **python3 tartube/tartube**
 
-7.2 "Download did not start" error
+7.2 Update Tartube on MS Windows
+--------------------------------
+
+*Q: You told me I need to update my Windows installation, how do I do that?*
+
+A: New installers for MS Windows are not released frequently, but small updates and fixes *are* uploaded frequently to `Github <https://github.com/axcore/tartube/>`__. You can update your Tartube installation quite easily.
+
+- Download the latest source code from `Github <https://github.com/axcore/tartube/>`__
+- In Tartube's main menu, select **System > Show Tartube script folder**
+- A folder opens containing files such as **setup.py** and **README.rst**
+- Copy the downloaded source code into this folder, replacing old files with new ones
+- Restart Tartube
+
+7.3 "Download did not start" error
 ----------------------------------
 
 *Q: When I try to download videos, nothing happens! In the Errors/Warnings tab, I can see "Download did not start"!*
 
 A: See `6.3 Setting the downloader's location`_
 
-7.3 Can't download a video
+7.4 Can't download a video
 --------------------------
 
 *Q: I can't download the video!*
@@ -2106,14 +2114,14 @@ Because most people don't like typing, **Tartube** offers a shortcut.
 - Click the **Output** tab to watch the test as it progresses
 - When the test is finished, a temporary directory (folder) opens, containing anything that **youtube-dl** was able to download
 
-7.4 Downloads never finish
+7.5 Downloads never finish
 --------------------------
 
 *Q: I clicked the 'Download all' button and it starts, but never finishes!*
 
-A: This generally indicates an error in the Python, Gtk and/or **Tartube** code. If you're running **Tartube** from a terminal window (see `7.1 Tartube won't install/won't run/doesn't work`_), you should be able to see the error, which you can report on `our GitHub page <https://github.com/axcore/tartube/issues>`__.
+A: This generally indicates an error in the Python, Gtk and/or **Tartube** code. The error should be visible in the Errors/Warnings tab. See `7.1 Tartube won't install/won't run/doesn't work`_).
 
-7.5 Videos are missing after a crash
+7.6 Videos are missing after a crash
 ------------------------------------
 
 *Q: After I downloaded some videos, Tartube crashed, and now all my videos are missing!*
@@ -2134,14 +2142,14 @@ A: **Tartube** creates a backup copy of its database, before trying to save a ne
 
 Note that **Tartube** does not create backup copies of the videos you've downloaded. That is your responsibility!
 
-7.6 Tartube database is broken
+7.7 Tartube database is broken
 ------------------------------
 
 *Q: The Tartube database is totally broken! How do I rebuild it? I don't want to download everything again!*
 
 A: If **Tartube** is able to load the database at all, then there is a built-in database repair tool. Click **File > Check database integrity**
 
-A: Try loading one of the database backups - see `7.5 Videos are missing after a crash`_
+A: Try loading one of the database backups - see `7.6 Videos are missing after a crash`_
 
 A: If the database file (**tartube.db**) is not actually corrupted, you can extract a list of channels and playlists from it. The list is exported as a JSON file.
 
@@ -2169,7 +2177,7 @@ Your new database now contains information about all the videos, but it doesn't 
 
 A: Database files created by **Tartube** v1.1.0 and earlier cannot be loaded due to serialisation issues. There is possibly no way to fix this.
 
-7.7 'Check all' button takes too long
+7.8 'Check all' button takes too long
 -------------------------------------
 
 *Q: I clicked the 'Check all' button, but the operation takes so long! It only found two new videos!*
@@ -2186,7 +2194,7 @@ This works well on sites like YouTube, which send information about videos in th
 - In the **Stop after this many videos (when downloading)** box, enter a number
 - Click **OK** to close the window
 
-7.8 'Download all' button takes too long
+7.9 'Download all' button takes too long
 ----------------------------------------
 
 *Q: I clicked the 'Download all' button. The whole operation took so long, even though Tartube only downloaded two  new videos!*
@@ -2200,7 +2208,7 @@ By default, the archive file is stored in the same folder as the video, but you 
 - Click **Store the archive file in Tartube's data directory** to create a single archive file that applies to every video, channel and playlist in Tartube's database
 - Click **Store the archive file at this location** to create an archive file somewhere else, then click **Set** to choose a folder
 
-7.9 Channel downloads one video at a time
+7.10 Channel downloads one video at a time
 -----------------------------------------
 
 *Q: In the Progress tab, 'Max downloads' is set to 2. But when I download my favourite channel, it downloads only one video at a time!*
@@ -2216,7 +2224,7 @@ You can download multiple videos from the same channel simultaneously, if you wa
 
 Alternatively, you can use custom downloads (see `6.14 Custom downloads`_).
 
-7.10 Tartube database file is getting in the way
+7.11 Tartube database file is getting in the way
 ------------------------------------------------
 
 *Q: Tartube stores its database file in the same place as its videos. Why can't I store them in different places?*
@@ -2231,7 +2239,7 @@ At the moment, the answer is '**Tartube** is working fine, fix your own computer
 - If you want to move your videos from one location to another, it's easy - just move a single directory (folder) and everything it contains. There is no need to reconfigure anything; just tell **Tartube** where to find the new directory (folder)
 - Splitting up the data folder and the database file would require a lot of code to be rewritten, and this would probably introduce lots of new bugs
 
-7.11 Duplicate video names
+7.12 Duplicate video names
 --------------------------
 
 *Q: I downloaded a channel, but some of the videos in the channel have the same name. Tartube only downloads one of them!*
@@ -2242,14 +2250,14 @@ A: Tartube can create files with names in different formats. The name of two vid
 - In the box **Format for video file names**, select **Title + ID**
 - Click **OK** to close the window
 
-7.12 Convert video to audio
+7.13 Convert video to audio
 ---------------------------
 
 *Q: I want to convert the video files to audio files!*
 
 A: See `6.22 Converting to audio`_
 
-7.13 Video is downloaded as separate video/audio files
+7.14 Video is downloaded as separate video/audio files
 ------------------------------------------------------
 
 *Q: I downloaded a video and expected a single video file, instead Tartube downloaded several files, none of which are playable!*
@@ -2269,7 +2277,7 @@ For some reason, youtube-dl ignores the download option unless the format is spe
 
 Tartube can merge a video and audio file together, long after they have been downloaded - see `6.26 More information about FFmpeg and AVConv`_.
 
-7.14 Too many folders in the main window
+7.15 Too many folders in the main window
 ----------------------------------------
 
 *Q: The main window is full of folders I never use! I can't see my own channels, playlists and folders!*
@@ -2284,14 +2292,14 @@ A: In the main menu, click **Edit > System preferences... > Windows > Videos**, 
 
 A: If you have many channels and playlists, create a folder, and then drag-and-drop some channels/playlists into it
 
-7.15 Not enough videos in the main window
+7.16 Not enough videos in the main window
 -----------------------------------------
 
 *Q: I want to see all the videos on a single page, not spread over several pages!*
 
 A: In the toolbar at the bottom of the **Videos** tab, set the page size to zero, and press **ENTER**.
 
-7.16 Toolbar is too small
+7.17 Toolbar is too small
 -------------------------
 
 *Q: The toolbar is too small! There isn't enough room for all the buttons!*
@@ -2300,14 +2308,14 @@ A: Click **Edit > System preferences... > Windows > Main window** and then click
 
 MS Windows users can already see a toolbar without labels.
 
-7.17 Toolbar is too big
+7.18 Toolbar is too big
 -----------------------
 
 *Q: The toolbar is too big! Make it go away!*
 
 A: Click **Edit > System preferences... > Windows > Main window**, and then click **Don't show the main window toolbar**. The new setting is applied when you restart **Tartube**.
 
-7.18 YouTube name/password not accepted
+7.19 YouTube name/password not accepted
 ---------------------------------------
 
 *Q: I added my YouTube username and password, but I am still seeing authentification errors!*
@@ -2324,7 +2332,7 @@ Having created the file, in the same edit window, click the **Name** tab. In the
 
 See also the **Tartube** thread `here <https://github.com/axcore/tartube/issues/68>`__.
 
-7.19 Georestriction workarounds don't work
+7.20 Georestriction workarounds don't work
 ------------------------------------------
 
 *Q: I want to download a video, but it's blocked in my region. I set the geostriction workarounds, but I still can't download the video!*
@@ -2337,7 +2345,7 @@ Unfortunately, although these options exist, websites are not compelled to respe
 
 In many cases, the only remedy is to buy a subscription to a `VPN <https://en.wikipedia.org/wiki/Virtual_private_network>`__ (or to the video website itself).
 
-7.20 Video website blocks me
+7.21 Video website blocks me
 ----------------------------
 
 *Q: I downloaded some videos from a channel, but then YouTube blocked me, and I can't download the rest of them!*
@@ -2350,7 +2358,7 @@ A: You can specify a list of proxies (**Edit > System preferences... > Operation
 
 Unfortunately, it is not possible to switch between proxies while downloading a channel (**youtube-dl** does not offer that functionality). But the proxy list will work well if you're trying to download ten different channels.
 
-7.21 Too many blocked videos
+7.22 Too many blocked videos
 ----------------------------
 
 *Q: The Videos tab is full of 'blocked' videos!*
@@ -2364,7 +2372,7 @@ If you don't want to see blocked videos in the **Videos** tab, deselect the butt
 
 If you don't want the blocked videos added to your database at all, you can click **Edit > System preferences > Operations > Downloads**, and then de-select **Add censored, age-restricted and other blocked videos to the database**
 
-7.22 MS Windows installer is too big
+7.23 MS Windows installer is too big
 ------------------------------------
 
 *Q: Why is the Windows installer so big?*
@@ -2386,7 +2394,7 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer and then compare it to the official one.
 
-7.23 Doesn't work on 32-bit Windows
+7.24 Doesn't work on 32-bit Windows
 -----------------------------------
 
 *Q: Tartube does not install/work on 32-bit Windows*
@@ -2401,7 +2409,7 @@ The final 32-bit releases (v2.3.367) can be downloaded from here:
 
 `Portable edition (32-bit) <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-32bit-portable.zip/download>`__
 
-7.24 Tartube can't detect livestreams
+7.25 Tartube can't detect livestreams
 -------------------------------------
 
 *Q: Tartube can't detect upcoming livestreams at all!*
@@ -2414,14 +2422,14 @@ If the `Python feedparser module <https://pypi.org/project/feedparser/>`__ is no
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **feedparser**, so there is no need to install it again.
 
-7.25 Livestream is already finished
+7.26 Livestream is already finished
 -----------------------------------
 
 *Q: Tartube is showing a livestream that finished hours/days/centuries ago!*
 
 A: Right-click the video and select **Livestream > Not a livestream**.
 
-7.26 Can't hear livestream alarms
+7.27 Can't hear livestream alarms
 ---------------------------------
 
 *Q: I set an alarm for an upcoming livestream, but I didn't hear anything!*
@@ -2434,7 +2442,7 @@ If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not 
 
 The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
 
-7.27 Some icons not visible
+7.28 Some icons not visible
 ---------------------------
 
 *Q: Icons in the Videos tab are broken! They all look the same!*
@@ -2445,7 +2453,7 @@ A: Since v2.4, **Tartube** uses a set of custom icons, replacing system (stock) 
 
 If you want to restore stock icons, click **Edit > System preferences... > Windows > Main window** and then click **Replace stock icons with custom icons (in case stock icons are not visible)** to deselect it. Click the **OK** button to close the window, then restart **Tartube**.
 
-7.28 Video thumbnails not visible
+7.29 Video thumbnails not visible
 ---------------------------------
 
 *Q: Tartube doesn't download video thumbnails any more! It used to work fine!*
@@ -2459,14 +2467,14 @@ If you have already downloaded a lot of **.webp** images, you can ask **Tartube*
 * Click **Operations > Tidy up files...**
 * In the dialogue window, click **Convert .webp files to .jpg using FFmpeg** to select it, then click the **OK** button
 
-7.29 Video text not visible
+7.30 Video text not visible
 ---------------------------
 
 *Q: I can't see the text below each video!*
 
 A: If the background colours in the **Videos** and **Drag and Drop** tabs are getting in the way, you can change them: click **Edit > Sysem preferences... > Windows > Colours**.
 
-7.30 Graphs not visible
+7.31 Graphs not visible
 -----------------------
 
 *Q: My buddy installed Tartube, and he showed me some download history graphs. But when I looked for that on my computer, I couldn't find them!*
@@ -2479,7 +2487,7 @@ On Linux/BSD, use your system's software manager.
 
 On MS Windows, click **Operations > Install matplotlib...**
 
-7.31 Tartube is not visible in the system tray
+7.32 Tartube is not visible in the system tray
 ----------------------------------------------
 
 *Q: Tartube is not visible in the system tray! There is just an empty space where the Tartube icon should be!*
@@ -2490,7 +2498,7 @@ A: This problem exists on certain Linux desktop environments (e.g. `Cinnamon <ht
 
 Other desktop environments (e.g. `MATE <https://mate-desktop.org/>`__) display the **Tartube** icon correctly.
 
-7.32 Tartube is not portable
+7.33 Tartube is not portable
 ----------------------------
 
 *Q: I want to install Tartube on a USB stick. How do I make Tartube portable?*
@@ -2507,7 +2515,7 @@ However, you can create an empty **settings.json** file in the source code direc
 
 You can see both locations by clicking **Edit > System preferences... > Files > Config**.
 
-7.33 Run out of disk space
+7.34 Run out of disk space
 --------------------------
 
 *Q: When I try to download videos, Tartube refuses, complaining "You have only X / Y Mb remaining on your device". But I'm using an external hard drive with over a trillion terabytes of empty space!*
@@ -2518,7 +2526,7 @@ This seems to be an issue with the virtualisation software itself (we have confi
 
 The only thing that can be done is to disable the checks and warnings altogether. Click **Edit > System preferences > Files > Device**, and deselect both **Before checking/downloading videos, warn user if disk space is less than** and **Halt downloads if disk space is less than**.
 
-7.34 Cannot embed thumbnails in videos
+7.35 Cannot embed thumbnails in videos
 --------------------------------------
 
 *Q: In download options, I enabled embedding thumbnails in my downloaded videos, but it doesn't work!*
@@ -2527,7 +2535,7 @@ A: Make sure you have installed FFmpeg.
 
 A: Make sure you have not disabled the setting to remove .webp thumbnails after converting them to another format. Open **Edit > System preferences > Operations > Downloads**. If **Convert .webp thumbnails into .jpg thumbnails** is enabled, then **...but don't delete the original thumbnails** should also be enabled.
 
-7.35 Cannot install FFmpeg
+7.36 Cannot install FFmpeg
 --------------------------
 
 *Q: I'm trying to install Tartube on MS Windows. When Tartube prompts me to install FFmpeg, the installation fails!**
@@ -2536,14 +2544,14 @@ A: The software library that makes FFmpeg available for download breaks frequent
 
 This issue only affects users on MS Windows.
 
-7.36 Annoying messages after downloads
+7.37 Annoying messages after downloads
 --------------------------------------
 
 *Q: Every time Tartube downloads videos, it shows an annoying dialogue window. Make it stop!*
 
 A: The dialogues can be disabled in **Edit > System preferences > Operations > Actions > Don't notify the user at the end of an operation**.
 
-7.37 Japanese/Korean videos won't download
+7.38 Japanese/Korean videos won't download
 ------------------------------------------
 
 *Q: On MS Windows, I can't download my favourite anime/K-pop video!*
@@ -2552,7 +2560,7 @@ A: This is an `unresolved bug <https://github.com/axcore/tartube/issues/320>`__ 
 
 As a workaround, click **Edit > General download options... > Files > Filesystem**, and then select **Restrict filenames to ASCII characters**. The videos should be downloaded and added to Tartube's database, but with garbled names (which is better than nothing.)
 
-7.38 No puedo hablar inglés
+7.39 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar Tartube porque no hablo inglés!*

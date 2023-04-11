@@ -291,6 +291,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_convert_combo = None       # Gtk.ComboBox
         self.classic_livestream_checkbutton = None
                                                 # Gtk.CheckButton
+        self.classic_sblock_checkbutton = None  # Gtk.CheckButton
+        self.classic_add_clips_button = None    # Gtk.Button
         self.classic_add_urls_button = None     # Gtk.Button
         self.classic_progress_treeview = None   # Gtk.TreeView
         self.classic_progress_liststore = None  # Gtk.ListStore
@@ -300,6 +302,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_redownload_button = None   # Gtk.Button
         self.classic_archive_button = None      # Gtk.ToggleButton
         self.classic_stop_button = None         # Gtk.Button
+        self.classic_clips_button = None        # Gtk.Button
         self.classic_ffmpeg_button = None       # Gtk.Button
         self.classic_move_up_button = None      # Gtk.Button
         self.classic_move_down_button = None    # Gtk.Button
@@ -3323,7 +3326,11 @@ class MainWin(Gtk.ApplicationWindow):
         #   enabled, URLs are automatically copied into this textview
         # --------------------------------------------------------------------
 
-        label3 = Gtk.Label(_('Enter URLs below'))
+        label3 = Gtk.Label(
+            _(
+            'Enter URLs below, choose your settings, click the' \
+            + ' \'Add URLs\' button, then click \'Download all\''),
+        )
         grid.attach(label3, 0, 1, grid_width, 1)
         label3.set_alignment(0, 0.5)
 
@@ -3375,6 +3382,8 @@ class MainWin(Gtk.ApplicationWindow):
         # Destination directory
         label4 = Gtk.Label(_('Destination:'))
         grid.attach(label4, 0, 3, 1, 1)
+        label4.set_xalign(0)
+        label4.set_hexpand(False)
 
         self.classic_dest_dir_liststore = Gtk.ListStore(str)
         for string in self.app_obj.classic_dir_list:
@@ -3433,10 +3442,14 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.classic_dest_dir_open_button.set_hexpand(False)
 
+        # Fourth row
+        # --------------------------------------------------------------------
+
         # Video/audio format
         label5 = Gtk.Label(_('Format:'))
         grid.attach(label5, 0, 4, 1, 1)
         label5.set_xalign(0)
+        label5.set_hexpand(False)
 
         combo_list = [_('Default') + '     ', _('Video:')]
         for item in formats.VIDEO_FORMAT_LIST:
@@ -3458,6 +3471,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_format_combo.pack_start(renderer_text, True)
         self.classic_format_combo.add_attribute(renderer_text, 'text', 0)
         self.classic_format_combo.set_entry_text_column(0)
+        self.classic_format_combo.set_hexpand(False)
         # (Signal connect appears below)
 
         # (The None value represents the first line in the combo, 'Default')
@@ -3487,6 +3501,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_resolution_combo.pack_start(renderer_text, True)
         self.classic_resolution_combo.add_attribute(renderer_text, 'text', 0)
         self.classic_resolution_combo.set_entry_text_column(0)
+        self.classic_resolution_combo.set_hexpand(False)
         # (Signal connect appears below)
 
         # (The None value represents the first line in the combo, 'Resolution')
@@ -3522,17 +3537,14 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_convert_combo.set_active(0)
         else:
             self.classic_convert_combo.set_active(1)
-
+        self.classic_convert_combo.set_hexpand(False)
         if not self.app_obj.classic_format_selection:
             self.classic_convert_combo.set_sensitive(False)
 
-        self.classic_livestream_checkbutton = Gtk.CheckButton()
-        grid.attach(self.classic_livestream_checkbutton, 4, 4, 1, 1)
-        self.classic_livestream_checkbutton.set_label(_('Is a livestream'))
-        self.classic_livestream_checkbutton.set_hexpand(True)
-        if self.app_obj.classic_livestream_flag:
-            self.classic_livestream_checkbutton.set_active(True)
-        # (Signal connect appears below)
+        # (Invisible label for spacing)
+        label6 = Gtk.Label('')
+        grid.attach(label6, 4, 4, 1, 1)
+        label6.set_hexpand(True)
 
         # (Signal connects from above)
         # If the user selects the 'Default' item, desensitise the radiobuttons
@@ -3551,15 +3563,58 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_classic_convert_combo_changed,
         )
 
+        # Add clips button
+        self.classic_add_clips_button = Gtk.Button(
+            '     ' + _('Add video clips') + '     ',
+        )
+        grid.attach(self.classic_add_clips_button, 5, 4, 2, 1)
+        self.classic_add_clips_button.set_action_name(
+            'app.classic_add_clips_button',
+        )
+        self.classic_add_clips_button.set_tooltip_text(_('Add video clips'))
+        self.classic_add_clips_button.set_hexpand(False)
+
+        # Fifth row
+        # --------------------------------------------------------------------
+
+        # Other settings
+        label7 = Gtk.Label(_('Other:'))
+        grid.attach(label7, 0, 5, 1, 1)
+        label7.set_xalign(0)
+        label7.set_hexpand(False)
+
+        self.classic_livestream_checkbutton = Gtk.CheckButton()
+        grid.attach(self.classic_livestream_checkbutton, 1, 5, 1, 1)
+        self.classic_livestream_checkbutton.set_label(_('Is a livestream'))
+        if self.app_obj.classic_livestream_flag:
+            self.classic_livestream_checkbutton.set_active(True)
+        self.classic_livestream_checkbutton.connect(
+            'toggled',
+            self.on_classic_livestream_checkbutton_toggled,
+        )
+
+        self.classic_sblock_checkbutton = Gtk.CheckButton()
+        grid.attach(self.classic_sblock_checkbutton, 2, 5, 2, 1)
+        self.classic_sblock_checkbutton.set_label(
+            _('Use SponsorBlock (requires FFmpeg v5.1+)'),
+        )
+        if self.app_obj.classic_sblock_flag:
+            self.classic_sblock_checkbutton.set_active(True)
+        self.classic_sblock_checkbutton.connect(
+            'toggled',
+            self.on_classic_sblock_checkbutton_toggled,
+        )
+
         # Add URLs button
         self.classic_add_urls_button = Gtk.Button(
             '     ' + _('Add URLs') + '     ',
         )
-        grid.attach(self.classic_add_urls_button, 5, 4, 2, 1)
+        grid.attach(self.classic_add_urls_button, 5, 5, 2, 1)
         self.classic_add_urls_button.set_action_name(
             'app.classic_add_urls_button',
         )
         self.classic_add_urls_button.set_tooltip_text(_('Add these URLs'))
+        self.classic_add_urls_button.set_hexpand(False)
 
         # Bottom half
         # -----------
@@ -3568,7 +3623,7 @@ class MainWin(Gtk.ApplicationWindow):
         grid2.set_column_spacing(self.spacing_size)
         grid2.set_row_spacing(self.spacing_size * 2)
 
-        # Fourth row - the Classic Progress List. A treeview to display the
+        # Sixth row - the Classic Progress List. A treeview to display the
         #   progress of downloads (in Classic Mode, ongoing download
         #   information is displayed here, rather than in the Progress tab)
         # --------------------------------------------------------------------
@@ -3666,7 +3721,7 @@ class MainWin(Gtk.ApplicationWindow):
         else:
             incoming_column.set_fixed_width(200)
 
-        # Fifth row - a strip of buttons that apply to rows in the Classic
+        # Seventh row - a strip of buttons that apply to rows in the Classic
         #   Progress List. We use another new hbox to avoid messing up the
         #   grid layout
         # --------------------------------------------------------------------
@@ -3775,6 +3830,29 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_archive_button.set_active(True)
 
         if not self.app_obj.show_custom_icons_flag:
+            self.classic_clips_button = Gtk.Button.new_from_icon_name(
+                Gtk.STOCK_CUT,
+                Gtk.IconSize.BUTTON,
+            )
+        else:
+            self.classic_clips_button = Gtk.Button.new()
+            self.classic_clips_button.set_image(
+                Gtk.Image.new_from_pixbuf(
+                    self.pixbuf_dict['stock_cut'],
+                ),
+            )
+        hbox3.pack_start(
+            self.classic_clips_button,
+            False,
+            False,
+            self.spacing_size,
+        )
+        self.classic_clips_button.set_action_name(
+            'app.classic_clips_button',
+        )
+        self.classic_clips_button.set_tooltip_text(_('Create video clips'))
+
+        if not self.app_obj.show_custom_icons_flag:
             self.classic_ffmpeg_button = Gtk.Button.new_from_icon_name(
                 Gtk.STOCK_EXECUTE,
                 Gtk.IconSize.BUTTON,
@@ -3786,12 +3864,7 @@ class MainWin(Gtk.ApplicationWindow):
                     self.pixbuf_dict['stock_execute'],
                 ),
             )
-        hbox3.pack_start(
-            self.classic_ffmpeg_button,
-            False,
-            False,
-            self.spacing_size,
-        )
+        hbox3.pack_start(self.classic_ffmpeg_button, False, False, 0)
         self.classic_ffmpeg_button.set_action_name(
             'app.classic_ffmpeg_button',
         )
@@ -3807,7 +3880,12 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_move_up_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_up']),
             )
-        hbox3.pack_start(self.classic_move_up_button, False, False, 0)
+        hbox3.pack_start(
+            self.classic_move_up_button,
+            False,
+            False,
+            self.spacing_size,
+        )
         self.classic_move_up_button.set_action_name(
             'app.classic_move_up_button',
         )
@@ -3823,12 +3901,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_move_down_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_go_down']),
             )
-        hbox3.pack_start(
-            self.classic_move_down_button,
-            False,
-            False,
-            self.spacing_size,
-        )
+        hbox3.pack_start(self.classic_move_down_button, False, False, 0)
         self.classic_move_down_button.set_action_name(
             'app.classic_move_down_button',
         )
@@ -3844,7 +3917,12 @@ class MainWin(Gtk.ApplicationWindow):
             self.classic_remove_button.set_image(
                 Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_delete']),
             )
-        hbox3.pack_start(self.classic_remove_button, False, False, 0)
+        hbox3.pack_start(
+            self.classic_remove_button,
+            False,
+            False,
+            self.spacing_size,
+        )
         self.classic_remove_button.set_action_name(
             'app.classic_remove_button',
         )
@@ -5017,6 +5095,7 @@ class MainWin(Gtk.ApplicationWindow):
         # The corresponding buttons in the Classic Mode tab must also be
         #   updated
         self.classic_stop_button.set_sensitive(not sens_flag)
+        self.classic_clips_button.set_sensitive(sens_flag)
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
         self.classic_clear_dl_button.set_sensitive(sens_flag)
@@ -5190,6 +5269,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.classic_menu_button.set_sensitive(sens_flag)
         self.classic_stop_button.set_sensitive(False)
         self.classic_archive_button.set_sensitive(sens_flag)
+        self.classic_clips_button.set_sensitive(sens_flag)
         self.classic_ffmpeg_button.set_sensitive(sens_flag)
         self.classic_clear_button.set_sensitive(sens_flag)
         self.classic_clear_dl_button.set_sensitive(sens_flag)
@@ -7044,18 +7124,9 @@ class MainWin(Gtk.ApplicationWindow):
         # Special
         special_submenu = Gtk.Menu()
 
-        if video_obj.dl_flag:
-
-            clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('_Create video clip...'),
-            )
-
-        else:
-
-            clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
-                _('Download video clip...'),
-            )
-
+        clip_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Create video clips...'),
+        )
         clip_menu_item.connect(
             'activate',
             self.on_video_catalogue_process_clip,
@@ -8762,6 +8833,24 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(stop_download_menu_item)
         if not self.app_obj.current_manager_obj:
             stop_download_menu_item.set_sensitive(False)
+
+        # Separator
+        popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Create video clips
+        create_clips_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Create _video clips...'),
+        )
+        create_clips_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_from_popup,
+            'clips',
+            video_list,
+        )
+        popup_menu.append(create_clips_menu_item)
+        if self.app_obj.current_manager_obj \
+        or len(video_list) > 1:
+            create_clips_menu_item.set_sensitive(False)
 
         # Process with FFmpeg
         process_ffmpeg_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -13739,9 +13828,10 @@ class MainWin(Gtk.ApplicationWindow):
 
 
     def classic_mode_tab_create_dummy_video(self, url, dest_dir, \
-    format_str=None):
+    format_str=None, ignore_extras_flag=False):
 
-        """Called by self.classic_mode_tab_add_urls() or
+        """Called by self.classic_mode_tab_add_urls(),
+        self.on_video_catalogue_process_clip_classic_mode() or
         mainapp.TartubeApp.download_manager_finished().
 
         Creates a dummy media.Video object. The dummy object has a negative
@@ -13767,6 +13857,10 @@ class MainWin(Gtk.ApplicationWindow):
                 formats.VIDEO_FORMAT_LIST, formats.AUDIO_FORMAT_LIST and
                 formats.VIDEO_RESOLUTION_LIST
 
+            ignore_extras_flag (bool): If True, called from
+                self.on_video_catalogue_process_clip_classic_mode(), in which
+                livestream/SponsorBlock settings should be ignored
+
         Return values:
 
             The dummy media.Video object created
@@ -13783,8 +13877,14 @@ class MainWin(Gtk.ApplicationWindow):
 
         new_obj.set_dummy(url, dest_dir, format_str)
 
-        if self.app_obj.classic_livestream_flag:
-            new_obj.set_live_mode(2)
+        print('19536')
+        print(ignore_extras_flag)
+        if not ignore_extras_flag:
+            if self.app_obj.classic_livestream_flag:
+                new_obj.set_live_mode(2)
+
+            if self.app_obj.classic_sblock_flag:
+                new_obj.set_dummy_sblock_flag(True)
 
         # Add a line to the treeview
         self.classic_mode_tab_add_row(new_obj)
@@ -18484,6 +18584,9 @@ class MainWin(Gtk.ApplicationWindow):
         post-processing, first prompting the user for a set of timestamps which
         are used to split the video into clips.
 
+        Alternatively, instructs yt-dlp (when available) to download video
+        chapters, handling them as clips.
+
         Args:
 
             menu_item (Gtk.MenuItem): The clicked menu item
@@ -18492,39 +18595,58 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
-        # Prompt the user for start/stop timestamps and a clip title
+        # Prompt the user
         dialogue_win = PrepareClipDialogue(self, media_data_obj)
         response = dialogue_win.run()
 
-        # Get the specified timestamps/clip title, before destroying the window
-        start_stamp = utils.strip_whitespace(dialogue_win.start_stamp)
-        stop_stamp = utils.strip_whitespace(dialogue_win.stop_stamp)
-        clip_title = utils.strip_whitespace(dialogue_win.clip_title)
-        all_flag = dialogue_win.all_flag
+        # Get the user's choices, before destroying the window
+        clip_mode = dialogue_win.clip_mode
+        dl_mode = dialogue_win.dl_mode
+        start_stamp = dialogue_win.start_stamp
+        stop_stamp = dialogue_win.stop_stamp
+        clip_title = dialogue_win.clip_title
+        stamp_list = dialogue_win.stamp_list
+        start_dl_flag = dialogue_win.start_dl_flag
+
         dialogue_win.destroy()
 
-        if response != Gtk.ResponseType.CANCEL \
-        and response != Gtk.ResponseType.DELETE_EVENT:
+        if not start_dl_flag:
+            return
 
-            if not all_flag:
+        # Check the validity of any specified timestamps
+        regex = r'^' + self.app_obj.timestamp_regex + r'$'
+        if start_stamp is not None:
 
-                # Check timestamps are valid. 'stop_stamp' and 'clip_title' are
-                #   optional, and default to None
-                if stop_stamp == '':
-                    stop_stamp = None
+            if not re.search(regex, start_stamp) \
+            or (
+                stop_stamp is not None \
+                and not re.search(regex, stop_stamp)
+            ) or not utils.timestamp_compare(
+                self.app_obj,
+                start_stamp,
+                stop_stamp,
+            ):
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('Invalid timestamp(s)'),
+                    'error',
+                    'ok',
+                )
 
-                if clip_title == '':
-                    clip_title = None
+                return
 
-                regex = r'^' + self.app_obj.timestamp_regex + r'$'
-                if not re.search(regex, start_stamp) \
+        elif stamp_list:
+
+            # Groups of 3, in the form [start, optional_stop, optional_title]
+            for mini_list in stamp_list:
+
+                if not re.search(regex, mini_list[0]) \
                 or (
-                    stop_stamp is not None \
-                    and not re.search(regex, stop_stamp)
+                    mini_list[1] is not None \
+                    and not re.search(regex, mini_list[1])
                 ) or not utils.timestamp_compare(
                     self.app_obj,
-                    start_stamp,
-                    stop_stamp,
+                    mini_list[0],
+                    mini_list[1],
                 ):
                     self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                         _('Invalid timestamp(s)'),
@@ -18534,39 +18656,302 @@ class MainWin(Gtk.ApplicationWindow):
 
                     return
 
-                # Store the values in a temporary buffer, so that download/
-                #   process operations can retrieve them
-                self.app_obj.set_temp_stamp_list([
-                    [ start_stamp, stop_stamp, clip_title ],
-                ])
+        # Clip mode: 'downloader' to download clips using the downloader
+        #   directly (currently only available for yt-dlp), 'ffmpeg' to
+        #   download clips using FFmpeg, or 'create' to create clips using the
+        #   already-downloaded video
+        # Download mode: 'chapters' to download chapters using yt-dlp directly
+        #   (when available), 'single' to download/extract a single clip using
+        #   specified timestamp(s), 'multiple' to download/extract multiple
+        #   clips
+        if clip_mode == 'create':
 
-            else:
+            if dl_mode == 'single':
+                insert_list \
+                = ['create', [start_stamp, stop_stamp, clip_title] ]
 
-                # Download clips for all timestamps in the media.Video's
-                #   .stamp_list, ignoring any timestamps/clip titles the user
-                #   just entered in the dialogue window
-                self.app_obj.set_temp_stamp_list(media_data_obj.stamp_list)
+            elif dl_mode == 'multiple':
+                insert_list = ['create']
+                for mini_list in stamp_list:
+                    insert_list.append(mini_list)
 
-            if not media_data_obj.dl_flag:
+            # Update IVs
+            self.app_obj.add_temp_stamp_buffer_dict(
+                media_data_obj.dbid,
+                insert_list,
+            )
 
-                # Start a (custom) download operation to download the clip. We
-                #   don't need to specify a downloads.CustomDLManager in this
-                #   case
-                self.app_obj.download_manager_start(
-                    'custom_real',
-                    # Not called from .script_slow_timer_callback()
-                    False,
-                    [ media_data_obj ],
+            # Start a process operation to split the clip from the already-
+            #   downloaded video
+            self.app_obj.process_manager_start(
+                self.app_obj.ffmpeg_options_obj,
+                [media_data_obj],
+            )
+
+        else:
+
+            if dl_mode == 'chapters':
+                insert_list = ['chapters']
+
+            elif dl_mode == 'single':
+                insert_list \
+                = [clip_mode, [start_stamp, stop_stamp, clip_title] ]
+
+            elif dl_mode == 'multiple':
+                insert_list = [clip_mode]
+                for mini_list in stamp_list:
+                    insert_list.append(mini_list)
+
+            # Update IVs
+            self.app_obj.set_video_timestamps_dl_mode(clip_mode)
+            self.app_obj.add_temp_stamp_buffer_dict(
+                media_data_obj.dbid,
+                insert_list,
+            )
+
+            # Start a (custom) download operation to download the clip. We
+            #   don't need to specify a downloads.CustomDLManager in this case
+            self.app_obj.download_manager_start(
+                'custom_real',
+                # Not called from .script_slow_timer_callback()
+                False,
+                [media_data_obj],
+            )
+
+
+    def on_video_catalogue_process_clip_classic_mode(self,
+    media_data_obj=None):
+
+        """Called from a callback in
+        mainapp.TartubeApp.on_button_classic_add_clips().
+
+        Also called by mainapp.TartubeApp.on_button_classic_clips().
+
+        Handles video clips in the Classic Mode tab, combining code from
+        self.on_video_catalogue_process_clip() and
+        self.classic_mode_tab_add_urls().
+
+        Opens the usual 'Create video clips' dialogue, then creates new dummy
+        media.Video objects for each item, and updates IVs.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video or None): When called in reponse to
+                clicking the 'Add clips' button, None. When called from the
+                popup menu in the Classic Progress List, a dummy media.Video
+                object
+
+        """
+
+        # Prompt the user
+        dialogue_win = PrepareClipDialogue(self, media_data_obj)
+        response = dialogue_win.run()
+
+        # Get the user's choices, before destroying the window
+        clip_mode = dialogue_win.clip_mode
+        dl_mode = dialogue_win.dl_mode
+        start_stamp = dialogue_win.start_stamp
+        stop_stamp = dialogue_win.stop_stamp
+        clip_title = dialogue_win.clip_title
+        stamp_list = dialogue_win.stamp_list
+        start_dl_flag = dialogue_win.start_dl_flag
+
+        classic_stamp_list = dialogue_win.classic_stamp_list
+        classic_url = dialogue_win.classic_url
+        classic_video_name = dialogue_win.classic_video_name
+
+        dialogue_win.destroy()
+
+        if not start_dl_flag:
+            return
+
+        # Check the validity of any specified timestamps
+        regex = r'^' + self.app_obj.timestamp_regex + r'$'
+        if start_stamp is not None:
+
+            if not re.search(regex, start_stamp) \
+            or (
+                stop_stamp is not None \
+                and not re.search(regex, stop_stamp)
+            ) or not utils.timestamp_compare(
+                self.app_obj,
+                start_stamp,
+                stop_stamp,
+            ):
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('Invalid timestamp(s)'),
+                    'error',
+                    'ok',
                 )
 
-            else:
+                return
 
-                # Start a process operation to split the clip from the already-
-                #   downloaded video
-                self.app_obj.process_manager_start(
-                    self.app_obj.ffmpeg_options_obj,
-                    [ media_data_obj ],
+        elif stamp_list:
+
+            # Groups of 3, in the form [start, optional_stop, optional_title]
+            for mini_list in stamp_list:
+
+                if not re.search(regex, mini_list[0]) \
+                or (
+                    mini_list[1] is not None \
+                    and not re.search(regex, mini_list[1])
+                ) or not utils.timestamp_compare(
+                    self.app_obj,
+                    mini_list[0],
+                    mini_list[1],
+                ):
+                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                        _('Invalid timestamp(s)'),
+                        'error',
+                        'ok',
+                    )
+
+                    return
+
+        # Create the dummy media.Video object
+        if not media_data_obj:
+
+            # Remove initial/final whitespace from the URL, and reject an
+            #   invalid URL
+            classic_url = utils.strip_whitespace(classic_url)
+            if not utils.check_url(classic_url):
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('Invalid URL'),
+                    'error',
+                    'ok',
                 )
+
+                return
+
+            # Get the specified download destination
+            tree_iter = self.classic_dest_dir_combo.get_active_iter()
+            model = self.classic_dest_dir_combo.get_model()
+            dest_dir = model[tree_iter][0]
+
+            # Get the specified video/audio format, leaving the value as None
+            #   if the 'Default' item is selected
+            tree_iter2 = self.classic_format_combo.get_active_iter()
+            model2 = self.classic_format_combo.get_model()
+            format_str = model2[tree_iter2][0]
+            # (Valid formats begin with whitespace)
+            if not re.search('^\s', format_str):
+                format_str = None
+            else:
+                format_str = re.sub('^\s*', '', format_str)
+                # (One last check for a valid video/audio format)
+                if not format_str in formats.VIDEO_FORMAT_LIST \
+                and not format_str in formats.AUDIO_FORMAT_LIST:
+                    format_str = None
+
+            # Set the specified resolution, leaving the value as None if the
+            #   'Highest' item is selected
+            tree_iter3 = self.classic_resolution_combo.get_active_iter()
+            model3 = self.classic_resolution_combo.get_model()
+            resolution_str = model3[tree_iter3][0]
+            # (Selectable resolutions in the combo begin with whitespace)
+            if not re.search('^\s', resolution_str):
+                resolution_str = None
+            else:
+                resolution_str = utils.strip_whitespace(resolution_str)
+                # (One last check for a valid resolution)
+                if not resolution_str in formats.VIDEO_RESOLUTION_LIST:
+                    resolution_str = None
+
+            # If the combobox item is selected, we convert a downloaded video
+            #   to the specified format with FFmpeg/AVConv. This is signified
+            #   by adding 'convert_' to the beginning of the format string
+            tree_iter4 = self.classic_convert_combo.get_active_iter()
+            model4 = self.classic_convert_combo.get_model()
+            convert_str = model4[tree_iter4][0]
+            if format_str is not None \
+            and convert_str == _('Convert to this format'):
+                format_str = 'convert_' + format_str
+            # The resolution, if specified, is added to the end of the format
+            #   string
+            if resolution_str is not None:
+                if format_str is None:
+                    format_str = resolution_str
+                else:
+                    format_str += '_' + resolution_str
+
+            # Create the dummy media.Video object. Dummy media.Video objects
+            #   have negative .dbids, and are not added to the media data
+            #   registry. The True argument tells the function to ignore the
+            #   value of mainapp.TartubeApp.classic_sblock_flag
+            dummy_video_obj = self.classic_mode_tab_create_dummy_video(
+                classic_url,
+                dest_dir,
+                format_str,
+                True,
+            )
+
+        else:
+
+            # Create a new dummy media.Video object, with the same properties
+            #   as the existing one. The True argument tells the function to
+            #   ignore the value of mainapp.TartubeApp.classic_sblock_flag
+            dummy_video_obj = self.classic_mode_tab_create_dummy_video(
+                media_data_obj.source,
+                media_data_obj.dummy_dir,
+                media_data_obj.dummy_format,
+                True,
+            )
+
+        # Set the dummy media.Video object's nickname, if the user provided
+        #   one; utils.clip_prepare_title() and
+        #   ClipDownloader.do_download_clips_with_downloader() will both look
+        #   out for it, and use it in the video's file name
+        if classic_video_name is not None:
+            dummy_video_obj.set_nickname(classic_video_name)
+
+        # Set the dummy media.Video object's timestamps, and start the
+        #   download/process operation
+        if clip_mode == 'create':
+
+            if dl_mode == 'single':
+                insert_list \
+                = ['create', [start_stamp, stop_stamp, clip_title] ]
+
+            elif dl_mode == 'multiple':
+                insert_list = ['create']
+                for mini_list in stamp_list:
+                    insert_list.append(mini_list)
+
+            # Update IVs
+            self.app_obj.add_temp_stamp_buffer_dict(
+                dummy_video_obj.dbid,
+                insert_list,
+            )
+
+            # Start a process operation to split the clip from the already-
+            #   downloaded video
+            self.app_obj.process_manager_start(
+                self.app_obj.ffmpeg_options_obj,
+                [dummy_video_obj],
+            )
+
+        else:
+
+            if dl_mode == 'chapters':
+                insert_list = ['chapters']
+
+            elif dl_mode == 'single':
+                insert_list \
+                = [clip_mode, [start_stamp, stop_stamp, clip_title] ]
+
+            elif dl_mode == 'multiple':
+                insert_list = [clip_mode]
+                for mini_list in stamp_list:
+                    insert_list.append(mini_list)
+
+            # Update IVs
+            self.app_obj.set_video_timestamps_dl_mode(clip_mode)
+            self.app_obj.add_temp_stamp_buffer_dict(
+                dummy_video_obj.dbid,
+                insert_list,
+            )
 
 
     def on_video_catalogue_process_ffmpeg(self, menu_item, media_data_obj):
@@ -18663,6 +19048,8 @@ class MainWin(Gtk.ApplicationWindow):
         post-processing, first prompting the user for a set of start/stop
         times of slices to remove from the video.
 
+        Alternatively, downloads the video with slices removed.
+
         Args:
 
             menu_item (Gtk.MenuItem): The clicked menu item
@@ -18676,138 +19063,112 @@ class MainWin(Gtk.ApplicationWindow):
         response = dialogue_win.run()
 
         # Get the specified start/stop times, before destroying the window
+        slice_mode = dialogue_win.slice_mode
+        dl_mode = dialogue_win.dl_mode
         start_time = utils.strip_whitespace(dialogue_win.start_time)
         stop_time = utils.strip_whitespace(dialogue_win.stop_time)
-        all_flag = dialogue_win.all_flag
-        all_but_flag = dialogue_win.all_but_flag
+        slice_list = dialogue_win.slice_list
+        start_dl_flag = dialogue_win.start_dl_flag
+
         dialogue_win.destroy()
 
-        if response != Gtk.ResponseType.CANCEL \
-        and response != Gtk.ResponseType.DELETE_EVENT:
+        if not start_dl_flag:
+            return
 
-            if not all_flag:
+        # If the user clicked the button in the 'one slice' section, check the
+        #   times are valid
+        if dl_mode == 'single':
 
-                # Check times are valid
-                try:
-                    start_time = float(
+            # Check times are valid
+            try:
+                start_time = float(
+                    utils.timestamp_convert_to_seconds(
+                        self.app_obj,
+                        start_time,
+                    )
+                )
+
+                if stop_time is not None:
+                    stop_time = float(
                         utils.timestamp_convert_to_seconds(
                             self.app_obj,
-                            start_time,
+                            stop_time,
                         )
                     )
 
-                    if stop_time is not None:
-                        stop_time = float(
-                            utils.timestamp_convert_to_seconds(
-                                self.app_obj,
-                                stop_time,
-                            )
-                        )
-
-                except:
-                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                        _('Invalid start/stop times'),
-                        'error',
-                        'ok',
-                    )
-
-                    return
-
-                if stop_time is not None and stop_time <= start_time:
-                    self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                        _('Invalid start/stop times'),
-                        'error',
-                        'ok',
-                    )
-
-                    return
-
-                # Compile the mini-dictionary in the format described by
-                #   media.Video.__init__()
-                # Then store the values in a temporary buffer, so that
-                #   download/process operations can retrieve them
-                if not all_but_flag:
-
-                    mini_dict = {
-                        'category': 'sponsor',
-                        'action': 'skip',
-                        'start_time': start_time,
-                        'stop_time': stop_time,
-                        'duration': 0,
-                    }
-
-                    self.app_obj.set_temp_slice_list([ mini_dict ])
-
-                elif start_time > 0 and stop_time is not None:
-
-                    mini_dict = {
-                        'category': 'sponsor',
-                        'action': 'skip',
-                        'start_time': 0,
-                        'stop_time': start_time,
-                        'duration': 0,
-                    }
-
-                    mini_dict2 = {
-                        'category': 'sponsor',
-                        'action': 'skip',
-                        'start_time': stop_time,
-                        'stop_time': None,
-                        'duration': 0,
-                    }
-
-                    self.app_obj.set_temp_slice_list([ mini_dict, mini_dict2 ])
-
-                elif start_time > 0 and stop_time is None:
-
-                    mini_dict = {
-                        'category': 'sponsor',
-                        'action': 'skip',
-                        'start_time': 0,
-                        'stop_time': start_time,
-                        'duration': 0,
-                    }
-
-                    self.app_obj.set_temp_slice_list([ mini_dict ])
-
-                else:
-
-                    mini_dict = {
-                        'category': 'sponsor',
-                        'action': 'skip',
-                        'start_time': stop_time,
-                        'stop_time': None,
-                        'duration': 0,
-                    }
-
-                    self.app_obj.set_temp_slice_list([ mini_dict ])
-
-            else:
-
-                # Use all slices in the media.Video's .slice_list, ignoring any
-                #   times the user just entered in the dialogue window
-                self.app_obj.set_temp_slice_list(media_data_obj.slice_list)
-
-            if not media_data_obj.dl_flag:
-
-                # Start a (custom) download operation to download the sliced
-                #   video. We don't need to specify a downloads.CustomDLManager
-                #   in this case
-                self.app_obj.download_manager_start(
-                    'custom_real',
-                    # Not called from .script_slow_timer_callback()
-                    False,
-                    [ media_data_obj ],
+            except:
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('Invalid start/stop times'),
+                    'error',
+                    'ok',
                 )
 
-            else:
+                return
 
-                # Start a process operation to remove the slices from the
-                #   already-downloaded video
-                self.app_obj.process_manager_start(
-                    self.app_obj.ffmpeg_options_obj,
-                    [ media_data_obj ],
+            if stop_time is not None and stop_time <= start_time:
+                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                    _('Invalid start/stop times'),
+                    'error',
+                    'ok',
                 )
+
+                return
+
+            # Compile the mini-dictionary in the format described by
+            #   media.Video.__init__()
+            mini_dict = {
+                'category': 'sponsor',
+                'action': 'skip',
+                'start_time': start_time,
+                'stop_time': stop_time,
+                'duration': 0,
+            }
+
+            insert_list = [mini_dict]
+
+        else:
+            insert_list = slice_list
+
+
+        # Slice mode: 'ffmpeg' to remove slices using FFmpeg, or 'create' to
+        #   remove slices using the already-downloaded video
+        # Download mode: 'single' to remove a single slice using specified
+        #   timestamps/seconds, 'multiple' to remove multiple slices. Set to
+        #   None when slice_mode is 'create'
+        if slice_mode == 'create':
+
+            # Update IVs
+            insert_list.insert(0, 'create')
+            self.app_obj.add_temp_slice_buffer_dict(
+                media_data_obj.dbid,
+                insert_list,
+            )
+
+            # Start a process operation to remove the slices from the
+            #   already-downloaded video
+            self.app_obj.process_manager_start(
+                self.app_obj.ffmpeg_options_obj,
+                [media_data_obj],
+            )
+
+        else:
+
+            # Update IVs
+            insert_list.insert(0, 'default')
+            self.app_obj.add_temp_slice_buffer_dict(
+                media_data_obj.dbid,
+                insert_list,
+            )
+
+            # Start a (custom) download operation to download the sliced
+            #   video. We don't need to specify a downloads.CustomDLManager
+            #   in this case
+            self.app_obj.download_manager_start(
+                'custom_real',
+                # Not called from .script_slow_timer_callback()
+                False,
+                [media_data_obj],
+            )
 
 
     def on_video_catalogue_re_download(self, menu_item, media_data_obj):
@@ -20510,7 +20871,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         Args:
 
-            radiobutton (Gtk.RadioButton): The widget clicked
+            checkbutton (Gtk.CheckButton): The widget clicked
 
         """
 
@@ -20813,8 +21174,8 @@ class MainWin(Gtk.ApplicationWindow):
             menu_item (Gtk.MenuItem): The menu item that was clicked
 
             menu_item_type (str): Identifies the menu item clicked, one of the
-                strings 'play', 'open', 'redownload', 'stop', 'ffmpeg',
-                'move_up', 'move_down', 'remove'
+                strings 'play', 'open', 'redownload', 'stop', 'clips',
+                'ffmpeg', 'move_up', 'move_down', 'remove'
 
             video_list (list): List of media.Video objects to which the action
                 will apply
@@ -20831,6 +21192,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.on_button_classic_redownload(None, None)
         elif menu_item_type == 'stop':
             self.app_obj.on_button_classic_stop(None, None)
+        elif menu_item_type == 'clips':
+            self.app_obj.on_button_classic_clips(None, None)
         elif menu_item_type == 'ffmpeg':
             self.app_obj.on_button_classic_ffmpeg(None, None)
         elif menu_item_type == 'move_up':
@@ -20990,6 +21353,21 @@ class MainWin(Gtk.ApplicationWindow):
             self.app_obj.set_classic_resolution_selection(text)
         else:
             self.app_obj.set_classic_resolution_selection(None)
+
+
+    def on_classic_sblock_checkbutton_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_classic_mode_tab().
+
+        Updates IVs.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        self.app_obj.set_classic_sblock_flag(checkbutton.get_active())
 
 
     def on_classic_textbuffer_changed(self, textbuffer):
@@ -34045,14 +34423,14 @@ class PrepareClipDialogue(Gtk.Dialog):
 
     """Called by mainwin.MainWin.on_video_catalogue_process_clip().
 
-    Prompt the user for a start/stop timestamp, and a clip title.
+    Prompt the user to download or create video clips.
 
     Args:
 
         main_win_obj (mainwin.MainWin): The parent main window
 
-        video_obj (media.Video): The video from which a clip will be downloaded
-            or extracted
+        video_obj (media.Video): The video from which video clips will be
+            downloaded or extracted
 
     """
 
@@ -34060,48 +34438,87 @@ class PrepareClipDialogue(Gtk.Dialog):
     # Standard class methods
 
 
-    def __init__(self, main_win_obj, video_obj):
+    def __init__(self, main_win_obj, video_obj=None):
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: \'Download/create video clip\' dialogue' \
-            + ' starts here. In the Videos tab, right-click a video and' \
-            + ' select Special > Download video clip...'
+            'TRANSLATOR\'S NOTE: \'Create video clip\' dialogue starts' \
+            + ' here. In the Videos tab, right-click a video and select' \
+            + ' Special > Create video clips...'
         )
 
         # IV list - class objects
         # -----------------------
         # Tartube's main window
         self.main_win_obj = main_win_obj
-        # The media.Video to be used
+        # The media.Video to be used (may be None when called from the Classic
+        #   Mode tab)
         self.video_obj = video_obj
 
 
         # IV list - Gtk widgets
         # ---------------------
-        #   (none)
+        self.radiobutton = None                     # Gtk.RadioButton
+        self.radiobutton2 = None                    # Gtk.RadioButton
+        self.radiobutton3 = None                    # Gtk.RadioButton
+        self.label5 = None                          # Gtk.Label
+        self.button = None                          # Gtk.Button
+        self.label9 = None                          # Gtk.Label
+        self.timestamp_liststore = None             # Gtk.ListStore
+        self.button10 = None                        # Gtk.Button
+        self.button11 = None                        # Gtk.Button
+        self.button12 = None                        # Gtk.Button
 
 
         # IV list - other
         # ---------------
-        # Store the user's choice as an IV, so the calling function can
-        #   retrieve it
+        # Store the user's choices as IVs, so the calling function can
+        #   retrieve them
+
+        # Clip mode: 'downloader' to download clips using the downloader
+        #   directly (currently only available for yt-dlp), 'ffmpeg' to
+        #   download clips using FFmpeg, or 'create' to create clips using the
+        #   already-downloaded video
+        self.clip_mode = self.main_win_obj.app_obj.video_timestamps_dl_mode
+        # Download mode: 'chapters' to download chapters using yt-dlp directly
+        #   (when available), 'single' to download/extract a single clip using
+        #   specified timestamp(s), 'multiple' to download/extract multiple
+        #   clips. Set to None when self.clip_mode is 'create'
+        self.dl_mode = None
+        # When self.dl_mode is 'chapters', an optional regex to apply. If not
+        #   specified, remains set to None
+        self.optional_regex = None
+        # When self.dl_mode is 'single', the start/stop timestamps and the clip
+        #   title. The start timestamp is compulsory, the others are optional,
+        #   but timestamps must be in a valid format where specified)
         self.start_stamp = None
         self.stop_stamp = None
         self.clip_title = None
-        self.all_flag = False
+        # When self.dl_mode is 'multiple', a list of timestamps (in groups of
+        #   3), used to set mainapp.TartubeApp.temp_stamp_buffer_dict
+        self.stamp_list = []
 
+        # When called from the Classic Mode tab, and self.video_obj is None,
+        #   an alternative timestamp list, in the same format as
+        #   media.Video.stamp_list. Used in the dummy media.Video object, when
+        #   it is created
+        self.classic_stamp_list = []
+        # The URL entered, when the box is visible (set to None rather than an
+        #   empty string)
+        self.classic_url = None
+        # Optional video name; if set, can be used with all clips (depending on
+        #   the value of mainapp.TartubeApp.split_video_name_mode)
+        self.classic_video_name = None
+
+        # Flag set to true when one of the 'Download' buttons is clicked,
+        #   which closes the window (in the absence of an OK button)
+        self.start_dl_flag = False
 
         # Code
         # ----
 
-        if not video_obj.dl_flag:
-            local_title = _('Download video clip')
-        else:
-            local_title = _('Create video clip')
-
         Gtk.Dialog.__init__(
             self,
-            local_title,
+            _('Create video clips'),
             main_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
@@ -34113,6 +34530,11 @@ class PrepareClipDialogue(Gtk.Dialog):
         app_obj = self.main_win_obj.app_obj
 
         # Set up the dialogue window
+        self.set_default_size(
+            app_obj.config_win_width,
+            -1,
+        )
+
         box = self.get_content_area()
 
         grid = Gtk.Grid()
@@ -34120,77 +34542,519 @@ class PrepareClipDialogue(Gtk.Dialog):
         grid.set_border_width(main_win_obj.spacing_size)
         grid.set_row_spacing(main_win_obj.spacing_size)
 
-        label = Gtk.Label()
-        grid.attach(label, 0, 0, 1, 1)
-        # (Artificially widen the window a little to make it look better)
-        label.set_markup(
-            _('Start timestamp (e.g. 15:29)') + (24 * ' '),
-        )
-        label.set_alignment(0, 0.5)
+        grid_width = 2
+        h_offset = 0
 
-        entry = Gtk.Entry()
-        grid.attach(entry, 0, 1, 1, 1)
-        # (Signal connect appears below)
+        if self.video_obj is None:
 
-        label2 = Gtk.Label()
-        grid.attach(label2, 0, 2, 1, 1)
-        label2.set_markup(_('Stop timestamp (optional)'))
-        label2.set_alignment(0, 0.5)
+            label = Gtk.Label()
+            grid.attach(label, 0, 0, grid_width, 1)
+            label.set_markup('<b>' + _('Enter the video\'s URL:') + '</b>')
+            label.set_alignment(0, 0.5)
 
-        entry2 = Gtk.Entry()
-        grid.attach(entry2, 0, 3, 1, 1)
-        entry2.connect('changed', self.on_stop_entry_changed)
+            entry = Gtk.Entry()
+            grid.attach(entry, 0, 1, grid_width, 1)
+            entry.connect('changed', self.on_url_entry_changed)
+
+            if app_obj.split_video_name_mode == 'num' \
+            or app_obj.split_video_name_mode == 'clip' \
+            or app_obj.split_video_name_mode == 'num_clip' \
+            or app_obj.split_video_name_mode == 'clip_num':
+
+                h_offset = 3
+
+                # Separator
+                grid.attach(Gtk.HSeparator(), 0, 2, grid_width, 1)
+
+            else:
+
+                h_offset = 5
+
+                label2 = Gtk.Label()
+                grid.attach(label2, 0, 2, grid_width, 1)
+                label2.set_markup(
+                    _('Optional video name (will be added to all clips)'),
+                )
+                label2.set_alignment(0, 0.5)
+
+                entry2 = Gtk.Entry()
+                grid.attach(entry2, 0, 3, grid_width, 1)
+                entry2.connect('changed', self.on_optional_entry_changed)
+
+                # Separator
+                grid.attach(Gtk.HSeparator(), 0, 4, grid_width, 1)
 
         label3 = Gtk.Label()
-        grid.attach(label3, 0, 4, 1, 1)
-        label3.set_markup(_('Clip title (optional)'))
+        grid.attach(label3, 0, (0 + h_offset), grid_width, 1)
+        label3.set_markup('<b>' + _('Select a method:') + '</b>')
         label3.set_alignment(0, 0.5)
 
+        self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Download new clips using yt-dlp'),
+        )
+        grid.attach(self.radiobutton, 0, (1 + h_offset), 1, 1)
+        # (Signal connect appears below)
+        if app_obj.ytdl_fork != 'yt-dlp':
+            self.radiobutton.set_sensitive(False)
+
+        self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
+        grid.attach(self.radiobutton2, 0, (2 + h_offset), 1, 1)
+        # (Signal connect appears below)
+        self.radiobutton2.set_label(
+            _('Download new clips using FFmpeg'),
+        )
+        if self.clip_mode == 'ffmpeg':
+            self.radiobutton2.set_active(True)
+
+        self.radiobutton3 = Gtk.RadioButton.new_from_widget(self.radiobutton2)
+        grid.attach(self.radiobutton3, 1, (1 + h_offset), 1, 1)
+        # (Signal connect appears below)
+        self.radiobutton3.set_label(
+            _('Create clips from the downloaded video'),
+        )
+        if self.clip_mode == 'create':
+            self.radiobutton3.set_active(True)
+
+        if self.video_obj is None or not self.video_obj.dl_flag:
+            self.radiobutton3.set_sensitive(False)
+
+        else:
+            label4 = Gtk.Label()
+            grid.attach(label4, 1, (2 + h_offset), 1, 1)
+            label4.set_markup(
+                '<i>' + _(
+                    'Warning: Downloading new clips is usually MUCH quicker!',
+                ) + '</i>',
+            )
+            label4.set_alignment(0, 0.5)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, (3 + h_offset), grid_width, 1)
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, (4 + h_offset), grid_width, 1)
+        grid2.set_column_spacing(main_win_obj.spacing_size)
+        grid2.set_row_spacing(main_win_obj.spacing_size)
+
+        grid2_width = 4
+
+        self.label5 = Gtk.Label()
+        grid2.attach(self.label5, 0, 0, grid2_width, 1)
+        if self.clip_mode == 'create':
+            self.label5.set_markup(
+                '<b>' + _('Create one clip') + '</b>:',
+            )
+        else:
+            self.label5.set_markup(
+                '<b>' + _('Download one clip') + '</b>:',
+            )
+        self.label5.set_alignment(0, 0.5)
+
+        label6 = Gtk.Label()
+        grid2.attach(label6, 0, 1, 1, 1)
+        label6.set_markup(_('Start timestamp (e.g. 15:29)'))
+        label6.set_alignment(0, 0.5)
+
+        entry_width = 12
+
         entry3 = Gtk.Entry()
-        grid.attach(entry3, 0, 5, 1, 1)
-        entry3.connect('changed', self.on_title_entry_changed)
+        grid2.attach(entry3, 1, 1, 1, 1)
+        # (Signal connect appears below)
+        entry3.set_width_chars(entry_width)
 
-        if not video_obj.dl_flag:
-            msg = _('Download this clip')
+        label7 = Gtk.Label()
+        grid2.attach(label7, 2, 1, 1, 1)
+        label7.set_markup(_('Stop timestamp (optional)'))
+        label7.set_alignment(0, 0.5)
+
+        entry4 = Gtk.Entry()
+        grid2.attach(entry4, 3, 1, 1, 1)
+        entry4.set_width_chars(entry_width)
+
+        label8 = Gtk.Label()
+        grid2.attach(label8, 0, 2, 1, 1)
+        label8.set_markup(_('Clip title (optional)'))
+        label8.set_alignment(0, 0.5)
+
+        entry5 = Gtk.Entry()
+        grid2.attach(entry5, 1, 2, 2, 1)
+
+        self.button = Gtk.Button.new_with_label('')
+        grid2.attach(self.button, 3, 2, 1, 1)
+        # (Signal connect appears below)
+        if self.clip_mode == 'create':
+            self.set_bold_button_text(self.button, _('Create clip'))
         else:
-            msg = _('Create this clip')
+            self.set_bold_button_text(self.button, _('Download clip'))
+        self.button.set_hexpand(True)
+        self.button.set_sensitive(False)
 
-        button = Gtk.Button.new_with_label(msg)
-        grid.attach(button, 0, 6, 1, 1)
-        button.set_hexpand(False)
-        button.connect('clicked', self.on_one_button_clicked)
-        button.set_sensitive(False)
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, (5 + h_offset), grid_width, 1)
 
-        if not video_obj.dl_flag:
-            msg = _('Download all clips')
+        self.label9 = Gtk.Label()
+        grid.attach(self.label9, 0, (6 + h_offset), grid_width, 1)
+        if self.clip_mode == 'create':
+            self.label9.set_markup(
+                '<b>' + _('Create multiple clips') + '</b>:',
+            )
         else:
-            msg = _('Create all clips')
+            self.label9.set_markup(
+                '<b>' + _('Download multiple clips') + '</b>:',
+            )
+        self.label9.set_alignment(0, 0.5)
 
-        msg += ' (' + str(len(video_obj.stamp_list)) + ')'
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, (7 + h_offset), grid_width, 1)
 
-        button2 = Gtk.Button.new_with_label(msg)
-        grid.attach(button2, 0, 7, 1, 1)
-        button2.set_hexpand(False)
-        button2.connect('clicked', self.on_all_button_clicked)
-        if not video_obj.stamp_list:
-            button2.set_sensitive(False)
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_hexpand(True)
+        scrolled.set_min_content_height(150)
 
-        # (Signal connect from above)
-        entry.connect('changed', self.on_start_entry_changed, button)
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate(
+            [ _('Marked'), _('Start'), _('Stop'), _('Clip title') ],
+        ):
+            if i == 0:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+                renderer_toggle.set_sensitive(True)
+                renderer_toggle.set_activatable(True)
+                renderer_toggle.connect(
+                    'toggled',
+                    self.on_treeview_button_toggled,
+                )
+
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        self.timestamp_liststore = Gtk.ListStore(bool, str, str, str)
+        treeview.set_model(self.timestamp_liststore)
+
+        # Initialise the list
+        self.update_treeview()
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, (8 + h_offset), grid_width, 1)
+        grid3.set_column_spacing(main_win_obj.spacing_size)
+        grid3.set_row_spacing(main_win_obj.spacing_size)
+
+        grid3_width = 4
+
+        button2 = Gtk.Button.new_with_label(_('Add timestamp from above'))
+        grid3.attach(button2, 0, 0, 1, 1)
+        # (Signal connect appears below)
+        button2.set_hexpand(True)
+
+        button3 = Gtk.Button.new_with_label(_('Delete timestamp'))
+        grid3.attach(button3, 1, 0, 1, 1)
+        # (Signal connect appears below)
+        button3.set_hexpand(True)
+
+        button4 = Gtk.Button.new_with_label(_('Clip preferences'))
+        grid3.attach(button4, 2, 0, 1, 1)
+        # (Signal connect appears below)
+        button4.set_hexpand(True)
+
+        button5 = Gtk.Button.new_with_label(_('Clear list'))
+        grid3.attach(button5, 3, 0, 1, 1)
+        # (Signal connect appears below)
+        button5.set_hexpand(True)
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid4 = Gtk.Grid()
+        grid.attach(grid4, 0, (9 + h_offset), grid_width, 1)
+        grid4.set_column_spacing(main_win_obj.spacing_size)
+        grid4.set_row_spacing(main_win_obj.spacing_size)
+
+        grid4_width = 4
+
+        button6 = Gtk.Button.new_with_label(_('Select all'))
+        grid4.attach(button6, 0, 0, 1, 1)
+        # (Signal connect appears below)
+        button6.set_hexpand(True)
+
+        button7 = Gtk.Button.new_with_label(_('Select none'))
+        grid4.attach(button7, 1, 0, 1, 1)
+        # (Signal connect appears below)
+        button7.set_hexpand(True)
+
+        button8 = Gtk.Button.new_with_label(_('Reset list using copied text'))
+        grid4.attach(button8, 2, 0, 1, 1)
+        # (Signal connect appears below)
+        button8.set_hexpand(True)
+
+        button9 = Gtk.Button.new_with_label(
+            _('Reset list using video description')
+        )
+        grid4.attach(button9, 3, 0, 1, 1)
+        # (Signal connect appears below)
+        button9.set_hexpand(True)
+        if self.video_obj is None:
+            button9.set_sensitive(False)
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid5 = Gtk.Grid()
+        grid.attach(grid5, 0, (10 + h_offset), grid_width, 1)
+        grid5.set_column_spacing(main_win_obj.spacing_size)
+        grid5.set_row_spacing(main_win_obj.spacing_size)
+
+        grid5_width = 3
+
+        self.button10 = Gtk.Button.new_with_label('')
+        grid5.attach(self.button10, 0, 0, 1, 1)
+        # (Signal connect appears below)
+        if self.clip_mode == 'create':
+            self.set_bold_button_text(self.button10, _('Create marked clips'))
+        else:
+            self.set_bold_button_text(
+                self.button10,
+                _('Download marked clips'),
+            )
+        self.button10.set_hexpand(True)
+
+        self.button11 = Gtk.Button.new_with_label('')
+        grid5.attach(self.button11, 1, 0, 1, 1)
+        # (Signal connect appears below)
+        if self.clip_mode == 'create':
+            self.set_bold_button_text(self.button11, _('Create all clips'))
+        else:
+            self.set_bold_button_text(self.button11, _('Download all clips'))
+        self.button11.set_hexpand(True)
+
+        self.button12 = Gtk.Button.new_with_label('')
+        grid5.attach(self.button12, 2, 0, 1, 1)
+        # (Signal connect appears below)
+        self.set_bold_button_text(self.button12, _('Download all chapters'))
+        self.button12.set_hexpand(True)
+        if self.clip_mode != 'downloader':
+            self.button12.set_sensitive(False)
+
+        # (Signal connects from above)
+        self.radiobutton.connect('toggled', self.on_radiobutton_toggled)
+        self.radiobutton2.connect('toggled', self.on_radiobutton2_toggled)
+        self.radiobutton3.connect('toggled', self.on_radiobutton3_toggled)
+
+        entry3.connect('changed', self.on_start_entry_changed)
+        self.button.connect(
+            'clicked',
+            self.on_dl_single_button_clicked,
+            entry3,
+            entry4,
+            entry5,
+        )
+
+        button2.connect(
+            'clicked',
+            self.on_add_stamp_button_clicked,
+            entry3,
+            entry4,
+            entry5,
+        )
+        button3.connect(
+            'clicked',
+            self.on_delete_stamp_button_clicked,
+            treeview,
+        )
+        button4.connect('clicked', self.on_prefs_button_clicked)
+        button5.connect('clicked', self.on_clear_stamp_button_clicked)
+        button6.connect('clicked', self.on_select_all_button_clicked)
+        button7.connect('clicked', self.on_select_none_button_clicked)
+
+        button8.connect('clicked', self.on_copy_stamp_button_clicked)
+        button9.connect('clicked', self.on_extract_stamp_button_clicked)
+
+        self.button10.connect('clicked', self.on_dl_marked_button_clicked)
+        self.button11.connect('clicked', self.on_dl_all_button_clicked)
+        self.button12.connect('clicked', self.on_dl_chapters_button_clicked)
 
         # Display the dialogue window
         self.show_all()
 
 
+    # Support functions
+
+
+    def set_bold_button_text(self, button, text):
+
+        """Can be called by anything.
+
+        Sets bold label text for a Gtk.Button.
+
+        Args:
+
+            button (Gtk.Button): The button to update
+
+            text (str): The (translated) text, which does not need to contain
+                <b>...</b> tags
+
+        """
+
+        for child in button.get_children():
+            child.set_label('<b>' + text + '</b>')
+            child.set_use_markup(True)
+
+
+    def update_treeview(self):
+
+        """Called by self.__init__().
+
+        Fills or updates the treeview. Based on
+        config.VideoEditWin.setup_timestamps_tab_update_treeview().
+        """
+
+        self.timestamp_liststore.clear()
+
+        if self.video_obj is not None:
+            stamp_list = self.video_obj.stamp_list
+        else:
+            stamp_list = self.classic_stamp_list
+
+        # Add each timestamp/title to the treeview, one row at a time
+        for mini_list in stamp_list:
+
+            start_stamp = mini_list[0]
+
+            if mini_list[1] is None:
+                stop_stamp = ''
+            else:
+                stop_stamp = mini_list[1]
+
+            if mini_list[2] is None:
+                clip_title = ''
+            else:
+                clip_title = mini_list[2]
+
+            self.timestamp_liststore.append(
+                [ False, start_stamp, stop_stamp, clip_title ],
+            )
+
+
     # Callback class methods
 
 
-    def on_all_button_clicked(self, button):
+    def on_add_stamp_button_clicked(self, button, entry, entry2, entry3):
 
         """Called from a callback in self.__init__().
 
-        Marks all clips to be created/downloaded, and closes the dialogue
-        window.
+        Adds a new timestamp to treeview, optionally with a clip title.
+
+        Code adapted from config.VideoEditWin.on_add_stamp_button_clicked().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, entry3 (Gtk.Entry): Other widgets to modify
+
+        """
+
+        app_obj = self.main_win_obj.app_obj
+
+        start_stamp = utils.strip_whitespace(entry.get_text())
+        stop_stamp = utils.strip_whitespace(entry2.get_text())
+        clip_title = utils.strip_whitespace(entry3.get_text())
+
+        # (Values are stored as None, rather than empty strings)
+        if stop_stamp == '':
+            stop_stamp = None
+
+        if clip_title == '':
+            clip_title = None
+
+        # Do nothing if specified timestamps aren't valid ('stop_stamp' is
+        #   optional)
+        regex = r'^' + app_obj.timestamp_regex + r'$'
+        if re.search(regex, start_stamp) \
+        and (stop_stamp is None or re.search(regex, stop_stamp)) \
+        and utils.timestamp_compare(app_obj, start_stamp, stop_stamp):
+
+            # Add leading zeroes to the minutes and seconds components, so
+            #   that .stamp_list gets sorted correctly (and doesn't look
+            #   weird)
+            start_stamp = utils.timestamp_format(app_obj, start_stamp)
+            if stop_stamp is not None:
+                stop_stamp = utils.timestamp_format(app_obj, stop_stamp)
+
+            # Timestamps stored in groups of three, in the form
+            #   (start_stamp, stop_stamp, clip_title)
+            # If a group with the same 'start_stamp' timestamp already exists,
+            #   don't replace it; allow duplicates (as the user may actually
+            #   want that)
+            if self.video_obj is not None:
+
+                stamp_list = self.video_obj.stamp_list
+                stamp_list.append([ start_stamp, stop_stamp, clip_title ])
+
+                # (The called function will sort the list)
+                self.video_obj.set_timestamps(stamp_list)
+
+            else:
+
+                self.classic_stamp_list.append(
+                    [ start_stamp, stop_stamp, clip_title ],
+                )
+                self.classic_stamp_list.sort()
+
+            # (Show changes, and empty entry boxes. The 'stop' timestamp, if
+            #   specified, becomes the 'start' timestamp for the next group)
+            self.update_treeview()
+
+            if stop_stamp is None:
+                entry.set_text('')
+            else:
+                entry.set_text(
+                    utils.timestamp_add_second(app_obj, stop_stamp),
+                )
+
+            entry2.set_text('')
+            entry3.set_text('')
+
+        else:
+
+#            app_obj.dialogue_manager_obj.show_msg_dialogue(
+#                _('Invalid timestamp(s)'),
+#                'error',
+#                'ok',
+#                self,           # Parent window is this window
+#            )
+            # The intended dialogue window doesn't behave well, so instead,
+            #   display a message in the entry boxes
+            if not re.search(regex, start_stamp):
+                entry.set_text(_('INVALID'))
+
+            if stop_stamp is not None and not re.search(regex, stop_stamp):
+                entry2.set_text(_('INVALID'))
+
+
+    def on_clear_stamp_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Empties the video's timestamp list.
+
+        Code adapted from config.VideoEditWin.on_clear_stamp_button_clicked().
 
         Args:
 
@@ -34198,16 +35062,22 @@ class PrepareClipDialogue(Gtk.Dialog):
 
         """
 
-        self.all_flag = True
-        self.destroy()
+        if self.video_obj is not None:
+            self.video_obj.reset_timestamps()
+        else:
+            self.classic_stamp_list = []
+
+        self.update_treeview()
 
 
-    def on_one_button_clicked(self, button):
+    def on_copy_stamp_button_clicked(self, button):
 
         """Called from a callback in self.__init__().
 
-        Marks one clip to be created/downloaded, using the specified
-        timestamps and/or clip title.
+        Updates the video's timestamp list using text the user has copied and
+        pasted into a dialogue window.
+
+        Code adapted from config.VideoEditWin.on_copy_stamp_button_clicked().
 
         Args:
 
@@ -34215,42 +35085,449 @@ class PrepareClipDialogue(Gtk.Dialog):
 
         """
 
-        self.all_flag = False
+        # Open the dialogue window
+        dialogue_win = AddStampDialogue(
+            self,
+            self.main_win_obj,
+        )
+        response = dialogue_win.run()
+
+        # Retrieve user choices from the dialogue window
+        if response == Gtk.ResponseType.OK:
+
+            text = dialogue_win.textbuffer.get_text(
+                dialogue_win.textbuffer.get_start_iter(),
+                dialogue_win.textbuffer.get_end_iter(),
+                # Don't include hidden characters
+                False,
+            )
+
+            # (Do not modify the existing list of timestamps, if no text was
+            #   added to the dialogue window)
+            if text != '':
+
+                if self.video_obj is not None:
+                    self.video_obj.extract_timestamps_from_descrip(
+                        self.main_win_obj.app_obj,
+                        text,
+                    )
+
+                else:
+                    self.classic_stamp_list \
+                    = utils.extract_timestamps_from_descrip(
+                        self.main_win_obj.app_obj,
+                        text,
+                    )
+
+                self.update_treeview()
+
+        # ...before destroying the dialogue window
+        dialogue_win.destroy()
+
+
+    def on_delete_stamp_button_clicked(self, button, treeview):
+
+        """Called from a callback in self.__init__().
+
+        Deletes the selected timestamp(s) from the video's timestamp list.
+
+        Code adapted from config.VideoEditWin.on_delete_stamp_button_clicked().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview displaying the timestamp list
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+            return
+
+        start_stamp = model[this_iter][1]
+        stop_stamp = model[this_iter][2]
+        clip_title = model[this_iter][3]
+
+        # Timestamps stored in groups of three, in the form
+        #   (start_stamp, stop_stamp, clip_title)
+        # Walk the list, and delete the first matching group
+        if self.video_obj is not None:
+            stamp_list = self.video_obj.stamp_list
+        else:
+            stamp_list = self.classic_stamp_list
+
+        mod_list = []
+        match_flag = False
+
+        for mini_list in stamp_list:
+
+            if not match_flag \
+            and mini_list[0] == start_stamp \
+            and (mini_list[1] is None or mini_list[1] == stop_stamp) \
+            and (mini_list[2] is None or mini_list[2] == clip_title):
+                match_flag = True   # Delete this one
+            else:
+                mod_list.append(mini_list)
+
+        if self.video_obj is not None:
+            # (The called function will sort the list)
+            self.video_obj.set_timestamps(mod_list)
+        else:
+            self.classic_stamp_list = mod_list
+            self.classic_stamp_list.sort()
+
+        # (Show changes)
+        self.update_treeview()
+
+
+    def on_dl_all_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Downloads/creates all clips.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.dl_mode = 'multiple'
+
+        if self.video_obj is not None:
+            self.stamp_list = self.video_obj.stamp_list
+        else:
+            self.stamp_list = self.classic_stamp_list
+
+        if self.stamp_list:
+            self.start_dl_flag = True
+            self.close()
+
+
+    def on_dl_chapters_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Downloads clips as chapters using yt-dlp directly.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.dl_mode = 'chapters'
+        self.start_dl_flag = True
+        self.close()
+
+
+    def on_dl_marked_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Downloads/creates marked clips.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.dl_mode = 'multiple'
+        self.stamp_list = []
+
+        if self.video_obj is not None:
+            this_stamp_list = self.video_obj.stamp_list
+        else:
+            this_stamp_list = self.classic_stamp_list
+
+        count = -1
+        for path in range(0, len(self.timestamp_liststore)):
+
+            count += 1
+            if self.timestamp_liststore[path][0] is True:
+
+                start_stamp, stop_stamp, clip_title \
+                = utils.clip_extract_data(this_stamp_list, count)
+
+                self.stamp_list.append([start_stamp, stop_stamp, clip_title])
+
+        if self.stamp_list:
+            self.start_dl_flag = True
+            self.close()
+
+
+    def on_dl_single_button_clicked(self, button, entry, entry2, entry3):
+
+        """Called from a callback in self.__init__().
+
+        Downloads/creates a single clip.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, entry3 (Gtk.Entry): Widgets specifying timestamps
+                and clip titles
+
+        """
+
+        self.dl_mode = 'single'
+
+        # (First entry is compulsory, others are optional; but timestamps must
+        #       be in a valid format where specified)
+        start_stamp = entry.get_text()
+        if start_stamp != '':
+            self.start_stamp = utils.strip_whitespace(start_stamp)
+
+        stop_stamp = entry2.get_text()
+        if stop_stamp != '':
+            self.stop_stamp = utils.strip_whitespace(stop_stamp)
+
+        clip_title = entry3.get_text()
+        if clip_title != '':
+            self.clip_title = utils.strip_whitespace(clip_title)
+
+        if self.start_stamp is not None:
+            self.start_dl_flag = True
+            self.close()
+
+
+    def on_extract_stamp_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Updates the video's timestamp list from its description, then displays
+        that list in the treeview.
+
+        Code adapted from
+        config.VideoEditWin.on_extract_stamp_button_clicked().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        self.video_obj.extract_timestamps_from_descrip(
+            self.main_win_obj.app_obj,
+        )
+
+        self.update_treeview()
+
+
+    def on_optional_entry_changed(self, entry):
+
+        """Called from callback in self.__init__().
+
+        Updates IVs.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        text = entry.get_text()
+        if text == '':
+            self.classic_video_name = None
+        else:
+            self.classic_video_name = text
+
+
+    def on_prefs_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Opens the preferences window to show clip settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        # N.B. Destroy this window before opening the preferences window, or
+        #   the latter will be hidden behind the main window
+        # N.B. If we don't destroy this window first, the preferences window is
+        #   non-responsive
         self.destroy()
+        config.SystemPrefWin(self.main_win_obj.app_obj, 'clips')
 
 
-    def on_start_entry_changed(self, entry, button):
+    def on_radiobutton_toggled(self, radiobutton):
+
+        """Called from a callback in self.__init__().
+
+        Updates widgets in the window, according to the current mode.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.clip_mode = 'downloader'
+
+            self.button12.set_sensitive(True)
+
+            self.label5.set_markup('<b>' + _('Download one clip') + '</b>:')
+            self.set_bold_button_text(self.button, _('Download clip'))
+
+            self.label9.set_markup(
+                '<b>' + _('Download multiple clips') + '</b>:',
+            )
+            self.set_bold_button_text(
+                self.button10,
+                _('Download marked clips'),
+            )
+            self.set_bold_button_text(self.button11, _('Download all clips'))
+
+
+    def on_radiobutton2_toggled(self, radiobutton):
+
+        """Called from a callback in self.__init__().
+
+        Updates widgets in the window, according to the current mode.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.clip_mode = 'ffmpeg'
+
+            self.button12.set_sensitive(False)
+
+            self.label5.set_markup('<b>' + _('Download one clip') + '</b>:')
+            self.set_bold_button_text(self.button, _('Download clip'))
+            self.label9.set_markup(
+                '<b>' + _('Download multiple clips') + '</b>:',
+            )
+            self.set_bold_button_text(
+                self.button10,
+                _('Download marked clips'),
+            )
+            self.set_bold_button_text(self.button11, _('Download all clips'))
+
+
+    def on_radiobutton3_toggled(self, radiobutton):
+
+        """Called from a callback in self.__init__().
+
+        Updates widgets in the window, according to the current mode.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.clip_mode = 'create'
+            self.dl_mode = None
+
+            self.button12.set_sensitive(False)
+
+            self.label5.set_markup('<b>' + _('Create one clip') + '</b>:')
+            self.set_bold_button_text(self.button, _('Create clip'))
+            self.label9.set_markup(
+                '<b>' + _('Create multiple clips') + '</b>:',
+            )
+            self.set_bold_button_text(self.button10, _('Create marked clips'))
+            self.set_bold_button_text(self.button11, _('Create all clips'))
+
+
+    def on_select_all_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Selects the checkbutton in every line in the treeview.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        for path in range(0, len(self.timestamp_liststore)):
+            self.timestamp_liststore[path][0] = True
+
+
+    def on_select_none_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        De-selects the checkbutton in every line in the treeview.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        for path in range(0, len(self.timestamp_liststore)):
+            self.timestamp_liststore[path][0] = False
+
+
+    def on_start_entry_changed(self, entry):
 
         """Called from callback in self.__init__().
 
-        Sets the start timestamp.
+        Sensitises the download button, depending on whether the entry contains
+        text, or not.
+
+        Note that the validity of any timestamps the user specifies is checked
+        by the calling mainwin.MainWin code.
 
         Args:
 
             entry (Gtk.Entry): The clicked widget
 
-            button (Gtk.Button): Another widget to be modified
+        """
+
+        text = entry.get_text()
+        if text == '':
+            self.button.set_sensitive(False)
+        else:
+            self.button.set_sensitive(True)
+
+
+    def on_treeview_button_toggled(self, renderer_toggle, tree_path):
+
+        """Called from a callback in self.__init__().
+
+        Toggles one of the check buttons in the treeview.
+
+        Args:
+
+            renderer_toggle (Gtk.CellRendererToggle): The widget clicked
+
+            tree_path (Gtk.TreePath): Path to the clicked row
 
         """
 
-        value = entry.get_text()
-        # (Unspecified timestamps/titles are stored as None, not empty strings)
-        if value == '':
-
-            self.start_stamp = None
-            button.set_sensitive(False)
-
-        else:
-
-            self.start_stamp = value
-            button.set_sensitive(True)
+        this_iter = self.timestamp_liststore.get_iter(tree_path)
+        self.timestamp_liststore[tree_path][0] \
+        = not self.timestamp_liststore[tree_path][0]
 
 
-    def on_stop_entry_changed(self, entry):
+    def on_url_entry_changed(self, entry):
 
         """Called from callback in self.__init__().
 
-        Sets the stop timestamp.
+        Updates IVs.
 
         Args:
 
@@ -34258,43 +35535,25 @@ class PrepareClipDialogue(Gtk.Dialog):
 
         """
 
-        value = entry.get_text()
-        if value == '':
-            self.stop_stamp = None
+        text = entry.get_text()
+        if text == '':
+            self.classic_url = None
         else:
-            self.stop_stamp = value
-
-
-    def on_title_entry_changed(self, entry):
-
-        """Called from callback in self.__init__().
-
-        Sets the clip title.
-
-        Args:
-
-            entry (Gtk.Entry): The clicked widget
-
-        """
-
-        value = entry.get_text()
-        if value == '':
-            self.clip_title = None
-        else:
-            self.clip_title = value
+            self.classic_url = text
 
 
 class PrepareSliceDialogue(Gtk.Dialog):
 
     """Called by mainwin.MainWin.on_video_catalogue_process_clip().
 
-    Prompt the user for a video slice, to be removed from the clicked video.
+    Prompt the user to remove video slices.
 
     Args:
 
         main_win_obj (mainwin.MainWin): The parent main window
 
-        video_obj (media.Video): The video from which a slice will be removed.
+        video_obj (media.Video): The video from which video slices will be
+            removed
 
     """
 
@@ -34305,9 +35564,9 @@ class PrepareSliceDialogue(Gtk.Dialog):
     def __init__(self, main_win_obj, video_obj):
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: \'Download/create sliced video\' dialogue' \
-            + ' starts here. In the Videos tab, right-click a video and' \
-            + ' select Special > Remove video slices...'
+            'TRANSLATOR\'S NOTE: \'Remove video slices\' dialogue starts' \
+            + ' here. In the Videos tab, right-click a video and select' \
+            + ' Special > Remove video slices...'
         )
 
         # IV list - class objects
@@ -34320,30 +35579,51 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         # IV list - Gtk widgets
         # ---------------------
-        #   (none)
+        self.radiobutton = None                     # Gtk.RadioButton
+        self.radiobutton2 = None                    # Gtk.RadioButton
+        self.label3 = None                          # Gtk.Label
+        self.button = None                          # Gtk.Button
+        self.label6 = None                          # Gtk.Label
+        self.slice_liststore = None                 # Gtk.ListStore
+        self.button9 = None                         # Gtk.Button
+        self.button10 = None                        # Gtk.Button
 
 
         # IV list - other
         # ---------------
         # Store the user's choice as an IV, so the calling function can
         #   retrieve it
+        # Slice mode: 'ffmpeg' to remove slices using FFmpeg, or 'create' to
+        #   remove slices using the already-downloaded video
+        # (These values match those used in mainwin.PrepareClipDialogue)
+        self.slice_mode = 'ffmpeg'
+        # Download mode: 'single' to remove a single slice using specified
+        #   timestamps/seconds, 'multiple' to remove multiple slices. Set to
+        #   None when self.clip_mode is 'create'
+        # (These values match those used in mainwin.PrepareClipDialogue)
+        self.dl_mode = None
+        # When self.dl_mode is 'single', the start/stop times (timestamps or
+        #   seconds). The start time is compulsory, the stop time is optional,
+        #   but timestamps must be in a valid format where specified)
         self.start_time = None
         self.stop_time = None
-        self.all_flag = False
-        self.all_but_flag = False
+        # When self.dl_mode is 'multiple', a list of dictionaries in the form
+        #   described by self.on_add_slice_button_clicked(), each representing
+        #   a single slice. The list is used to set
+        #   mainapp.TartubeApp.temp_slice_buffer_dict
+        self.slice_list = []
+
+        # Flag set to true when one of the 'Download' buttons is clicked,
+        #   which closes the window (in the absence of an OK button)
+        self.start_dl_flag = False
 
 
         # Code
         # ----
 
-        if not video_obj.dl_flag:
-            local_title = _('Download sliced video')
-        else:
-            local_title = _('Create sliced video')
-
         Gtk.Dialog.__init__(
             self,
-            local_title,
+            _('Remove video slices'),
             main_win_obj,
             Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
@@ -34355,6 +35635,10 @@ class PrepareSliceDialogue(Gtk.Dialog):
         app_obj = self.main_win_obj.app_obj
 
         # Set up the dialogue window
+        self.set_default_size(
+            app_obj.config_win_width,
+            -1,
+        )
         box = self.get_content_area()
 
         grid = Gtk.Grid()
@@ -34362,81 +35646,510 @@ class PrepareSliceDialogue(Gtk.Dialog):
         grid.set_border_width(main_win_obj.spacing_size)
         grid.set_row_spacing(main_win_obj.spacing_size)
 
+        grid_width = 2
+
         label = Gtk.Label()
-        grid.attach(label, 0, 0, 1, 1)
-        # (Artificially widen the window a little to make it look better)
-        label.set_markup(
-            _('Start (timestamp or seconds)'),
-        )
+        grid.attach(label, 0, 0, grid_width, 1)
+        label.set_markup('<b>' + _('Select a method:') + '</b>')
         label.set_alignment(0, 0.5)
 
-        entry = Gtk.Entry()
-        grid.attach(entry, 0, 1, 1, 1)
-        # (Signal connect appears below)
+        self.radiobutton = Gtk.RadioButton.new_with_label_from_widget(
+            None,
+            _('Download new sliced video'),
+        )
+        grid.attach(self.radiobutton, 0, 1, 1, 1)
 
-        label2 = Gtk.Label()
-        grid.attach(label2, 0, 2, 1, 1)
-        label2.set_markup(_('Stop (optional)'))
-        label2.set_alignment(0, 0.5)
+        self.radiobutton2 = Gtk.RadioButton.new_from_widget(self.radiobutton)
+        grid.attach(self.radiobutton2, 1, 1, 1, 1)
+        # (Signal connect appears below)
+        self.radiobutton2.set_label(
+            _('Remove slices from the downloaded video'),
+        )
+        if not self.video_obj.dl_flag:
+            self.radiobutton2.set_sensitive(False)
+
+        else:
+            label2 = Gtk.Label()
+            grid.attach(label2, 0, 2, grid_width, 1)
+            label2.set_markup(
+                '<i>' + _(
+                    'Warning: Downloading new sliced videos is usually MUCH' \
+                    + ' quicker!',
+                ) + '</i>',
+            )
+            label2.set_alignment(0, 0.5)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 3, grid_width, 1)
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid2 = Gtk.Grid()
+        grid.attach(grid2, 0, 4, grid_width, 1)
+        grid2.set_column_spacing(main_win_obj.spacing_size)
+        grid2.set_row_spacing(main_win_obj.spacing_size)
+
+        grid2_width = 4
+
+        self.label3 = Gtk.Label()
+        grid2.attach(self.label3, 0, 0, grid2_width, 1)
+        if self.slice_mode == 'create':
+            self.label3.set_markup(
+                '<b>' + _('Create video with one slice') + '</b>:(',
+            )
+        else:
+            self.label3.set_markup(
+                '<b>' + _('Download video with one slice') + '</b>:',
+            )
+        self.label3.set_alignment(0, 0.5)
+
+        label4 = Gtk.Label()
+        grid2.attach(label4, 0, 1, 1, 1)
+        label4.set_markup(_('Start (timestamp or seconds)'))
+        label4.set_alignment(0, 0.5)
+
+        entry_width = 12
+
+        entry = Gtk.Entry()
+        grid2.attach(entry, 1, 1, 1, 1)
+        # (Signal connect appears below)
+        entry.set_width_chars(entry_width)
+
+        label5 = Gtk.Label()
+        grid2.attach(label5, 2, 1, 1, 1)
+        label5.set_markup(_('Stop (optional)'))
+        label5.set_alignment(0, 0.5)
 
         entry2 = Gtk.Entry()
-        grid.attach(entry2, 0, 3, 1, 1)
-        entry2.connect('changed', self.on_stop_entry_changed)
+        grid2.attach(entry2, 3, 1, 1, 1)
+        entry2.set_width_chars(entry_width)
 
-        if not video_obj.dl_flag:
-            msg = _('Download and remove this slice')
+        self.button = Gtk.Button.new_with_label('')
+        grid2.attach(self.button, 2, 2, 2, 1)
+        # (Signal connect appears below)
+        if self.slice_mode == 'create':
+            self.set_bold_button_text(self.button, _('Create sliced video'))
         else:
-            msg = _('Create this sliced video')
+            self.set_bold_button_text(self.button, _('Download sliced video'))
+        self.button.set_hexpand(True)
+        self.button.set_sensitive(False)
 
-        button = Gtk.Button.new_with_label(msg)
-        grid.attach(button, 0, 4, 1, 1)
-        button.set_hexpand(False)
-        button.connect('clicked', self.on_one_button_clicked)
-        button.set_sensitive(False)
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 5, grid_width, 1)
 
-        if video_obj.dl_flag:
-            extra_rows = 0
-            button2 = Gtk.Button()
-
-        else:
-            extra_rows = 1
-            button2 = Gtk.Button.new_with_label(
-                _('Download and remove everything but this slice'),
+        self.label6 = Gtk.Label()
+        grid.attach(self.label6, 0, 6, grid_width, 1)
+        if self.slice_mode == 'create':
+            self.label6.set_markup(
+                '<b>' + _('Create video with multiple slices') + '</b>:',
             )
-            grid.attach(button2, 0, 5, 1, 1)
-            button2.set_hexpand(False)
-            button2.connect('clicked', self.on_all_but_button_clicked)
-            button2.set_sensitive(False)
-
-        if not video_obj.dl_flag:
-            msg = _('Download video with all slices removed')
         else:
-            msg = _('Create video with all slices removed')
+            self.label6.set_markup(
+                '<b>' + _('Download video with multiple slices') + '</b>:',
+            )
+        self.label6.set_alignment(0, 0.5)
 
-        msg += ' (' + str(len(video_obj.slice_list)) + ')'
+        frame = Gtk.Frame()
+        grid.attach(frame, 0, 7, grid_width, 1)
 
-        button3 = Gtk.Button.new_with_label(msg)
-        grid.attach(button3, 0, (5 + extra_rows), 1, 1)
-        button3.set_hexpand(False)
-        button3.connect('clicked', self.on_all_button_clicked)
-        if not video_obj.slice_list:
-            button3.set_sensitive(False)
+        scrolled = Gtk.ScrolledWindow()
+        frame.add(scrolled)
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_hexpand(True)
+        scrolled.set_min_content_height(150)
 
-        # (Signal connect from above)
-        entry.connect('changed', self.on_start_entry_changed, button, button2)
+        treeview = Gtk.TreeView()
+        scrolled.add(treeview)
+        treeview.set_headers_visible(True)
+
+        for i, column_title in enumerate([
+            _('Marked'),
+            _('Category'),
+            _('Action Type'),
+            _('Start'),
+            _('Stop'),
+        ]):
+            if i == 0:
+                renderer_toggle = Gtk.CellRendererToggle()
+                column_toggle = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_toggle,
+                    active=i,
+                )
+                treeview.append_column(column_toggle)
+                column_toggle.set_resizable(False)
+                renderer_toggle.set_sensitive(True)
+                renderer_toggle.set_activatable(True)
+                renderer_toggle.connect(
+                    'toggled',
+                    self.on_treeview_button_toggled,
+                )
+
+            else:
+                renderer_text = Gtk.CellRendererText()
+                column_text = Gtk.TreeViewColumn(
+                    column_title,
+                    renderer_text,
+                    text=i,
+                )
+                treeview.append_column(column_text)
+                column_text.set_resizable(True)
+
+        self.slice_liststore = Gtk.ListStore(bool, str, str, str, str)
+        treeview.set_model(self.slice_liststore)
+
+        # Initialise the list
+        self.update_treeview()
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid3 = Gtk.Grid()
+        grid.attach(grid3, 0, 8, grid_width, 1)
+        grid3.set_column_spacing(main_win_obj.spacing_size)
+        grid3.set_row_spacing(main_win_obj.spacing_size)
+
+        grid3_width = 4
+
+        label7 = Gtk.Label()
+        grid3.attach(label7, 0, 0, 1, 1)
+        label7.set_markup(_('Category'))
+        label7.set_alignment(0, 0.5)
+
+        combostore = Gtk.ListStore(str)
+        for category in formats.SPONSORBLOCK_CATEGORY_LIST:
+            combostore.append( [category] )
+
+        combo = Gtk.ComboBox.new_with_model(combostore)
+        grid3.attach(combo, 1, 0, 1, 1)
+        combo.set_hexpand(True)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
+        combo.set_active(0)
+
+        label8 = Gtk.Label()
+        grid3.attach(label8, 2, 0, 1, 1)
+        label8.set_markup(_('Action Type'))
+        label8.set_alignment(0, 0.5)
+
+        combostore2 = Gtk.ListStore(str)
+        for action in formats.SPONSORBLOCK_ACTION_LIST:
+            combostore2.append( [action] )
+
+        combo2 = Gtk.ComboBox.new_with_model(combostore2)
+        grid3.attach(combo2, 3, 0, 1, 1)
+        combo2.set_hexpand(True)
+
+        renderer_text = Gtk.CellRendererText()
+        combo2.pack_start(renderer_text, True)
+        combo2.add_attribute(renderer_text, 'text', 0)
+        combo2.set_active(0)
+
+        label9 = Gtk.Label()
+        grid3.attach(label9, 0, 1, 1, 1)
+        label9.set_markup(_('Start (timestamp or seconds)'))
+        label9.set_alignment(0, 0.5)
+
+        entry3 = Gtk.Entry()
+        grid3.attach(entry3, 1, 1, 1, 1)
+        # (Signal connect appears below)
+        entry3.set_width_chars(entry_width)
+
+        label10 = Gtk.Label()
+        grid3.attach(label10, 2, 1, 1, 1)
+        label10.set_markup(_('Stop (optional)'))
+        label10.set_alignment(0, 0.5)
+
+        entry4 = Gtk.Entry()
+        grid3.attach(entry4, 3, 1, 1, 1)
+        # (Signal connect appears below)
+        entry4.set_width_chars(entry_width)
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid4 = Gtk.Grid()
+        grid.attach(grid4, 0, 9, grid_width, 1)
+        grid4.set_column_spacing(main_win_obj.spacing_size)
+        grid4.set_row_spacing(main_win_obj.spacing_size)
+
+        grid4_width = 4
+
+        button2 = Gtk.Button.new_with_label(_('Add slice'))
+        grid4.attach(button2, 0, 0, 1, 1)
+        # (Signal connect appears below)
+        button2.set_hexpand(True)
+
+        button3 = Gtk.Button.new_with_label(_('Delete slice'))
+        grid4.attach(button3, 1, 0, 1, 1)
+        # (Signal connect appears below)
+        button3.set_hexpand(True)
+
+        button4 = Gtk.Button.new_with_label(_('SponsorBlock settings'))
+        grid4.attach(button4, 2, 0, 1, 1)
+        # (Signal connect appears below)
+        button4.set_hexpand(True)
+
+        button5 = Gtk.Button.new_with_label(_('Clear list'))
+        grid4.attach(button5, 3, 0, 1, 1)
+        # (Signal connect appears below)
+        button5.set_hexpand(True)
+
+        # (Additional grid, to avoid messing up the format of the previous one)
+        grid5 = Gtk.Grid()
+        grid.attach(grid5, 0, 10, grid_width, 1)
+        grid5.set_column_spacing(main_win_obj.spacing_size)
+        grid5.set_row_spacing(main_win_obj.spacing_size)
+
+        grid5_width = 4
+
+        button6 = Gtk.Button.new_with_label(_('Select all'))
+        grid5.attach(button6, 0, 0, 1, 1)
+        # (Signal connect appears below)
+        button6.set_hexpand(True)
+
+        button7 = Gtk.Button.new_with_label(_('Select none'))
+        grid5.attach(button7, 1, 0, 1, 1)
+        # (Signal connect appears below)
+        button7.set_hexpand(True)
+
+        button8 = Gtk.Button.new_with_label(
+            _('Contact SponsorBlock to reset list'),
+        )
+        grid5.attach(button8, 2, 0, 2, 1)
+        # (Signal connect appears below)
+        button8.set_hexpand(True)
+        if app_obj.custom_sblock_mirror == '' or self.video_obj.vid is None:
+            button8.set_sensitive(False)
+
+        self.button9 = Gtk.Button.new_with_label('')
+        grid5.attach(self.button9, 0, 1, 2, 1)
+        # (Signal connect appears below)
+        if self.slice_mode == 'create':
+            self.set_bold_button_text(
+                self.button9,
+                _('Create video, removing marked slices'),
+            )
+        else:
+            self.set_bold_button_text(
+                self.button9,
+                _('Download video, removing marked slices'),
+            )
+        self.button9.set_hexpand(True)
+
+        self.button10 = Gtk.Button.new_with_label('')
+        grid5.attach(self.button10, 2, 1, 1, 1)
+        # (Signal connect appears below)
+        if self.slice_mode == 'create':
+            self.set_bold_button_text(
+                self.button10,
+                _('Create video, removing all slices'),
+            )
+        else:
+            self.set_bold_button_text(
+                self.button10,
+                _('Download video, removing all slices'),
+            )
+        self.button10.set_hexpand(True)
+
+        # (Signal connects from above)
+        entry.connect('changed', self.on_start_entry_changed)
+        self.button.connect(
+            'clicked',
+            self.on_dl_single_button_clicked,
+            entry,
+            entry2,
+        )
+
+        self.radiobutton.connect('toggled', self.on_radiobutton_toggled)
+        self.radiobutton2.connect('toggled', self.on_radiobutton2_toggled)
+
+        button2.connect(
+            'clicked',
+            self.on_add_slice_button_clicked,
+            combo,
+            combo2,
+            entry3,
+            entry4,
+        )
+        button3.connect(
+            'clicked',
+            self.on_delete_slice_button_clicked,
+            treeview,
+        )
+        button4.connect('clicked', self.on_prefs_button_clicked)
+        button5.connect('clicked', self.on_clear_slice_button_clicked)
+        button6.connect('clicked', self.on_select_all_button_clicked)
+        button7.connect('clicked', self.on_select_none_button_clicked)
+        button8.connect('clicked', self.on_contact_sblock_clicked)
+
+        self.button9.connect('clicked', self.on_dl_marked_button_clicked)
+        self.button10.connect('clicked', self.on_dl_all_button_clicked)
 
         # Display the dialogue window
         self.show_all()
 
 
+    # Support functions
+
+
+    def set_bold_button_text(self, button, text):
+
+        """Can be called by anything.
+
+        Sets bold label text for a Gtk.Button.
+
+        Args:
+
+            button (Gtk.Button): The button to update
+
+            text (str): The (translated) text, which does not need to contain
+                <b>...</b> tags
+
+        """
+
+        for child in button.get_children():
+            child.set_label('<b>' + text + '</b>')
+            child.set_use_markup(True)
+
+
+    def update_treeview(self):
+
+        """Called by self.__init__().
+
+        Fills or updates the treeview. Based on
+        config.VideoEditWin.setup_slices_tab_update_treeview().
+        """
+
+        self.slice_liststore.clear()
+
+        # Add each timestamp/title to the treeview, one row at a time
+        for mini_dict in self.video_obj.slice_list:
+
+            if 'category' in mini_dict:
+                category = mini_dict['category']
+            else:
+                category = 'n/a'
+
+            if 'action' in mini_dict:
+                action = mini_dict['action']
+            else:
+                action = 'n/a'
+
+            if 'start_time' in mini_dict:
+                start_time = mini_dict['start_time']
+            else:
+                start_time = 'n/a'
+
+            if 'stop_time' in mini_dict \
+            and mini_dict['stop_time'] is not None:
+                stop_time = mini_dict['stop_time']
+            else:
+                stop_time = 'n/a'
+
+            self.slice_liststore.append(
+                [ False, category, action, str(start_time), str(stop_time) ],
+            )
+
+
     # Callback class methods
 
 
-    def on_all_button_clicked(self, button):
+    def on_add_slice_button_clicked(self, button, combo, combo2, entry,
+    entry2):
 
         """Called from a callback in self.__init__().
 
-        Marks all slices to be removed, and closes the dialogue window.
+        Adds a new slice to the treeview.
+
+        Code adapted from config.VideoEditWin.on_add_slice_button_clicked().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            combo, combo2 (Gtk.Entry): Other widgets to modify
+
+            entry, entry2 (Gtk.Entry): Other widgets to modify
+
+        """
+
+        app_obj = self.main_win_obj.app_obj
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        category = model[tree_iter][0]
+
+        tree_iter2 = combo2.get_active_iter()
+        model2 = combo2.get_model()
+        action_type = model2[tree_iter2][0]
+
+        start_time = utils.strip_whitespace(entry.get_text())
+        stop_time = utils.strip_whitespace(entry2.get_text())
+
+        start_time = float(
+            utils.timestamp_convert_to_seconds(app_obj, start_time),
+        )
+
+        if stop_time == '':
+            stop_time = None
+        else:
+            stop_time = float(
+                utils.timestamp_convert_to_seconds(app_obj, stop_time),
+            )
+
+        # Do nothing if specified timestamps aren't valid
+        try:
+            ignore = float(start_time)
+            if stop_time is not None:
+                ignore = float(stop_time)
+
+        except:
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid start/stop times'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+            return
+
+        if stop_time is not None and stop_time <= start_time:
+            self.app_obj.dialogue_manager_obj.show_msg_dialogue(
+                _('Invalid start/stop times'),
+                'error',
+                'ok',
+                self,           # Parent window is this window
+            )
+
+            return
+
+        # Compile the mini-dictionary in the format returned by SponsorBlock
+        mini_dict = {
+            'category': category,
+            'action': action_type,
+            'start_time': start_time,
+            'stop_time': stop_time,
+            'duration': 0,
+        }
+
+        # Add it to the list
+        slice_list = self.video_obj.slice_list
+        slice_list.append(mini_dict)
+
+        # (The called function will sort the list)
+        self.video_obj.set_slices(slice_list)
+
+        # Show changes, and empty entry boxes
+        self.update_treeview()
+        entry.set_text('')
+        entry.set_text('')
+
+
+    def on_clear_slice_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Empties the video's slice list.
+
+        Code adapted from config.VideoEditWin.on_clear_slice_button_clicked().
 
         Args:
 
@@ -34444,16 +36157,93 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         """
 
-        self.all_flag = True
-        self.destroy()
+        self.video_obj.reset_slices()
+        self.update_treeview()
 
 
-    def on_all_but_button_clicked(self, button):
+    def on_contact_sblock_clicked(self, button):
 
         """Called from a callback in self.__init__().
 
-        Marks everything but the specified slice to be removed, using the
-        specified times.
+        Contacts SponsorBlock to reset the video's slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, (Gtk.Entry): Widgets specifying timestamps/seconds
+
+        """
+
+        utils.fetch_slice_data(
+            self.main_win_obj.app_obj,
+            self.video_obj,
+        )
+
+        self.update_treeview()
+
+
+    def on_delete_slice_button_clicked(self, button, treeview):
+
+        """Called from a callback in self.__init__().
+
+        Deletes the selected slice(s) from the video's slice list.
+
+        Code adapted from config.VideoEditWin.on_delete_slice_button_clicked().
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            treeview (Gtk.TreeVies): The treeview displaying the timestamp list
+
+        """
+
+        selection = treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        if not path_list:
+            return
+
+        # (Multiple selection is not enabled)
+        this_iter = model.get_iter(path_list[0])
+        if this_iter is None:
+            return
+
+        category = model[this_iter][1]
+        action_type = model[this_iter][2]
+        start_time = float(model[this_iter][3])
+        stop_time = float(model[this_iter][4])
+
+        # Slices are stored as a list of mini-dictionaries, in the form
+        #   described by self.on_add_slice_button_clicked()
+        # Walk the list, and delete the first matching mini-dictionary
+        slice_list = self.video_obj.slice_list
+        mod_list = []
+        match_flag = False
+
+        for mini_dict in slice_list:
+
+            if not match_flag \
+            and mini_dict['category'] == category \
+            and mini_dict['action'] == action_type \
+            and mini_dict['start_time'] == start_time \
+            and mini_dict['stop_time'] == stop_time:
+                match_flag = True   # Delete this one
+            else:
+                mod_list.append(mini_dict)
+
+        # (The called function will sort the list)
+        self.video_obj.set_slices(mod_list)
+
+        # (Show changes)
+        self.update_treeview()
+
+
+    def on_dl_all_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Downloads/creates all clips.
 
         Args:
 
@@ -34461,15 +36251,19 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         """
 
-        self.all_but_flag = True
-        self.destroy()
+        self.dl_mode = 'multiple'
+        self.slice_list = self.video_obj.slice_list.copy()
+
+        if self.slice_list:
+            self.start_dl_flag = True
+            self.close()
 
 
-    def on_one_button_clicked(self, button):
+    def on_dl_marked_button_clicked(self, button):
 
         """Called from a callback in self.__init__().
 
-        Marks one slice to be removed, using the specified times.
+        Downloads/creates video with marked slice(s) removed.
 
         Args:
 
@@ -34477,56 +36271,211 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         """
 
-        self.all_flag = False
+        self.dl_mode = 'multiple'
+        self.slice_list = []
+
+        count = -1
+        for path in range(0, len(self.slice_liststore)):
+
+            count += 1
+            if self.slice_liststore[path][0] is True:
+
+                self.slice_list.append(self.video_obj.slice_list[count])
+
+        if self.slice_list:
+            self.start_dl_flag = True
+            self.close()
+
+
+    def on_dl_single_button_clicked(self, button, entry, entry2):
+
+        """Called from a callback in self.__init__().
+
+        Downloads/creates a sliced video.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry, entry2, (Gtk.Entry): Widgets specifying timestamps/seconds
+
+        """
+
+        self.dl_mode = 'single'
+
+        # First entry is compulsory, second is optional
+        # Values, if specified, can be either a timestamp, or a value in
+        #   seconds
+        start_time = entry.get_text()
+        if start_time != '':
+            self.start_time = utils.strip_whitespace(start_time)
+
+        stop_time = entry2.get_text()
+        if stop_time != '':
+            self.stop_time = utils.strip_whitespace(stop_time)
+
+        if self.start_time is not None:
+            self.start_dl_flag = True
+            self.close()
+
+
+    def on_prefs_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Opens the preferences window to show SponsorBlock settings.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        # N.B. Destroy this window before opening the preferences window, or
+        #   the latter will be hidden behind the main window
+        # N.B. If we don't destroy this window first, the preferences window is
+        #   non-responsive
         self.destroy()
+        config.SystemPrefWin(self.main_win_obj.app_obj, 'slices')
 
 
-    def on_start_entry_changed (self, entry, button, button2):
+    def on_radiobutton_toggled(self, radiobutton):
+
+        """Called from a callback in self.__init__().
+
+        Updates widgets in the window, according to the current mode.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.slice_mode = 'ffmpeg'
+
+            self.label3.set_markup(
+                '<b>' + _('Download video with one slice') + '</b>:'
+            )
+            self.set_bold_button_text(self.button, _('Download sliced video'))
+            self.label6.set_markup(
+                '<b>' + _('Download video with multiple slices') + '</b>:',
+            )
+            self.set_bold_button_text(
+                self.button9,
+                _('Download video, removing marked slices'),
+            )
+            self.set_bold_button_text(
+                self.button10,
+                _('Download video, removing all slices'),
+            )
+
+
+    def on_radiobutton2_toggled(self, radiobutton):
+
+        """Called from a callback in self.__init__().
+
+        Updates widgets in the window, according to the current mode.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.slice_mode = 'create'
+            self.dl_mode = None
+
+            self.label3.set_markup(
+                '<b>' + _('Create video with one slice') + '</b>:'
+            )
+            self.set_bold_button_text(self.button, _('Create sliced video'))
+            self.label6.set_markup(
+                '<b>' + _('Create video with multiple slices') + '</b>:',
+            )
+            self.set_bold_button_text(
+                self.button9,
+                _('Create video, removing marked slices'),
+            )
+            self.set_bold_button_text(
+                self.button10,
+                _('Create video, removing all slices'),
+            )
+
+
+    def on_select_all_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        Selects the checkbutton in every line in the treeview.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        for path in range(0, len(self.slice_liststore)):
+            self.slice_liststore[path][0] = True
+
+
+    def on_select_none_button_clicked(self, button):
+
+        """Called from a callback in self.__init__().
+
+        De-selects the checkbutton in every line in the treeview.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        for path in range(0, len(self.slice_liststore)):
+            self.slice_liststore[path][0] = False
+
+
+    def on_start_entry_changed(self, entry):
 
         """Called from callback in self.__init__().
 
-        Sets the start time.
+        Sensitises the download button, depending on whether the entry contains
+        text, or not.
+
+        Note that the validity of any timestamps the user specifies is checked
+        by the calling mainwin.MainWin code.
 
         Args:
 
             entry (Gtk.Entry): The clicked widget
 
-            button, button2 (Gtk.Button): Other widgets to be modified
-
         """
 
-        value = entry.get_text()
-        # (Unspecified times are stored as None, not empty strings)
-        if value == '':
-
-            self.start_time = None
-            button.set_sensitive(False)
-            button2.set_sensitive(False)
-
+        text = entry.get_text()
+        if text == '':
+            self.button.set_sensitive(False)
         else:
-
-            self.start_time = value
-            button.set_sensitive(True)
-            button2.set_sensitive(True)
+            self.button.set_sensitive(True)
 
 
-    def on_stop_entry_changed (self, entry):
+    def on_treeview_button_toggled(self, renderer_toggle, tree_path):
 
-        """Called from callback in self.__init__().
+        """Called from a callback in self.__init__().
 
-        Sets the stop time.
+        Toggles one of the check buttons in the treeview.
 
         Args:
 
-            entry (Gtk.Entry): The clicked widget
+            renderer_toggle (Gtk.CellRendererToggle): The widget clicked
+
+            tree_path (Gtk.TreePath): Path to the clicked row
 
         """
 
-        value = entry.get_text()
-        if value == '':
-            self.stop_time = None
-        else:
-            self.stop_time = value
+        this_iter = self.slice_liststore.get_iter(tree_path)
+        self.slice_liststore[tree_path][0] \
+        = not self.slice_liststore[tree_path][0]
 
 
 class RecentVideosDialogue(Gtk.Dialog):

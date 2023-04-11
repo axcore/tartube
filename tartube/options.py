@@ -1582,6 +1582,15 @@ class OptionsParser(object):
             options_list.append('--extractor-args')
             options_list.append(item)
 
+        # Add the SponsorBlock option used in Classic Mode downloads
+        if (
+            operation_type == 'classic_sim' \
+            or operation_type == 'classic_real' \
+            or operation_type == 'classic_custom'
+        ) and media_data_obj.dummy_sblock_flag:
+            options_list.append('--sponsorblock-remove')
+            options_list.append('default')
+
         # Build the --output and --paths options
         options_list = self.build_paths(
             dir_path,
@@ -1602,7 +1611,7 @@ class OptionsParser(object):
 
             options_list.append('--config-location')
             options_list.append(utils.get_dl_config_path(self.app_obj))
-
+        
         # Filter out yt-dlp options, if required. A list of them is specified
         #   in mainapp.TartubeApp.ytdlp_exclusive_options_dict
         if self.app_obj.ytdlp_filter_options_flag \

@@ -111,7 +111,7 @@ drag_drop_text=None, no_modify_flag=None):
             # (Cope with multiple valid URLs on the same line, or a single
             #   valid URL with arbitrary text before and afterwards)
             for item in line.split():
-                
+
                 if check_url(item):
 
                     item = strip_whitespace(item)
@@ -177,7 +177,7 @@ mark_end=None, drag_drop_text=None):
             line = strip_whitespace(line)
             if re.search('\S', line):
                 valid_list.append(line)
-                
+
     if valid_list:
 
         # Some URLs survived the cull
@@ -524,8 +524,8 @@ def clip_extract_data(stamp_list, clip_num):
 def clip_prepare_title(app_obj, video_obj, clip_title_dict, clip_title,
 clip_num, clip_max):
 
-    """Called by downloads.ClipDownloader.do_download() and
-    process.ProcessManager.run().
+    """Called by downloads.ClipDownloader.do_download_clips_with_ffmpeg(), etc,
+    and by process.ProcessManager.run().
 
     Before creating a video clip, decide what its clip title should be.
     The title depends on various settings.
@@ -536,7 +536,7 @@ clip_num, clip_max):
 
         video_obj (media.Video): The video to be sent to FFmpeg
 
-        clip_title_dict (dict): Dictionary of clip tiles used when splitting a
+        clip_title_dict (dict): Dictionary of clip titles used when splitting a
             video into clips), used to re-name duplicates
 
         clip_title (str): When splitting a video, the title of this video clip
@@ -569,9 +569,15 @@ clip_num, clip_max):
         clip_str = str(clip_num)
 
     # Set the video clip's filename, using the specified format
-    # Note that dummy media.Video objects might not have a .file_name set
-    #   (especially in an operation started in Classic Mode), so we have to
-    #   take account of that
+    # Note that dummy media.Video objects might not have a .file_name set. In
+    #   that case, we can use the .nickname (which is optionally set by the
+    #   user, but which might also be None)
+    orig_name = video_obj.file_name
+    if orig_name is None \
+    and video_obj.dummy_flag \
+    and video_obj.nickname != app_obj.default_video_name:
+        orig_name = video_obj.nickname
+
     if app_obj.split_video_name_mode == 'num':
         mod_title = clip_str
     elif app_obj.split_video_name_mode == 'clip':
@@ -583,38 +589,38 @@ clip_num, clip_max):
 
     elif app_obj.split_video_name_mode == 'orig':
 
-        if video_obj.file_name is None:
+        if orig_name is None:
             mod_title = app_obj.split_video_custom_title
         else:
-            mod_title = video_obj.file_name
+            mod_title = orig_name
 
     elif app_obj.split_video_name_mode == 'orig_num':
 
-        if video_obj.file_name is None:
+        if orig_name is None:
             mod_title = clip_str
         else:
-            mod_title = video_obj.file_name + ' ' + clip_str
+            mod_title = orig_name + ' ' + clip_str
 
     elif app_obj.split_video_name_mode == 'orig_clip':
 
-        if video_obj.file_name is None:
+        if orig_name is None:
             mod_title = clip_title
         else:
-            mod_title = video_obj.file_name + ' ' + clip_title
+            mod_title = orig_name + ' ' + clip_title
 
     elif app_obj.split_video_name_mode == 'orig_num_clip':
 
-        if video_obj.file_name is None:
+        if orig_name is None:
             mod_title = clip_str + ' ' + clip_title
         else:
-            mod_title = video_obj.file_name + ' ' + clip_str + ' ' + clip_title
+            mod_title = orig_name + ' ' + clip_str + ' ' + clip_title
 
     elif app_obj.split_video_name_mode == 'orig_clip_num':
 
-        if video_obj.file_name is None:
+        if orig_name is None:
             mod_title = clip_title + ' ' + clip_str
         else:
-            mod_title = video_obj.file_name + ' ' + clip_title + ' ' + clip_str
+            mod_title = orig_name + ' ' + clip_title + ' ' + clip_str
 
     # Failsafe
     if mod_title is None:
@@ -704,6 +710,109 @@ clip_num, clip_max):
                 )
 
 
+def clip_prepare_chapter_output_template(app_obj, video_obj, dest_dir):
+
+    """Called by downloads.ClipDownloader.do_download_clips_with_chapters().
+
+    A slimmed-down version of utils.clip_prepare_title(), used when downloading
+    all clips from a video at the same time (in which case, each clip is named
+    using a youtube-dl output template).
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video to be sent to FFmpeg
+
+        dest_dir (str): Full path to the download destination directory
+
+    Return values:
+
+        The output template (including a full file path, unlike the return
+            value of utils.clip_prepare_title() )
+
+    """
+
+    # Set the video clip's filename, using the specified format
+    # Note that dummy media.Video objects might not have a .file_name set
+    #   (especially in an operation started in Classic Mode), so we have to
+    #   take account of that
+    if app_obj.split_video_name_mode == 'num':
+        mod_title = '%(section_number)s'
+    elif app_obj.split_video_name_mode == 'clip':
+        mod_title = '%(section_title)s'
+    elif app_obj.split_video_name_mode == 'num_clip':
+        mod_title = '%(section_number)s %(section_title)s'
+    elif app_obj.split_video_name_mode == 'clip_num':
+        mod_title = '%(section_title)s %(section_number)s'
+
+    elif app_obj.split_video_name_mode == 'orig' \
+    or app_obj.split_video_name_mode == 'orig_num':
+
+        # N.B. We must have a unique clip name, so these two settings are
+        #   combined
+        if video_obj.file_name is None:
+            mod_title = '%(section_number)s'
+        else:
+            mod_title = video_obj.file_name + ' %(section_number)s'
+
+    elif app_obj.split_video_name_mode == 'orig_clip':
+
+        if video_obj.file_name is None:
+            mod_title = '%(section_title)s'
+        else:
+            mod_title = video_obj.file_name + ' %(section_title)s'
+
+    elif app_obj.split_video_name_mode == 'orig_num_clip':
+
+        if video_obj.file_name is None:
+            mod_title = '%(section_number)s %(section_title)s'
+        else:
+            mod_title = video_obj.file_name \
+            + ' %(section_number)s %(section_title)s'
+
+    elif app_obj.split_video_name_mode == 'orig_clip_num':
+
+        if video_obj.file_name is None:
+            mod_title = '%(section_title)s %(section_number)s'
+        else:
+            mod_title = video_obj.file_name \
+            + ' %(section_title)s %(section_number)s'
+
+    # Failsafe
+    if mod_title is None:
+        mod_title = '%(section_number)s'
+
+    # Set the output template with its correct file path
+    if video_obj.file_ext is None:
+
+        return os.path.abspath(
+            os.path.join(
+                dest_dir,
+                mod_title + '.%(ext)s',
+            ),
+        )
+
+    elif not app_obj.split_video_subdir_flag:
+
+        return os.path.abspath(
+            os.path.join(
+                dest_dir,
+                mod_title + video_obj.file_ext,
+            ),
+        )
+
+    else:
+
+        return os.path.abspath(
+            os.path.join(
+                dest_dir,
+                video_obj.file_name,
+                mod_title + video_obj.file_ext,
+            ),
+        )
+
+
 def clip_set_destination(app_obj, video_obj):
 
     """Called by downloads.ClipDownloader.do_download() and
@@ -724,7 +833,7 @@ def clip_set_destination(app_obj, video_obj):
         A list in the form:
 
             (
-                arent_folder_object, parent_directory,
+                parent_folder_object, parent_directory,
                 destination_folder_object, destination_directory
             )
 
@@ -1797,6 +1906,192 @@ def extract_path_components(path):
     return directory, filename, extension
 
 
+def extract_timestamps_from_descrip(app_obj, descrip):
+
+    """Can be called by anything. If setting a media.Video object's timestamp
+    list, call media.Video.extract_timestamps_from_descrip() instead.
+
+    From some arbitrary text, attempt to extract a video's timestamps.
+
+    Compiles a list in groups of three, in the form
+        [start_stamp, stop_stamp, clip_title]
+    'start_stamp' is a string in the form h+:m+[:s+], e.g. '15:52',
+        '01:15:52'
+    'stop_stamp' is always None, so that if 'start_stamp' is used to split
+        a video clip, the clip ends at the next 'start_stamp' (or at the
+        end of the video). It's up to the user to specify their own
+        'stop_stamp' values explicitly, if they need them.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        descrip (str): The text from which timestamps are extracted. This
+            function assumes it is not an empty string
+
+    """
+
+    regex = r'^\s*(' + app_obj.timestamp_regex + r')(\s.*)'
+    rev_regex = r'^(.*\s)(' + app_obj.timestamp_regex + r')\s*$'
+    digit_count = 0
+    line_list = descrip.splitlines()
+
+    temp_list = []
+    stamp_list = []
+
+    for line in line_list:
+
+        # (To improve detection, remove initial/final non-alphanumeric
+        #   characters)
+        line = re.sub('^[\W\s]+', '', line)
+        line = re.sub('[\W\s]+$', '', line)
+
+        # We would like every timestamp to be in the same format, i.e.
+        #   either none of them have an h+ component, or all of them
+        #   have an h+ component, with exactly the same number of digits
+        #   (with any necessary leading zeroes)
+        # Extract the timestamps into a temporary list. For each timestamp,
+        #   count the number of digits for the h+ component, and store the
+        #   highest number of digits found
+
+        # 15:52 Title
+        result = re.search(regex, line)
+
+        if result:
+
+            title = result.groups()[5]
+            hours = result.groups()[2]
+            minutes = result.groups()[3]
+            seconds = result.groups()[4]
+
+        else:
+
+            # Title 15:52
+            result = re.search(rev_regex, line)
+            if result:
+
+                title = result.groups()[0]
+                hours = result.groups()[3]
+                minutes = result.groups()[4]
+                seconds = result.groups()[5]
+
+        if result:
+
+            # Remove punctuation in the title, such as the hyphen in a line
+            #   like 'Intro - 15.52', and strip leading/trailing whitespace
+            if title != '':
+                # !!! DEBUG This is not yet tested on other alphabets
+                title = re.sub(r'\s\W+\s', ' ', title)
+                title = strip_whitespace(title)
+
+            # Use None as the title, rather than an empty string
+            if title == '':
+                title = None
+
+            # Count the number of digits in the h+ component, having
+            #   removed any leading zeroes
+            if hours is not None:
+                this_len = len(str(int(hours)))
+                if this_len > digit_count:
+                    digit_count = this_len
+
+            # Temporarily store the components
+            temp_list.append( [title, hours, minutes, seconds] )
+
+    # Now compile the a list of timestamps, formatted as strings in the
+    #   form h:mm:ss or mm:ss, and with the correct number of leading
+    #   zeroes applied
+    for mini_list in temp_list:
+
+        stamp_list.append(
+            [
+                timestamp_quick_format(         # 'start_stamp'
+                    app_obj,
+                    mini_list[1],               # Hours (optional)
+                    mini_list[2],               # Minutes
+                    mini_list[3],               # Seconds
+                    digit_count,                # Number of digits in h+
+                ),
+                None,                           # 'stop_stamp'
+                mini_list[0],                   # 'clip_title'
+
+            ]
+        )
+
+    # Sort by timestamp (since we can't assume the description does that)
+    stamp_list.sort()
+
+    # Procedure complete
+    return stamp_list
+
+
+def extract_timestamps_from_chapters(app_obj, chapter_list):
+
+    """Can be called by anything. If setting a media.Video object's timestamp
+    list, call media.Video.extract_timestamps_from_chapters() instead.
+
+    When supplied with a list of chapters from the video's metadata,
+    convert that data and store it as a list of timestamps.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        chapter_list (list): An ordered list containing a series of python
+            dictionaries. Each dictionary corresponds to the start of a
+            single chapter, and is expected to contain the keys
+            'start_time', 'end_time' and 'title'. YouTube always supplies
+            all three, but in common with other parts of the code, we will
+            still accept the chapter if 'end_time' and/or 'title' are
+            missing
+
+    """
+
+    # Extract each chapter in turn
+    stamp_list = []
+    while chapter_list:
+
+        chapter_dict = chapter_list.pop(0)
+
+        if not 'start_time' in chapter_dict:
+            # Ignore this chapter
+            continue
+        else:
+            # Tartube timestamps use whole seconds, so round up any
+            #   fractional values
+            start = int(chapter_dict['start_time'])
+
+        stop = None
+        if 'end_time' in chapter_dict:
+            stop = int(chapter_dict['end_time'])
+            # If a chapter stops at second #10, the next chapter starts at
+            #   second #10
+            # But FFmpeg expects the chapter to stop at second #9, so take
+            #   account of that
+            if chapter_list:
+                stop -= 1
+
+        clip_title = None
+        if 'title' in chapter_dict and chapter_dict['title'] != '':
+            clip_title = chapter_dict['title']
+
+        # 'start' and 'stop' are in seconds. Convert them to a string in
+        #   the usual format, 'mm:ss' or 'h:mm:ss', where the 'h' component
+        #   can contain any number of digits
+        # The True flag tells the function not to include the 'h' component
+        #   if it's zero
+        start_stamp = convert_seconds_to_string(start, True)
+        if stop is not None:
+            stop_stamp = convert_seconds_to_string(stop, True)
+        else:
+            stop_stamp = None
+
+        stamp_list.append( [start_stamp, stop_stamp, clip_title] )
+
+    # Procedure complete
+    return stamp_list
+
+
 def find_available_name(app_obj, old_name, min_value=2, max_value=9999):
 
     """Can be called by anything.
@@ -1957,7 +2252,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-            
+
         return
 
     # 400 = bad request, 404 = not found
@@ -1971,7 +2266,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-                
+
         return
 
     elif request_obj.status_code == 404:
@@ -1984,7 +2279,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-                
+
         return
 
     # (Conversion to JSON might produce an exception)
@@ -2001,7 +2296,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                 print(msg)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(msg)
-                
+
         return
 
     # Only use the data matching the video (since the video ID may have
@@ -2018,7 +2313,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                     print(msg)
                 if app_obj.ytdl_log_stderr_flag:
                     app_obj.write_downloader_log(msg)
-                
+
             return
 
         elif mini_dict['videoID'] == video_obj.vid:
@@ -2041,7 +2336,7 @@ def fetch_slice_data(app_obj, video_obj, page_num=None, terminal_flag=False):
                         print(msg)
                     if app_obj.ytdl_log_stdout_flag:
                         app_obj.write_downloader_log(msg)
-                    
+
             return
 
 
@@ -2548,7 +2843,7 @@ classic_flag):
 
     """Called by downloads.ClipDownloader.do_download_remove_slices() (only).
 
-    A modified version of utils.generate_split_system_cmd().
+    A modified version of utils.generate_ffmpeg_split_system_cmd().
 
     Prepares the system command that instructs youtube-dl to download a video
     clip (instead of downloading the whole video). The downloaded clips are
@@ -2593,8 +2888,9 @@ classic_flag):
 
     # Filter out download options that get in the way. A list of them is
     #   specified in mainapp.TartubeApp.split_ignore_option_dict
-    # Unlike the corresponding code in utils.generate_split_system_cmd(), we
-    #   do write the metadata files (if required), but only for the first clip
+    # Unlike the corresponding code in
+    #   utils.generate_ffmpeg_split_system_cmd() (etc), we do write the
+    #   metadata files (if required), but only for the first clip
     # Exception: if the parent container's .dl_no_db_flag is set, don't write
     #   the metadata files at all
     mod_options_list = []
@@ -2665,6 +2961,12 @@ classic_flag):
     if stop_time is not None:
         slice_arg += ' -to ' + str(stop_time)
 
+    # Force keyframes at cuts, if required, by re-encoding the clips
+    # This is a very inefficient way of doing things (for example, compared to
+    #   yt-dlp's method), but at least it requires only one FFmpeg command
+    if app_obj.slice_video_force_keyframe_flag:
+        slice_arg += ' -c:v libx264'
+
     mod_options_list.append('--external-downloader')
     mod_options_list.append('ffmpeg')
     mod_options_list.append('--external-downloader-args')
@@ -2707,10 +3009,271 @@ classic_flag):
     return cmd_list
 
 
-def generate_split_system_cmd(app_obj, orig_video_obj, options_list, dest_dir,
-clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
+def generate_chapters_split_system_cmd(app_obj, orig_video_obj, options_list,
+dest_dir, temp_dir, output_template, custom_dl_obj, divert_mode, classic_flag):
 
-    """Called by downloads.ClipDownloader.do_download() (only).
+    """Called by downloads.ClipDownloader.do_download_clips_with_chapters()
+    (only).
+
+    A simplified version of utils.generate_ytdl_system_cmd().
+
+    Prepares the system command that instructs yt-dlp to download chapters as
+    video clips (instead of downloading the whole video).
+
+    Note that, at the time of writing (v2.4.297), only yt-dlp supports the
+    --split-chapters download option.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        orig_video_obj (media.Video): The video object for the video from which
+            the clip is downloaded
+
+        options_list (list): A list of download options generated by a call to
+            options.OptionsParser.parse()
+
+        dest_dir (str): The directory into which the clip will be downloaded
+
+        temp_dir (str): A temporary directory used during the download
+
+        output_template (str): Output template, including the full file path
+
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies, if any
+
+        divert_mode (str): If not None, should be one of the values of
+            downloads.CustomDLManager.divert_mode: 'default', 'hooktube',
+            'invidious' or 'other'. If not 'default', a media.Video object
+            whose source URL points to YouTube should be converted to the
+            specified alternative YouTube front-end (no conversion takes place
+            for channels/playlists/folders)
+
+        classic_flag (bool): Specifies the (standard) operation type. True for
+            'classic_custom', False for 'custom_real'
+
+    """
+
+    # Filter out download options that get in the way. A list of them is
+    #   specified in mainapp.TartubeApp.split_ignore_option_dict
+    mod_options_list = []
+    while options_list:
+
+        item = options_list.pop(0)
+        if item in app_obj.split_ignore_option_dict:
+
+            if app_obj.split_ignore_option_dict[item]:
+                # This option takes an argument
+                options_list.pop(0)
+
+        elif item == '-o' \
+        or item == '--output' \
+        or item == '-P' \
+        or item == '--paths':
+
+            # The output template is set below
+                # This option takes an argument
+                options_list.pop(0)
+
+        else:
+            mod_options_list.append(item)
+
+    # On MS Windows and yt-dlp, if --restrict-filenames is not specified, then
+    #   insert --windows-filenames. (I can't be sure that yt-dlp knows it is
+    #   running on MS Windows, when running inside MSYS2)
+    if app_obj.ytdl_fork is not None \
+    and app_obj.ytdl_fork == 'yt-dlp' \
+    and os.name == 'nt' \
+    and not '--restrict-filenames' in mod_options_list:
+        mod_options_list.append('--windows-filenames')
+
+    # Supply youtube-dl with the path to the ffmpeg binary, if the user has
+    #   provided one
+    if app_obj.ffmpeg_path is not None:
+        mod_options_list.append('--ffmpeg-location')
+        mod_options_list.append(app_obj.ffmpeg_path)
+
+    # Set up chapters, the output template, and the temporary directory
+    mod_options_list.append('--split-chapters')
+    mod_options_list.append('--output')
+    mod_options_list.append('chapter:' + output_template)
+    mod_options_list.append('--paths')
+    mod_options_list.append(temp_dir)
+
+    # Convert a YouTube URL to an alternative YouTube front-end, if required
+    source = orig_video_obj.source
+    if divert_mode is not None:
+        if divert_mode == 'hooktube':
+            source = convert_youtube_to_hooktube(source)
+        elif divert_mode == 'invidious':
+            source = convert_youtube_to_invidious(app_obj, source)
+        elif divert_mode == 'custom' \
+        and custom_dl_obj.divert_website is not None \
+        and len(custom_dl_obj.divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
+
+    # Convert a downloader path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+    else:
+        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+    return cmd_list
+
+
+def generate_downloader_split_system_cmd(app_obj, orig_video_obj, options_list,
+dest_dir, temp_dir, stamp_list, custom_dl_obj, divert_mode, classic_flag):
+
+    """Called by downloads.ClipDownloader.do_download_clips_with_downloader()
+    (only).
+
+    A simplified version of utils.generate_ytdl_system_cmd().
+
+    Prepares the system command that instructs yt-dlp to download sections as
+    video clips (instead of downloading the whole video).
+
+    Note that, at the time of writing (v2.4.297), only yt-dlp supports the
+    --download-sections download option.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        orig_video_obj (media.Video): The video object for the video from which
+            the clip is downloaded
+
+        options_list (list): A list of download options generated by a call to
+            options.OptionsParser.parse()
+
+        dest_dir (str): The directory into which the clip will be downloaded
+
+        temp_dir (str): A temporary directory used during the download
+
+        stamp_list (list): List in groups of three, in the form
+            [start_timestamp, stop_timestamp, clip_title]
+
+        custom_dl_obj (downloads.CustomDLManager or None): The custom download
+            manager that applies, if any
+
+        divert_mode (str): If not None, should be one of the values of
+            downloads.CustomDLManager.divert_mode: 'default', 'hooktube',
+            'invidious' or 'other'. If not 'default', a media.Video object
+            whose source URL points to YouTube should be converted to the
+            specified alternative YouTube front-end (no conversion takes place
+            for channels/playlists/folders)
+
+        classic_flag (bool): Specifies the (standard) operation type. True for
+            'classic_custom', False for 'custom_real'
+
+    """
+
+    # Filter out download options that get in the way. A list of them is
+    #   specified in mainapp.TartubeApp.split_ignore_option_dict
+    mod_options_list = []
+    while options_list:
+
+        item = options_list.pop(0)
+        if item in app_obj.split_ignore_option_dict:
+
+            if app_obj.split_ignore_option_dict[item]:
+                # This option takes an argument
+                options_list.pop(0)
+
+        elif item == '-o' \
+        or item == '--output' \
+        or item == '-P' \
+        or item == '--paths':
+
+            # The output template is set below
+                # This option takes an argument
+                options_list.pop(0)
+
+        else:
+            mod_options_list.append(item)
+
+    # On MS Windows and yt-dlp, if --restrict-filenames is not specified, then
+    #   insert --windows-filenames. (I can't be sure that yt-dlp knows it is
+    #   running on MS Windows, when running inside MSYS2)
+    if app_obj.ytdl_fork is not None \
+    and app_obj.ytdl_fork == 'yt-dlp' \
+    and os.name == 'nt' \
+    and not '--restrict-filenames' in mod_options_list:
+        mod_options_list.append('--windows-filenames')
+
+    # Supply youtube-dl with the path to the ffmpeg binary, if the user has
+    #   provided one
+    if app_obj.ffmpeg_path is not None:
+        mod_options_list.append('--ffmpeg-location')
+        mod_options_list.append(app_obj.ffmpeg_path)
+
+    # Set up sections, the output template, and the temporary directory
+    for i in range(len(stamp_list)):
+
+        # List in the form [start_stamp, stop_stamp, clip_title]
+        # If 'stop_stamp' is not specified, then 'start_stamp' of the next clip
+        #   is used. If there are no more clips, then this clip will end at the
+        #   end of the video
+        start_stamp, stop_stamp, clip_title = clip_extract_data(stamp_list, i)
+
+        mod_options_list.append('--download-sections')
+        # Use the clip title, if available; otherwise use timestamps
+        if stop_stamp is None or stop_stamp == '':
+            mod_options_list.append('*' + start_stamp + '-inf')
+        else:
+            mod_options_list.append('*' + start_stamp + '-' + stop_stamp)
+
+    mod_options_list.append('--output')
+    mod_options_list.append('Video %(section_start)s %(section_end)s')
+    mod_options_list.append('--paths')
+    mod_options_list.append(temp_dir)
+
+    # Force keyframes at cuts, if required
+    if app_obj.split_video_force_keyframe_flag:
+        mod_options_list.append('--force-keyframes-at-cuts')
+
+    # Convert a YouTube URL to an alternative YouTube front-end, if required
+    source = orig_video_obj.source
+    if divert_mode is not None:
+        if divert_mode == 'hooktube':
+            source = convert_youtube_to_hooktube(source)
+        elif divert_mode == 'invidious':
+            source = convert_youtube_to_invidious(app_obj, source)
+        elif divert_mode == 'custom' \
+        and custom_dl_obj.divert_website is not None \
+        and len(custom_dl_obj.divert_website) > 2:
+            source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
+
+    # Convert a downloader path beginning with ~ (not on MS Windows)
+    ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
+    if os.name != 'nt':
+        ytdl_path = re.sub('^\~', os.path.expanduser('~'), ytdl_path)
+
+    # Set the list. At the moment, a custom path must be preceded by 'python3'
+    #   (Git #243), except on MS Windows when the custom path points at an .exe
+    #   (Git #299)
+    if app_obj.ytdl_path_custom_flag \
+    and (os.name != 'nt' or not re.search('\.exe$', ytdl_path)):
+        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+    else:
+        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+    return cmd_list
+
+
+def generate_ffmpeg_split_system_cmd(app_obj, orig_video_obj, options_list,
+dest_dir, clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode,
+classic_flag):
+
+    """Called by downloads.ClipDownloader.do_download_clips_with_ffmpeg()
+    (only).
 
     A simplified version of utils.generate_ytdl_system_cmd().
 
@@ -2813,6 +3376,12 @@ clip_title, start_stamp, stop_stamp, custom_dl_obj, divert_mode, classic_flag):
     stamp_arg = '-ss ' + start_stamp
     if stop_stamp is not None:
         stamp_arg += ' -to ' + stop_stamp
+
+    # Force keyframes at cuts, if required, by re-encoding the clips
+    # This is a very inefficient way of doing things (for example, compared to
+    #   yt-dlp's method), but at least it requires only one FFmpeg command
+    if app_obj.split_video_force_keyframe_flag:
+        stamp_arg += ' -c:v libx264'
 
     mod_options_list.append('--external-downloader')
     mod_options_list.append('ffmpeg')
@@ -4074,9 +4643,9 @@ def timestamp_format(app_obj, stamp):
     The user can specify timestamps without leading zeroes, for example '1:59'
     for '01:59', or even '1:5' or '01:05'.
 
-    Add leading zeroes for the minutes and seconds components. Removes leading
-    zeroes for the hours component, if specified. This ensures that any list of
-    timestamps is sorted correctly.
+    Add leading zeroes for the minutes and seconds components. If the hours
+    component is specified, removes any leading zeroes. If it is not specified,
+    adds it. This ensures that any list of timestamps is sorted correctly.
 
     Args:
 
@@ -4100,13 +4669,14 @@ def timestamp_format(app_obj, stamp):
         hours = match.groups()[1]
         if hours is not None:
             hours = int(hours)
+        else:
+            hours = 0
 
         minutes = int(match.groups()[2])
         seconds = int(match.groups()[3])
 
         stamp = '{:02d}'.format(minutes) + ':{:02d}'.format(seconds)
-        if hours:
-            stamp = str(int(hours)) + ':' + stamp
+        stamp = str(int(hours)) + ':' + stamp
 
     return stamp
 
@@ -4130,6 +4700,8 @@ def timestamp_quick_format(app_obj, hours, minutes, seconds,
     'hour_digit_count' is specified, adds leading zeroes to make the correct
     number of digits.
 
+    If the hours component is not specified, adds one.
+
     As a result of calling this function, any list of timestamps processed with
     this function can be sorted in the correct order.
 
@@ -4149,22 +4721,20 @@ def timestamp_quick_format(app_obj, hours, minutes, seconds,
 
     stamp = '{:02d}'.format(int(minutes)) + ':{:02d}'.format(int(seconds))
 
-    if hours is None and hour_digit_count is not None:
+    if hours is None:
         hours = 0
 
-    if hours is not None:
+    # Remove leading zeroes
+    hours = str(int(hours))
 
-        # Remove leading zeroes
-        hours = str(int(hours))
+    if hour_digit_count is None or len(hours) >= hour_digit_count:
 
-        if hour_digit_count is None or len(hours) >= hour_digit_count:
+        stamp = hours + ':' + stamp
 
-            stamp = hours + ':' + stamp
+    elif len(hours) < hour_digit_count:
 
-        elif len(hours) < hour_digit_count:
-
-            # Add leading zeroes
-            stamp = hours.rjust(hour_digit_count, '0') + ':' + stamp
+        # Add leading zeroes
+        stamp = hours.rjust(hour_digit_count, '0') + ':' + stamp
 
     return stamp
 

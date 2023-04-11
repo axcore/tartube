@@ -15456,6 +15456,14 @@ class VideoEditWin(GenericEditWin):
             self.on_clear_slice_button_clicked,
         )
 
+        button5 = Gtk.Button(_('Contact SponsorBlock to reset list'))
+        grid2.attach(button5, 2, 1, 2, 1)
+        button5.set_hexpand(True)
+        button5.connect(
+            'clicked',
+            self.on_contact_sblock_clicked,
+        )
+
 
     def setup_slices_tab_update_treeview(self):
 
@@ -16493,6 +16501,26 @@ class VideoEditWin(GenericEditWin):
         SystemPrefWin(self.app_obj, 'clips')
 
 
+    def on_contact_sblock_clicked(self, button):
+
+        """Called from a callback in self.setup_slices_tab().
+
+        Contacts SponsorBlock to reset the video's slice list.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+        """
+
+        utils.fetch_slice_data(
+            self.app_obj,
+            self.edit_obj,
+        )
+
+        self.setup_slices_tab_update_treeview()
+
+
     def on_copy_stamp_button_clicked(self, button):
 
         """Called from a callback in self.setup_timestamps_tab().
@@ -16616,7 +16644,6 @@ class VideoEditWin(GenericEditWin):
         # (Multiple selection is not enabled)
         this_iter = model.get_iter(path_list[0])
         if this_iter is None:
-
             return
 
         start_stamp = model[this_iter][0]
@@ -20041,7 +20068,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(7)
+        self.operations_inner_notebook.set_current_page(8)
 
 
     def select_custom_dl_tab(self):
@@ -20136,7 +20163,7 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.notebook.set_current_page(4)
-        self.operations_inner_notebook.set_current_page(8)
+        self.operations_inner_notebook.set_current_page(9)
 
 
     # (Setup tabs)
@@ -20316,7 +20343,8 @@ class SystemPrefWin(GenericPrefWin):
         combo2.add_attribute(renderer_text, 'text', 1)
 
         # !!! DEBUG
-        # Git 518: User reports .current_locale is set to 'en_MY', but I can't reproduce it
+        # Git 518: User reports .current_locale is set to 'en_MY', but I can't
+        #   reproduce it
         if self.app_obj.current_locale is None \
         or not self.app_obj.current_locale in formats.LOCALE_LIST:
             combo2.set_active(0)
@@ -22532,8 +22560,8 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_drag_error_separator_button_toggled,
         )
-        
-                
+
+
     def setup_windows_system_tray_tab(self, inner_notebook):
 
         """Called by self.setup_windows_tab().
@@ -25108,9 +25136,9 @@ class SystemPrefWin(GenericPrefWin):
         )
         grid_width = 2
 
-        # Video clips (requires FFmpeg)
+        # Timestamps
         self.add_label(grid,
-            '<u>' + _('Video clips (requires FFmpeg)') + '</u>',
+            '<u>' + _('Timestamps') + '</u>',
             0, 0, grid_width, 1,
         )
 
@@ -25161,9 +25189,36 @@ class SystemPrefWin(GenericPrefWin):
             self.on_reextract_stamps_flag_toggled,
         )
 
+        # Video clips (requires FFmpeg)
+        self.add_label(grid,
+            '<u>' + _('Video clips (requires FFmpeg or yt-dlp)') + '</u>',
+            0, 5, grid_width, 1,
+        )
+
+        radiobutton = self.add_radiobutton(grid,
+            None,
+            _('Download video clips using FFmpeg'),
+            0, 6, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        radiobutton2 = self.add_radiobutton(grid,
+            radiobutton,
+            _('Download video clips using yt-dlp'),
+            1, 6, 1, 1,
+        )
+        if self.app_obj.video_timestamps_dl_mode == 'downloader':
+            radiobutton2.set_active(True)
+
+        # (Signal connects from above)
+        radiobutton.connect(
+            'toggled',
+            self.on_clips_dl_mode_button_toggled,
+        )
+
         self.add_label(grid,
             _('Format of video clip filenames'),
-            0, 5, 1, 1,
+            0, 7, 1, 1,
         )
 
         combo_list = [
@@ -25192,7 +25247,7 @@ class SystemPrefWin(GenericPrefWin):
             store.append([ descrip, mode])
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 1, 5, 1, 1)
+        grid.attach(combo, 1, 7, 1, 1)
         combo.set_hexpand(True)
 
         renderer_text = Gtk.CellRendererText()
@@ -25203,13 +25258,13 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid,
             _('Generic title for video clips'),
-            0, 6, 1, 1,
+            0, 8, 1, 1,
         )
 
         entry = self.add_entry(grid,
             None,
             True,
-            1, 6, 1, 1,
+            1, 8, 1, 1,
         )
         entry.set_text(self.app_obj.split_video_custom_title)
         entry.connect(
@@ -25217,23 +25272,23 @@ class SystemPrefWin(GenericPrefWin):
             self.on_custom_title_changed,
         )
 
-        radiobutton = self.add_radiobutton(grid,
+        radiobutton3 = self.add_radiobutton(grid,
             None,
             _('Move clips to the Video Clips folder'),
-            0, 7, 1, 1,
+            0, 9, 1, 1,
         )
         # (Signal connect appears below)
 
-        radiobutton2 = self.add_radiobutton(grid,
-            radiobutton,
+        radiobutton4 = self.add_radiobutton(grid,
+            radiobutton3,
             _('Keep clips with their original video'),
-            1, 7, 1, 1,
+            1, 9, 1, 1,
         )
         if not self.app_obj.split_video_clips_dir_flag:
-            radiobutton2.set_active(True)
+            radiobutton4.set_active(True)
 
         # (Signal connects from above)
-        radiobutton.connect(
+        radiobutton3.connect(
             'toggled',
             self.on_clips_dir_button_toggled,
         )
@@ -25242,7 +25297,7 @@ class SystemPrefWin(GenericPrefWin):
             _('...but place new files inside a sub-directory'),
             self.app_obj.split_video_subdir_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 10, grid_width, 1,
         )
         checkbutton5.connect(
             'toggled',
@@ -25253,7 +25308,7 @@ class SystemPrefWin(GenericPrefWin):
             _('Add new files to Tartube\'s database'),
             self.app_obj.split_video_add_db_flag,
             True,                   # Can be toggled by user
-            0, 9, grid_width, 1,
+            0, 11, 1, 1,
         )
         checkbutton6.connect(
             'toggled',
@@ -25264,33 +25319,44 @@ class SystemPrefWin(GenericPrefWin):
             _('Use the original video\'s thumbnail'),
             self.app_obj.split_video_copy_thumb_flag,
             True,                   # Can be toggled by user
-            1, 9, grid_width, 1,
+            1, 11, 1, 1,
         )
         checkbutton7.connect('toggled', self.on_copy_thumb_flag_toggled)
+
+        checkbutton8 = self.add_checkbutton(grid,
+            _(
+                'Force keyframes at cuts (slower, but fewer video artefacts' \
+                + ' before and after each cut)',
+            ),
+            self.app_obj.split_video_force_keyframe_flag,
+            True,                   # Can be toggled by user
+            0, 12, grid_width, 1,
+        )
+        checkbutton8.connect('toggled', self.on_split_keyframe_flag_toggled)
 
         if os.name == 'nt':
             msg = _('After splitting a video, open the destination folder')
         else:
             msg = _('After splitting a video, open the destination directory')
 
-        checkbutton8 = self.add_checkbutton(grid,
+        checkbutton9 = self.add_checkbutton(grid,
             msg,
             self.app_obj.split_video_auto_open_flag,
             True,                   # Can be toggled by user
-            0, 10, grid_width, 1,
+            0, 13, grid_width, 1,
         )
-        checkbutton8.connect('toggled', self.on_auto_open_flag_toggled)
+        checkbutton9.connect('toggled', self.on_auto_open_flag_toggled)
 
-        checkbutton9 = self.add_checkbutton(grid,
+        checkbutton10 = self.add_checkbutton(grid,
             _(
             'After splitting a video, delete the original (ignored for' \
             + ' videos in channels/playlists)',
             ),
             self.app_obj.split_video_auto_delete_flag,
             True,                   # Can be toggled by user
-            0, 11, grid_width, 1,
+            0, 14, grid_width, 1,
         )
-        checkbutton9.connect('toggled', self.on_auto_delete_flag_toggled)
+        checkbutton10.connect('toggled', self.on_auto_delete_flag_toggled)
 
 
     def setup_operations_slices_tab(self, inner_notebook):
@@ -25375,14 +25441,28 @@ class SystemPrefWin(GenericPrefWin):
 
         checkbutton5 = self.add_checkbutton(grid,
             _(
+            'Force keyframes at cuts (slower, but fewer video artefacts' \
+            + ' before and after each cut)',
+            ),
+            self.app_obj.slice_video_force_keyframe_flag,
+            True,               # Can be toggled by user
+            0, 5, grid_width, 1,
+        )
+        checkbutton5.connect(
+            'toggled',
+            self.on_slice_keyframe_flag_toggled,
+        )
+
+        checkbutton6 = self.add_checkbutton(grid,
+            _(
             'After removing slices from a video, reset all timestamp and' \
             + ' slice data (recommended)',
             ),
             self.app_obj.slice_video_cleanup_flag,
             True,               # Can be toggled by user
-            0, 5, grid_width, 1,
+            0, 6, grid_width, 1,
         )
-        checkbutton5.connect(
+        checkbutton6.connect(
             'toggled',
             self.on_slice_cleanup_button_toggled,
         )
@@ -26902,7 +26982,7 @@ class SystemPrefWin(GenericPrefWin):
             '<u>' + _('General preferences') + '</u>',
             0, 0, 1, 1,
         )
-        
+
         self.add_label(grid,
             '<i>' + _(
                 'Applies to Output tab, terminal window and downloader log',
@@ -28299,6 +28379,24 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_split_video_clips_dir_flag(True)
         else:
             self.app_obj.set_split_video_clips_dir_flag(False)
+
+
+    def on_clips_dl_mode_button_toggled(self, radiobutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Toggles between download clips with FFmpeg and yt-dlp.
+
+        Args:
+
+            radiobutton (Gtk.RadioButton): The widget clicked
+
+        """
+
+        if radiobutton.get_active():
+            self.app_obj.set_video_timestamps_dl_mode('ffmpeg')
+        else:
+            self.app_obj.set_video_timestamps_dl_mode('downloader')
 
 
     def on_close_to_tray_toggled(self, checkbutton, checkbutton2):
@@ -29887,7 +29985,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_operation_download_limit(int(text))
 
 
-    def on_drag_error_msg_button_toggled(self, checkbutton): 
+    def on_drag_error_msg_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29908,7 +30006,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_msg_flag(False)
 
 
-    def on_drag_error_name_button_toggled(self, checkbutton): 
+    def on_drag_error_name_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29930,7 +30028,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_name_flag(False)
 
 
-    def on_drag_error_path_button_toggled(self, checkbutton): 
+    def on_drag_error_path_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29952,7 +30050,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_path_flag(False)
 
 
-    def on_drag_error_separator_button_toggled(self, checkbutton): 
+    def on_drag_error_separator_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29974,7 +30072,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_separator_flag(False)
 
 
-    def on_drag_error_source_button_toggled(self, checkbutton): 
+    def on_drag_error_source_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -29996,7 +30094,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_error_source_flag(False)
 
 
-    def on_drag_msg_button_toggled(self, checkbutton): 
+    def on_drag_msg_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -30080,7 +30178,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_drag_video_path_flag(False)
 
 
-    def on_drag_separator_button_toggled(self, checkbutton):  
+    def on_drag_separator_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_windows_drag_tab().
 
@@ -33880,6 +33978,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_show_tooltips_extra_flag(False)
 
 
+    def on_slice_keyframe_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_slices_tab().
+
+        Enables/disables forced keyframes at cuts, when removing slices from
+        videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.slice_video_force_keyframe_flag:
+            self.app_obj.set_slice_video_force_keyframe_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.slice_video_force_keyframe_flag:
+            self.app_obj.set_slice_video_force_keyframe_flag(False)
+
+
     def on_sound_custom_changed(self, combo):
 
         """Called from callback in self.setup_operations_actions_tab().
@@ -33895,6 +34014,27 @@ class SystemPrefWin(GenericPrefWin):
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
         self.app_obj.set_sound_custom(model[tree_iter][0])
+
+
+    def on_split_keyframe_flag_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_clips_tab().
+
+        Enables/disables forced keyframes at cuts, when splitting videos into
+        clips.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.split_video_force_keyframe_flag:
+            self.app_obj.set_split_video_force_keyframe_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.split_video_force_keyframe_flag:
+            self.app_obj.set_split_video_force_keyframe_flag(False)
 
 
     def on_split_mode_combo_changed(self, combo):

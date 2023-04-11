@@ -2097,6 +2097,9 @@ class Video(GenericMedia):
         # Valid values are those specified by formats.VIDEO_FORMAT_LIST,
         #   formats.AUDIO_FORMAT_LIST and formats.VIDEO_RESOLUTION_LIST
         self.dummy_format = None
+        # Flag set to True to enable yt-dlp to remove all SponsorBlock
+        #   categories
+        self.dummy_sblock_flag = False
         # Flag set to True if the download was completed, in which case
         #   self.source is not added to mainapp.TartubeApp.classic_pending_list
         #   (remembering it for the next session)
@@ -2343,101 +2346,18 @@ class Video(GenericMedia):
         and (override_descrip is None or override_descrip == ''):
             return
 
-        regex = r'^\s*(' + app_obj.timestamp_regex + r')(\s.*)'
-        rev_regex = r'^(.*\s)(' + app_obj.timestamp_regex + r')\s*$'
-        digit_count = 0
-
         if override_descrip is not None and override_descrip != '':
-            line_list = override_descrip.splitlines()
-        else:
-            line_list = self.descrip.splitlines()
-
-        temp_list = []
-        stamp_list = []
-
-        for line in line_list:
-
-            # (To improve detection, remove initial/final non-alphanumeric
-            #   characters)
-            line = re.sub('^[\W\s]+', '', line)
-            line = re.sub('[\W\s]+$', '', line)
-
-            # We would like every timestamp to be in the same format, i.e.
-            #   either none of them have an h+ component, or all of them
-            #   have an h+ component, with exactly the same number of digits
-            #   (with any necessary leading zeroes)
-            # Extract the timestamps into a temporary list. For each timestamp,
-            #   count the number of digits for the h+ component, and store the
-            #   highest number of digits found
-
-            # 15:52 Title
-            result = re.search(regex, line)
-
-            if result:
-
-                title = result.groups()[5]
-                hours = result.groups()[2]
-                minutes = result.groups()[3]
-                seconds = result.groups()[4]
-
-            else:
-
-                # Title 15:52
-                result = re.search(rev_regex, line)
-                if result:
-
-                    title = result.groups()[0]
-                    hours = result.groups()[3]
-                    minutes = result.groups()[4]
-                    seconds = result.groups()[5]
-
-            if result:
-
-                # Remove punctuation in the title, such as the hyphen in a line
-                #   like 'Intro - 15.52', and strip leading/trailing whitespace
-                if title != '':
-                    # !!! DEBUG This is not yet tested on other alphabets
-                    title = re.sub(r'\s\W+\s', ' ', title)
-                    title = utils.strip_whitespace(title)
-
-                # Use None as the title, rather than an empty string
-                if title == '':
-                    title = None
-
-                # Count the number of digits in the h+ component, having
-                #   removed any leading zeroes
-                if hours is not None:
-                    this_len = len(str(int(hours)))
-                    if this_len > digit_count:
-                        digit_count = this_len
-
-                # Temporarily store the components
-                temp_list.append( [title, hours, minutes, seconds] )
-
-        # Now compile the a list of timestamps, formatted as strings in the
-        #   form h:mm:ss or mm:ss, and with the correct number of leading
-        #   zeroes applied
-        for mini_list in temp_list:
-
-            stamp_list.append(
-                [
-                    utils.timestamp_quick_format(   # 'start_stamp'
-                        app_obj,
-                        mini_list[1],               # Hours (optional)
-                        mini_list[2],               # Minutes
-                        mini_list[3],               # Seconds
-                        digit_count,                # Number of digits in h+
-                    ),
-                    None,                           # 'stop_stamp'
-                    mini_list[0],                   # 'clip_title'
-
-                ]
+            self.stamp_list = utils.extract_timestamps_from_descrip(
+                app_obj,
+                override_descrip,
             )
 
-        # Sort by timestamp (since we can't assume the description does that)
-        stamp_list.sort()
-        self.stamp_list = stamp_list.copy()
-
+        else:
+            self.stamp_list = utils.extract_timestamps_from_descrip(
+                app_obj,
+                self.descrip,
+            )
+       
 
     def extract_timestamps_from_chapters(self, app_obj, chapter_list):
 
@@ -2470,49 +2390,11 @@ class Video(GenericMedia):
             return
 
         # Extract each chapter in turn
-        stamp_list = []
-        while chapter_list:
-
-            chapter_dict = chapter_list.pop(0)
-
-            if not 'start_time' in chapter_dict:
-                # Ignore this chapter
-                continue
-            else:
-                # Tartube timestamps use whole seconds, so round up any
-                #   fractional values
-                start = int(chapter_dict['start_time'])
-
-            stop = None
-            if 'end_time' in chapter_dict:
-                stop = int(chapter_dict['end_time'])
-                # If a chapter stops at second #10, the next chapter starts at
-                #   second #10
-                # But FFmpeg expects the chapter to stop at second #9, so take
-                #   account of that
-                if chapter_list:
-                    stop -= 1
-
-            clip_title = None
-            if 'title' in chapter_dict and chapter_dict['title'] != '':
-                clip_title = chapter_dict['title']
-
-            # 'start' and 'stop' are in seconds. Convert them to a string in
-            #   the usual format, 'mm:ss' or 'h:mm:ss', where the 'h' component
-            #   can contain any number of digits
-            # The True flag tells the function not to include the 'h' component
-            #   if it's zero
-            start_stamp = utils.convert_seconds_to_string(start, True)
-            if stop is not None:
-                stop_stamp = utils.convert_seconds_to_string(stop, True)
-            else:
-                stop_stamp = None
-
-            stamp_list.append( [start_stamp, stop_stamp, clip_title] )
-
-        # All done
-        self.stamp_list = stamp_list
-
+        self.stamp_list = utils.extract_timestamps_from_chapters(
+            app_obj,
+            chapter_list,
+        )
+        
 
     def set_slices(self, slice_list):
 
@@ -2830,6 +2712,14 @@ class Video(GenericMedia):
     def set_dummy_path(self, path):
 
         self.dummy_path = path
+
+
+    def set_dummy_sblock_flag(self, flag):
+
+        if flag:
+            self.dummy_sblock_flag = True
+        else:
+            self.dummy_sblock_flag = False
 
 
     def set_duration(self, duration=None):

@@ -752,7 +752,7 @@ VIDEO_FPS_DICT = {
     '4320p60':  '60',
 }
 
-video_format_setup_list = ['mp4', 'flv', 'ogg', 'webm', 'mkv', 'avi']
+video_format_setup_list = ['mp4', 'flv', 'ogg', 'webm', 'mkv', 'avi', '3gp']
 
 VIDEO_FORMAT_LIST = []
 VIDEO_FORMAT_DICT = {}
@@ -1021,6 +1021,7 @@ EXTERNAL_ICON_DICT = {
 STOCK_ICON_DICT = {
     'stock_add': 'add_small.png',
     'stock_cancel': 'cancel_small.png',
+    'stock_cut': 'cut_small.png',
     'stock_delete': 'delete_small.png',
     'stock_execute': 'ffmpeg_small.png',
     'stock_file': 'file_small.png',
