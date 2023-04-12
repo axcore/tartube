@@ -1550,6 +1550,23 @@ class TartubeApp(Gtk.Application):
         #   is processed, the entry is removed from the dictionary)
         self.media_reg_auto_dl_stop_dict = {}
 
+        # Subsets of self.media_reg_dict, containing only media.Videos whose
+        #   .live_mode has recently changed. These IVs are not stored in
+        #   Tartube's database
+        # Entries are added temporarily until self.download_manager_finished()
+        #   or self.livestream_manager_finished() have a chance to act on them
+        #   (for example, by playing an alarm for for a livestream that has
+        #   just gone live)
+        # Dictionary of videos which have just started broadcasting
+        #   (.live_mode was 0/1, now 2)
+        self.media_reg_live_started_dict = {}
+        # Dictionary of videos which have stopped broadcasting (.live_mode was
+        #   2, now 0)
+        self.media_reg_live_stopped_dict = {}
+        # Dictionary of livestreams which were broadcasting (.live_mode was
+        #   2), but for which downloads.StreamManager cannot obtain JSON data
+        self.media_reg_live_vanished_dict = {}
+
         # Some media data objects are fixed (i.e. are created when Tartube
         #   first starts, and cannot be deleted by the user). Shortcuts to
         #   those objects
@@ -2107,6 +2124,17 @@ class TartubeApp(Gtk.Application):
         #       'create': Remove slices from a video that's already been
         #           downloaded, again using FFmpeg
         self.temp_slice_buffer_dict = {}
+
+        # Temporary output template override buffer
+        # Set by a call from
+        #   mainwin.MainWin.on_video_catalogue_output_override()
+        # During the subsequent download of the media.Video, youtube-dl's
+        #   output template is overriden with the name stored in this buffer
+        # Dictionary in the form
+        #   temp_output_override_dict[dbid] = name
+        # ...where 'dbid' is the .dbid of a media.Video, and 'name' is any
+        #   acceptable filename for the operating system
+        self.temp_output_override_dict = {}
 
         # Flag set to True if download operations with yt-dlp should add the
         #   '--write-comments' option, downloading comments to the .info.json
@@ -4164,7 +4192,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-197)
-            200-299: mainwin.py     (in use: 201-274)
+            200-299: mainwin.py     (in use: 201-275)
             300-399: downloads.py   (in use: 301-318)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
@@ -11662,9 +11690,10 @@ class TartubeApp(Gtk.Application):
         # In any case, reset those IVs
         self.halt_after_operation_flag = False
         self.no_dialogue_this_time_flag = False
-        # Also reset temporary clip/slice buffers
+        # Also reset temporary clip/slice/override buffers
         self.temp_stamp_buffer_dict = {}
         self.temp_slice_buffer_dict = {}
+        self.temp_output_override_dict = {}
         # Also reset operation IVs
         self.operation_halted_flag = False
 
@@ -12936,29 +12965,24 @@ class TartubeApp(Gtk.Application):
         widgets.
         """
 
-        # The operation generated three dictionaries of videos whose livestream
-        #   status has changed
-        # Before destroying the downloads.StreamManager object, import them
-        video_started_dict \
-        = self.livestream_manager_obj.video_started_dict.copy()
-        video_stopped_dict \
-        = self.livestream_manager_obj.video_stopped_dict.copy()
-        video_missing_dict \
-        = self.livestream_manager_obj.video_missing_dict.copy()
+        # Any code can check whether livestream operation is in progress, or
+        #   not, by checking this IV
+        self.livestream_manager_obj = None
 
-        # Any videos marked as missing can be removed from the media registry
+        # Update the status icon in the system tray
+        self.status_icon_obj.update_icon()
+
+        # Any videos marked as vanished (i.e. missing from the data collected
+        #   by downloads.MiniJSONFetcher) can be removed from the media
+        #   registry immediately
         # (Note that if a download operation is running, this function won't
         #   do everything that it would normally do)
         if not self.download_manager_obj:
-            for video_obj in video_missing_dict.values():
+            for video_obj in self.media_reg_live_vanished_dict.values():
 
                 # The True argument tells the function to delete files
                 #   associated with the video (the thumbnail, in this case)
                 self.delete_video(video_obj, True)
-
-        # Any code can check whether livestream operation is in progress, or
-        #   not, by checking this IV
-        self.livestream_manager_obj = None
 
         # Any videos whose livestream status has changed must be redrawn in
         #   the Video catalogue
@@ -12978,10 +13002,10 @@ class TartubeApp(Gtk.Application):
 
             # (Compile a new dictionary, to eliminate duplicates)
             temp_dict = {}
-            for dbid in video_started_dict:
-                temp_dict[dbid] = video_started_dict[dbid]
-            for dbid in video_stopped_dict:
-                temp_dict[dbid] = video_stopped_dict[dbid]
+            for dbid in self.media_reg_live_started_dict:
+                temp_dict[dbid] = self.media_reg_live_started_dict[dbid]
+            for dbid in self.media_reg_live_stopped_dict:
+                temp_dict[dbid] = self.media_reg_live_stopped_dict[dbid]
             for this_obj in self.media_reg_live_dict.values():
                 temp_dict[this_obj.dbid] = this_obj
 
@@ -12993,12 +13017,10 @@ class TartubeApp(Gtk.Application):
                     video_obj,
                 )
 
-        # Update the status icon in the system tray
-        self.status_icon_obj.update_icon()
-
         # Notify the user and/or open videos in the system's web browser, if
         #   a waiting livestream has just gone live (and if allowed to do so)
-        for video_obj in video_started_dict.values():
+        sound_flag = False
+        for video_obj in self.media_reg_live_started_dict.values():
 
             if video_obj.dbid in self.media_reg_dict:
 
@@ -13013,24 +13035,26 @@ class TartubeApp(Gtk.Application):
                         video_obj.source,
                     )
 
+                # Play only one sound effect per livestream operation
+                if video_obj.dbid in self.media_reg_auto_alarm_dict:
+                    sound_flag = True
+
                 if video_obj.dbid in self.media_reg_auto_open_dict \
                 and video_obj.source:
                     utils.open_file(self, video_obj.source)
 
-        # Play a sound effect (but only one) if any waiting livestream has
-        #   gone live
-        if video_started_dict:
+        if sound_flag:
             self.play_sound()
 
         # If the livestream has just started or just stopped, download it (if
         #   required to do so)
         # First compile a dictionary to eliminate duplicate videos
         dl_dict = {}
-        for video_obj in video_started_dict.values():
+        for video_obj in self.media_reg_live_started_dict.values():
             if video_obj.dbid in self.media_reg_auto_dl_start_dict:
                 dl_dict[video_obj.dbid] = video_obj
 
-        for video_obj in video_stopped_dict.values():
+        for video_obj in self.media_reg_live_stopped_dict.values():
             if video_obj.dbid in self.media_reg_auto_dl_stop_dict:
                 dl_dict[video_obj.dbid] = video_obj
 
@@ -13042,7 +13066,12 @@ class TartubeApp(Gtk.Application):
                 #   rename the original file (in case the download fails)
                 self.prepare_overwrite_video(video_obj)
 
-        # Then download the videos
+        # Reset the temporary IVs, whose values we don't need any more
+        self.media_reg_live_started_dict = {}
+        self.media_reg_live_stopped_dict = {}
+        self.media_reg_live_vanished_dict = {}
+
+        # Then download the marked videos
         if dl_dict:
 
             if not self.download_manager_obj:
@@ -13274,9 +13303,10 @@ class TartubeApp(Gtk.Application):
 
         # Reset operation IVs
         self.operation_halted_flag = False
-        # Also reset temporary clip/slice buffers
+        # Also reset temporary clip/slice/override buffers
         self.temp_stamp_buffer_dict = {}
         self.temp_slice_buffer_dict = {}
+        self.temp_output_override_dict = {}
 
 
     # (Download operation support functions)
@@ -13713,6 +13743,7 @@ class TartubeApp(Gtk.Application):
         """
 
         # Only set the .name IV if the video is currently unnamed
+        # (N.B. The output template override, if applicable, is handled below)
         if video_obj.name == self.default_video_name:
             video_obj.set_name(video_obj.file_name)
             # (The video's title, stored in the .nickname IV, will be updated
@@ -13729,6 +13760,15 @@ class TartubeApp(Gtk.Application):
         # If the JSON file was downloaded, we can extract video statistics from
         #   it
         self.update_video_from_json(video_obj)
+
+        # That function call updates the video's .nickname. If an output
+        #   template override applies to this video, we can update IVs now,
+        #   completely replacing the nickname generated already
+        if video_obj.dbid in self.temp_output_override_dict:
+            name = self.temp_output_override_dict[video_obj.dbid]
+            video_obj.set_nickname(name)
+            # (The temporary buffer, once used, must be emptied immediately)
+            del self.temp_output_override_dict[video_obj.dbid]
 
         # For any of those statistics that haven't been set (because the JSON
         #   file was missing or didn't contain the right statistics), set them
@@ -16618,7 +16658,15 @@ class TartubeApp(Gtk.Application):
                 'Mark video as livestream request failed sanity check',
             )
 
-        elif live_mode == 0:
+        # Update IVs required by self.livestream_manager_finished()
+        if (video_obj.live_mode == 0 or video_obj.live_mode == 1) \
+        and live_mode == 2:
+            self.media_reg_live_started_dict[video_obj.dbid] = video_obj
+        elif video_obj.live_mode == 2 and live_mode == 0:
+            self.media_reg_live_stopped_dict[video_obj.dbid] = video_obj
+
+        # Update other IVs
+        if live_mode == 0:
 
             # Mark video as not a livestream
             if video_obj.live_mode == 0:
@@ -21778,6 +21826,9 @@ class TartubeApp(Gtk.Application):
                 user's chosen sound effect, self.sound_custom
 
         """
+
+        if self.sound_dir is None:
+            return
 
         if sound_name is None:
             sound_name = self.sound_custom
@@ -27021,6 +27072,11 @@ class TartubeApp(Gtk.Application):
         del self.container_unavailable_dict[name]
 
 
+    def add_media_reg_live_vanished_dict(self, video_obj):
+
+        self.media_reg_live_vanished_dict[video_obj.dbid] = video_obj
+
+
     def set_num_worker_apply_flag(self, flag):
 
         """Called by mainwin.MainWin.on_num_worker_checkbutton_changed().
@@ -27684,6 +27740,16 @@ class TartubeApp(Gtk.Application):
             self.system_warning_show_flag = False
         else:
             self.system_warning_show_flag = True
+
+
+    def add_temp_output_override_dict(self, dbid, name):
+
+        self.temp_output_override_dict[dbid] = name
+
+
+    def del_temp_output_override_dict(self, dbid):
+
+        del self.temp_output_override_dict[dbid]
 
 
     def add_temp_slice_buffer_dict(self, dbid, mini_list):

@@ -7171,8 +7171,29 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         special_submenu.append(Gtk.SeparatorMenuItem())
 
+        if not video_obj.dl_flag:
+            output_override_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Download with _name...'),
+            )
+        else:
+            output_override_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Re-download with _name...'),
+            )
+        output_override_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_output_override,
+            video_obj,
+        )
+        special_submenu.append(output_override_menu_item)
+        if not download_menu_item.get_sensitive() \
+        or (video_obj.dl_flag and self.app_obj.current_manager_obj):
+            output_override_menu_item.set_sensitive(False)
+
+        # Separator
+        special_submenu.append(Gtk.SeparatorMenuItem())
+
         reload_metadata_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Reload metadata'),
+            _('Reload _metadata'),
         )
         reload_metadata_menu_item.connect(
             'activate',
@@ -8870,8 +8891,10 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu.append(Gtk.SeparatorMenuItem())
 
         # Copy file path
+        copy_submenu = Gtk.Menu()
+
         copy_path_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Copy file path'),
+            _('_File path'),
         )
         copy_path_menu_item.connect(
             'activate',
@@ -8880,10 +8903,10 @@ class MainWin(Gtk.ApplicationWindow):
         )
         if len(video_list) > 1:
             copy_path_menu_item.set_sensitive(False)
-        popup_menu.append(copy_path_menu_item)
+        copy_submenu.append(copy_path_menu_item)
 
         # Copy URL
-        copy_url_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Copy UR_L'))
+        copy_url_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_URL'))
         copy_url_menu_item.connect(
             'activate',
             self.on_classic_progress_list_get_url,
@@ -8891,11 +8914,11 @@ class MainWin(Gtk.ApplicationWindow):
         )
         if len(video_list) > 1:
             copy_url_menu_item.set_sensitive(False)
-        popup_menu.append(copy_url_menu_item)
+        copy_submenu.append(copy_url_menu_item)
 
         # Copy system command
         copy_cmd_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Copy s_ystem command'),
+            _('_System command'),
         )
         copy_cmd_menu_item.connect(
             'activate',
@@ -8904,14 +8927,17 @@ class MainWin(Gtk.ApplicationWindow):
         )
         if len(video_list) > 1:
             copy_cmd_menu_item.set_sensitive(False)
-        popup_menu.append(copy_cmd_menu_item)
+        copy_submenu.append(copy_cmd_menu_item)
 
-        # Separator
-        popup_menu.append(Gtk.SeparatorMenuItem())
+        copy_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Copy'))
+        copy_menu_item.set_submenu(copy_submenu)
+        popup_menu.append(copy_menu_item)
 
         # Move up
+        move_submenu = Gtk.Menu()
+
         move_up_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Move _up'),
+            _('_Up'),
         )
         move_up_menu_item.connect(
             'activate',
@@ -8919,11 +8945,11 @@ class MainWin(Gtk.ApplicationWindow):
             'move_up',
             video_list,
         )
-        popup_menu.append(move_up_menu_item)
+        move_submenu.append(move_up_menu_item)
 
         # Move down
         move_down_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Move _down'),
+            _('_Down'),
         )
         move_down_menu_item.connect(
             'activate',
@@ -8931,10 +8957,25 @@ class MainWin(Gtk.ApplicationWindow):
             'move_down',
             video_list,
         )
-        popup_menu.append(move_down_menu_item)
+        move_submenu.append(move_down_menu_item)
+
+        move_menu_item = Gtk.MenuItem.new_with_mnemonic(_('_Move'))
+        move_menu_item.set_submenu(move_submenu)
+        popup_menu.append(move_menu_item)
 
         # Separator
         popup_menu.append(Gtk.SeparatorMenuItem())
+
+        # Re-insert URL above
+        reinsert_url_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Re-_insert URL above'),
+        )
+        reinsert_url_menu_item.connect(
+            'activate',
+            self.on_classic_progress_list_reinsert_url,
+            video_list,
+        )
+        popup_menu.append(reinsert_url_menu_item)
 
         # Remove from list
         remove_from_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -13877,8 +13918,6 @@ class MainWin(Gtk.ApplicationWindow):
 
         new_obj.set_dummy(url, dest_dir, format_str)
 
-        print('19536')
-        print(ignore_extras_flag)
         if not ignore_extras_flag:
             if self.app_obj.classic_livestream_flag:
                 new_obj.set_live_mode(2)
@@ -18545,6 +18584,119 @@ class MainWin(Gtk.ApplicationWindow):
                 )
 
 
+    def on_video_catalogue_output_override(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu().
+
+        Downloads (or re-downloads) the right-clicked media.Video object,
+        specifying a video name that overrides youtube-dl's output template.
+
+        Based on code in self.on_video_catalogue_download() and
+        self.on_video_catalogue_re_download().
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        # Prompt the user
+        dialogue_win = OutputOverrideDialogue(self, media_data_obj)
+        response = dialogue_win.run()
+
+        # Get the user's choices, before destroying the window
+        name = dialogue_win.new_name
+        dialogue_win.destroy()
+
+        if response != Gtk.ResponseType.OK:
+            return
+
+        # Basic checks
+        download_manager_obj = self.app_obj.download_manager_obj
+
+        if (
+            self.app_obj.current_manager_obj \
+            and not download_manager_obj
+        ) or (
+            self.app_obj.download_manager_obj \
+            and download_manager_obj.operation_classic_flag
+        ) or media_data_obj.live_mode == 1:
+            return self.app_obj.system_error(
+                275,
+                'Callback request denied due to current conditions',
+            )
+
+        if name is None or re.search('^\s*$', name):
+            return
+
+        elif os.name != 'nt' and name in self.app_obj.illegal_name_mswin_list:
+
+            self.dialogue_manager_obj.show_msg_dialogue(
+                _('The name \'{0}\' is not allowed').format(name),
+                'error',
+                'ok',
+            )
+
+            return
+
+        # Update IVs
+        self.app_obj.add_temp_output_override_dict(
+            media_data_obj.dbid,
+            name,
+        )
+
+        # (Reset the video's nickname to match its name. This looks good when
+        #   re-downloading a video, to which an output tempalte override had
+        #   been applied)
+        media_data_obj.set_nickname(media_data_obj.name)
+
+        # If the video is already downloaded...
+        if media_data_obj.dl_flag:
+
+            # ...delete the files associated with the video
+            self.app_obj.delete_video_files(media_data_obj)
+
+            # No download operation will start, if the media.Video object is
+            #   marked as downloaded
+            self.app_obj.mark_video_downloaded(media_data_obj, False)
+
+        # (Re-)download the video
+        if download_manager_obj:
+
+            # Download operation already in progress. Add this video to its
+            #   list
+            download_item_obj \
+            = download_manager_obj.download_list_obj.create_item(
+                media_data_obj,
+                None,           # media.Scheduled object
+                'real',         # override_operation_type
+                False,          # priority_flag
+                False,          # ignore_limits_flag
+            )
+
+            if download_item_obj:
+
+                # Add a row to the Progress List
+                self.progress_list_add_row(
+                    download_item_obj.item_id,
+                    media_data_obj,
+                )
+
+                # Update the main window's progress bar
+                self.app_obj.download_manager_obj.nudge_progress_bar()
+
+        else:
+
+            # Start a new download operation to download this video
+            self.app_obj.download_manager_start(
+                'real',
+                False,
+                [media_data_obj],
+            )
+
+
     def on_video_catalogue_page_entry_activated(self, entry):
 
         """Called from a callback in self.setup_videos_tab().
@@ -21288,6 +21440,71 @@ class MainWin(Gtk.ApplicationWindow):
 
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         clipboard.set_text(dummy_obj.source, -1)
+
+
+    def on_classic_progress_list_reinsert_url(self, menu_item, dummy_list):
+
+        """Called from a callback in self.classic_progress_list_popup_menu().
+
+        Re-inserts the selected rows' URLs into the list at the top of the
+        Classic Mode tab, then removes the selected rows from the Classic
+        Progress List and updates IVs.
+
+        Based on code in self.classic_mode_tab_remove_rows().
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The menu item that was clicked
+
+            dummy_list (list): List of dummy media.Video objects on the
+                clicked row(s)
+
+        """
+
+        # (Import IVs for convenience)
+        manager_obj = self.app_obj.download_manager_obj
+
+        # Check each row in turn
+        source_list = []
+        for dummy_video_obj in dummy_list:
+
+            # If there is a current download operation, we need to update it
+            if manager_obj:
+
+                # If this dummy media.Video object is the one being downloaded,
+                #   halt the download
+                for worker_obj in manager_obj.worker_list:
+
+                    if worker_obj.running_flag \
+                    and worker_obj.download_item_obj \
+                    and worker_obj.download_item_obj.media_data_obj.dbid \
+                    == dummy_video_obj.dbid:
+                        worker_obj.downloader_obj.stop()
+
+            # Delete the dummy media.Video object
+            del self.classic_media_dict[dummy_video_obj.dbid]
+
+            # Remove the row from the treeview
+            row_iter = self.classic_mode_tab_find_row_iter(
+                dummy_video_obj.dbid,
+            )
+
+            if row_iter:
+                self.classic_progress_liststore.remove(row_iter)
+
+            # Prepare to re-insert the URL into the list at the top of the tab
+            if dummy_video_obj.source is not None:
+                source_list.append(dummy_video_obj.source)
+
+        # Re-insert the URLS
+        if source_list:
+            utils.add_links_to_textview(
+                self.app_obj,
+                source_list,
+                self.classic_textbuffer,
+                self.classic_mark_start,
+                self.classic_mark_end,
+            )
 
 
     def on_classic_progress_list_right_click(self, treeview, event):
@@ -34419,6 +34636,118 @@ class NewbieDialogue(Gtk.Dialog):
         self.destroy()
 
 
+class OutputOverrideDialogue(Gtk.Dialog):
+
+    """Called by mainwin.on_video_catalogue_output_override().
+
+    Python class handling a dialogue window to prompt the user for a video
+    name. If specified, the name is used to override youtube-dl's output
+    template while downloading the video.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        video_obj (media.Video): The video to be renamed
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, video_obj):
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Download with name\' and \'Re-download' \
+            + ' with name\' dialogue starts here. Right-click a video and' \
+            + ' select Special > Download with name...',
+        )
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+        # The video to be renamed
+        self.video_obj = video_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        # (none)
+
+
+        # IV list - other
+        # ---------------
+        # The new name specified by the user, or None if no name has been
+        #   specified, or if the specified name matches the existing name
+        self.new_name = None
+
+
+        # Code
+        # ----
+
+        if not video_obj.dl_flag:
+            title = _('Download with name')
+        else:
+            title = _('Re-download with name')
+
+        Gtk.Dialog.__init__(
+            self,
+            title,
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OK, Gtk.ResponseType.OK,
+            )
+        )
+
+        self.set_modal(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label(
+            _('Override the output template with this name'),
+        )
+        grid.attach(label, 0, 0, 1, 1)
+
+        entry = Gtk.Entry()
+        grid.attach(entry, 0, 1, 1, 1)
+        entry.connect('changed', self.on_entry_changed)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+    # Callback class methods
+
+
+    def on_entry_changed(self, entry):
+
+        """Called from callback in self.__init__().
+
+        Updates IVs.
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        text = entry.get_text()
+        if text == '' or text == self.video_obj.name:
+            self.new_name = None
+        else:
+            self.new_name = text
+
+
 class PrepareClipDialogue(Gtk.Dialog):
 
     """Called by mainwin.MainWin.on_video_catalogue_process_clip().
@@ -35518,7 +35847,6 @@ class PrepareClipDialogue(Gtk.Dialog):
 
         """
 
-        this_iter = self.timestamp_liststore.get_iter(tree_path)
         self.timestamp_liststore[tree_path][0] \
         = not self.timestamp_liststore[tree_path][0]
 
@@ -36473,7 +36801,6 @@ class PrepareSliceDialogue(Gtk.Dialog):
 
         """
 
-        this_iter = self.slice_liststore.get_iter(tree_path)
         self.slice_liststore[tree_path][0] \
         = not self.slice_liststore[tree_path][0]
 

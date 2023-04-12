@@ -614,12 +614,12 @@ class ProcessManager(threading.Thread):
 
             override_output_mode = 'slice'
             temp_flag = True
-            
+
             # Use the temporary buffer
             slice_list \
             = self.app_obj.temp_slice_buffer_dict[orig_video_obj.dbid]
             # The first entry in 'slice_list' is the value 'create'; remove it
-            slice_list.pop(0)        
+            slice_list.pop(0)
             # (The temporary buffer, once used, must be emptied immediately)
             self.app_obj.del_temp_slice_buffer_dict(orig_video_obj.dbid)
 
@@ -837,7 +837,7 @@ class ProcessManager(threading.Thread):
             The destination directory of the clips on success, None on failure
 
         """
-        
+
         # Re-extract timestamps from the video's .info.json or .description
         #   file, if allowed
         # (No point doing it, if the temporary buffer is set)
@@ -883,7 +883,7 @@ class ProcessManager(threading.Thread):
             stamp_list \
             = self.app_obj.temp_stamp_buffer_dict[orig_video_obj.dbid]
             # The first entry in 'stamp_list' is the value 'create'; remove it
-            stamp_list.pop(0)                        
+            stamp_list.pop(0)
             # The temporary buffer, once used, must be emptied immediately
             self.app_obj.del_temp_stamp_buffer_dict(orig_video_obj.dbid)
 

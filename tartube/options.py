@@ -1593,6 +1593,7 @@ class OptionsParser(object):
 
         # Build the --output and --paths options
         options_list = self.build_paths(
+            media_data_obj,
             dir_path,
             copy_dict,
             options_list,
@@ -1611,7 +1612,7 @@ class OptionsParser(object):
 
             options_list.append('--config-location')
             options_list.append(utils.get_dl_config_path(self.app_obj))
-        
+
         # Filter out yt-dlp options, if required. A list of them is specified
         #   in mainapp.TartubeApp.ytdlp_exclusive_options_dict
         if self.app_obj.ytdlp_filter_options_flag \
@@ -1789,7 +1790,7 @@ class OptionsParser(object):
         return dir_path
 
 
-    def build_paths(self, dir_path, copy_dict, options_list):
+    def build_paths(self, media_data_obj, dir_path, copy_dict, options_list):
 
         """Called by self.parse().
 
@@ -1797,6 +1798,9 @@ class OptionsParser(object):
         options list.
 
         Args:
+
+            media_data_obj (media.Video, media.Channel, media.Playlist,
+                media.Folder): The media data object being downloaded
 
             dir_path (str): The directory into which files are to be downloaded
 
@@ -1848,6 +1852,19 @@ class OptionsParser(object):
             for item in copy_dict['output_path_list']:
                 options_list.append('--paths')
                 options_list.append(item)
+
+        # Lastly, apply the output override for a media.Video object, if one
+        #   is specified
+        if media_data_obj.dbid in self.app_obj.temp_output_override_dict:
+
+            # Add it to the end of 'options_list', so anyone examining the
+            #   yellow text in the Output Tab can clearly see that this is
+            #   an override
+            name = self.app_obj.temp_output_override_dict[media_data_obj.dbid]
+            options_list.append('--output')
+            options_list.append(
+                os.path.abspath(os.path.join(dir_path, name + '.%(ext)s')),
+            )
 
         return options_list
 

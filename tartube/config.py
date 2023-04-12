@@ -2073,7 +2073,7 @@ class GenericEditWin(GenericConfigWin):
             'nickname',
             2, 2, 1, 1,
         )
-        entry3.set_editable(False)
+        entry3.set_editable(True)
 
         label2 = self.add_label(grid,
             _('Contained in'),
@@ -2895,10 +2895,8 @@ class CustomDLEditWin(GenericEditWin):
         # (From self.setup_slices_tab)
         self.checkbutton6 = None                # Gtk.CheckButton
         self.liststore3 = None                  # Gtk.ListStore
-        self.combo = None                       # Gtk.ComboBox
         self.button5 = None                     # Gkt.Button
         self.button6 = None                     # Gkt.Button
-        self.button7 = None                     # Gkt.Button
         # (From self.setup_delay_tab)
         self.checkbutton7 = None                # Gtk.CheckButton
         self.spinbutton = None                  # Gtk.SpinButton
@@ -3053,9 +3051,8 @@ class CustomDLEditWin(GenericEditWin):
             'toggled',
             self.on_slice_button_toggled,
         )
-        self.button5.connect('clicked', self.on_toggle_button_clicked)
-        self.button6.connect('clicked', self.on_select_all_button_clicked)
-        self.button7.connect('clicked', self.on_unselect_all_button_clicked)
+        self.button5.connect('clicked', self.on_select_all_button_clicked)
+        self.button6.connect('clicked', self.on_unselect_all_button_clicked)
 
         # (From self.setup_delay_tab)
         self.checkbutton7.connect(
@@ -3427,7 +3424,7 @@ class CustomDLEditWin(GenericEditWin):
         )
 
         tab, grid = self.add_notebook_tab(_('S_lices'))
-        grid_width = 3
+        grid_width = 2
 
         # Slice settings
         self.add_label(grid,
@@ -3474,6 +3471,12 @@ class CustomDLEditWin(GenericEditWin):
                 )
                 treeview.append_column(column_toggle)
                 column_toggle.set_resizable(False)
+                renderer_toggle.set_sensitive(True)
+                renderer_toggle.set_activatable(True)
+                renderer_toggle.connect(
+                    'toggled',
+                    self.on_treeview_button_toggled,
+                )
             else:
                 renderer_text = Gtk.CellRendererText()
                 column_text = Gtk.TreeViewColumn(
@@ -3491,49 +3494,23 @@ class CustomDLEditWin(GenericEditWin):
         self.setup_slices_tab_update_treeview()
 
         # Editing buttons
-        label = self.add_label(grid,
-            _('Types of video slice to remove:'),
-            1, 2, 2, 1,
-        )
-        label.set_hexpand(False)
-
-        self.combo = self.add_combo(grid,
-            formats.SPONSORBLOCK_CATEGORY_LIST,
-            None,
-            1, 3, 1, 1,
-        )
-        self.combo.set_hexpand(False)
-        self.combo.set_active(0)
-        if not self.edit_obj.slice_flag:
-            self.combo.set_sensitive(False)
-
-        self.button5 = Gtk.Button(_('Toggle'))
-        grid.attach(self.button5, 2, 3, 1, 1)
-        self.button5.set_hexpand(False)
+        self.button5 = Gtk.Button(_('Remove all'))
+        grid.attach(self.button5, 1, 2, 1, 1)
+        self.button5.set_hexpand(True)
         if not self.edit_obj.slice_flag:
             self.button5.set_sensitive(False)
 
-        # (To avoid messing up the neat format of the rows above, add a
-        #   secondary grid, and put the next set of widgets inside it)
-        grid2 = self.add_secondary_grid(grid, 1, 4, 2, 1)
-
-        self.button6 = Gtk.Button(_('Remove all'))
-        grid2.attach(self.button6, 0, 0, 1, 1)
+        self.button6 = Gtk.Button(_('Remove none'))
+        grid.attach(self.button6, 1, 3, 1, 1)
         self.button6.set_hexpand(True)
         if not self.edit_obj.slice_flag:
             self.button6.set_sensitive(False)
 
-        self.button7 = Gtk.Button(_('Remove none'))
-        grid2.attach(self.button7, 0, 1, 1, 1)
-        self.button7.set_hexpand(True)
-        if not self.edit_obj.slice_flag:
-            self.button7.set_sensitive(False)
-
         # (Empty labels for aesthetics)
-        for i in range(5):
+        for i in range(8):
             self.add_label(grid,
                 '',
-                1, (4 + i), 2, 1,
+                1, (4 + i), 1, 1,
             )
 
 
@@ -4254,19 +4231,15 @@ class CustomDLEditWin(GenericEditWin):
 
             self.edit_dict['slice_flag'] = True
 
-            self.combo.set_sensitive(True)
             self.button5.set_sensitive(True)
             self.button6.set_sensitive(True)
-            self.button7.set_sensitive(True)
 
         else:
 
             self.edit_dict['split_flag'] = False
 
-            self.combo.set_sensitive(False)
             self.button5.set_sensitive(False)
             self.button6.set_sensitive(False)
-            self.button7.set_sensitive(False)
 
 
     def on_split_button_toggled(self, checkbutton):
@@ -4295,31 +4268,32 @@ class CustomDLEditWin(GenericEditWin):
             self.checkbutton6.set_sensitive(True)
 
 
-    def on_toggle_button_clicked(self, button):
+    def on_treeview_button_toggled(self, renderer_toggle, tree_path):
 
-        """Called by callback in self.setup_tabs().
+        """Called from callback in self.setup_slices_tab().
+
+        Enables/disables a category of video slice.
 
         Args:
 
-            button (Gtk.Button): The widget clicked
+            renderer_toggle (Gtk.CellRendererToggle): The widget clicked
+
+            tree_path (Gtk.TreePath): Path to the clicked row
 
         """
 
-        combo_iter = self.combo.get_active_iter()
-        combo_model = self.combo.get_model()
-        category = combo_model[combo_iter][0]
+        # (This condition makes the treeview insensitive, when other widgets
+        #   in the same tab are insensitive)
+#        if self.retrieve_val('slice_flag'):
+        if self.checkbutton6.get_active():
 
-        slice_dict = self.retrieve_val('slice_dict')
+            self.liststore3[tree_path][0] = not self.liststore3[tree_path][0]
 
-        if slice_dict[category]:
-            slice_dict[category] = False
-        else:
-            slice_dict[category] = True
+            slice_dict = self.retrieve_val('slice_dict')
+            slice_dict[self.liststore3[tree_path][1]] \
+            = self.liststore3[tree_path][0]
 
-        self.edit_dict['slice_dict'] = slice_dict
-
-        # Update the treeview
-        self.setup_slices_tab_update_treeview()
+            self.edit_dict['slice_dict'] = slice_dict
 
 
     def on_unselect_all_button_clicked(self, button):
@@ -17040,7 +17014,28 @@ class ChannelPlaylistEditWin(GenericEditWin):
     # (Non-widget functions)
 
 
-#   def apply_changes():        # Inherited from GenericEditWin
+    def apply_changes(self):
+
+        """Called by self.on_button_ok_clicked() and
+        self.on_button_apply_clicked().
+
+        Any changes the user has made are temporarily stored in self.edit_dict.
+        Apply to those changes to the object being edited.
+        """
+
+        # Apply any changes the user has made
+        for key in self.edit_dict.keys():
+            setattr(self.edit_obj, key, self.edit_dict[key])
+
+        # The changes can now be cleared
+        self.edit_dict = {}
+
+        # Update this media.Channel/media.Playlist in the Video Index
+        GObject.timeout_add(
+            0,
+            self.app_obj.main_win_obj.video_index_update_row_text,
+            self.edit_obj,
+        )
 
 
 #   def retrieve_val():         # Inherited from GenericConfigWin
@@ -18068,7 +18063,29 @@ class FolderEditWin(GenericEditWin):
     # (Non-widget functions)
 
 
-#   def apply_changes():        # Inherited from GenericEditWin
+    def apply_changes(self):
+
+        """Called by self.on_button_ok_clicked() and
+        self.on_button_apply_clicked().
+
+        Any changes the user has made are temporarily stored in self.edit_dict.
+        Apply to those changes to the object being edited.
+        """
+
+        # Apply any changes the user has made
+        for key in self.edit_dict.keys():
+            setattr(self.edit_obj, key, self.edit_dict[key])
+
+        # The changes can now be cleared
+        self.edit_dict = {}
+
+        # Update this media.Channel/media.Playlist in the Video Index
+        GObject.timeout_add(
+            0,
+            self.app_obj.main_win_obj.video_index_update_row_text,
+            self.edit_obj,
+        )
+
 
 
 #   def retrieve_val():         # Inherited from GenericConfigWin
@@ -24997,7 +25014,9 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 2, 1, 1,
         )
-        if not mainapp.HAVE_PLAYSOUND_FLAG:
+        if not mainapp.HAVE_PLAYSOUND_FLAG \
+        or self.app_obj.sound_dir is None \
+        or not self.app_obj.sound_list:
             checkbutton2.set_sensitive(False)
         checkbutton2.connect(
             'toggled',
@@ -25010,14 +25029,18 @@ class SystemPrefWin(GenericPrefWin):
             1, 2, 1, 1,
         )
         combo.connect('changed', self.on_sound_custom_changed)
-        if not mainapp.HAVE_PLAYSOUND_FLAG:
-            combo.set_sensitive(False)
+        if not mainapp.HAVE_PLAYSOUND_FLAG \
+        or self.app_obj.sound_dir is None \
+        or not self.app_obj.sound_list:
+            combo.set_visible(False)
 
         button = Gtk.Button(_('Test'))
         grid.attach(button, 2, 2, 1, 1)
         button.set_tooltip_text(_('Plays the selected sound effect'))
         button.connect('clicked', self.on_test_sound_clicked, combo)
-        if not mainapp.HAVE_PLAYSOUND_FLAG:
+        if not mainapp.HAVE_PLAYSOUND_FLAG \
+        or self.app_obj.sound_dir is None \
+        or not self.app_obj.sound_list:
             button.set_sensitive(False)
 
         checkbutton3 = self.add_checkbutton(grid,

@@ -10634,24 +10634,6 @@ class StreamManager(threading.Thread):
         #   key = media data object's unique .dbid
         #   value = the media data object itself
         self.video_dict = {}
-        # A subset of self.video_dict, containing only videos whose livestream
-        #   status has changed from waiting to live
-        # Used by mainapp.TartubeApp.livestream_manager_finished() to update
-        #   the Video Catalogue, create a desktop notification and/or open the
-        #   livestream in the system's web browser
-        self.video_started_dict = {}
-        # A subset of self.video_dict, containing only videos whose livestream
-        #   status has changed from live to finished
-        # Used by mainapp.TartubeApp.livestream_manager_stopped() to update
-        #   the Video Catalogue
-        self.video_stopped_dict = {}
-        # A subset of self.video_dict, containing only videos which were
-        #   currently broadcasting livestreams, but for which there is no
-        #   JSON data (indicating that the video has been deleted, or is
-        #   temporarily unavailable on the website)
-        # Used by mainapp.TartubeApp.livestream_manager_finished() to remove
-        #   the video(s) from the Video Catalogue
-        self.video_missing_dict = {}
 
         # Flag set to False if self.stop_livestream_operation() is called
         # The False value halts the loop in self.run()
@@ -10705,63 +10687,6 @@ class StreamManager(threading.Thread):
         if self.running_flag:
             self.running_flag = False
             self.app_obj.livestream_manager_finished()
-
-
-    def mark_video_as_missing(self, video_obj):
-
-        """Called by downloads.MiniJSONFetcher.do_fetch().
-
-        If a media.Video object marked as a livestream is missing in the
-        parent channel's/playlist's RSS feed, then add the video to an IV, so
-        that mainapp.TartubeApp.livestream_manager_finished() can take
-        appropriate action, when the livestream operation is finished.
-
-        Args:
-
-            video_obj (media.Video): The livestream video which was not found
-                in the RSS stream
-
-        """
-
-        self.video_missing_dict[video_obj.dbid] = video_obj
-
-
-    def mark_video_as_started(self, video_obj):
-
-        """Called by downloads.MiniJSONFetcher.do_fetch().
-
-        If a media.Video object marked as a livestream has started
-        broadcasting, then add the video to an IV, so that
-        mainapp.TartubeApp.livestream_manager_finished() can take appropriate
-        action, when the livestream operation is finished.
-
-        Args:
-
-            video_obj (media.Video): The livestream video which has started
-                broadcasting
-
-        """
-
-        self.video_started_dict[video_obj.dbid] = video_obj
-
-
-    def mark_video_as_stopped(self, video_obj):
-
-        """Called by downloads.MiniJSONFetcher.do_fetch().
-
-        If a media.Video object marked as a livestream has stopped
-        broadcasting, then add the video to an IV, so that
-        mainapp.TartubeApp.livestream_manager_finished() can take appropriate
-        action, when the livestream operation is finished.
-
-        Args:
-
-            video_obj (media.Video): The livestream video which has stopped
-                broadcasting
-
-        """
-
-        self.video_stopped_dict[video_obj.dbid] = video_obj
 
 
     def stop_livestream_operation(self):
@@ -11081,12 +11006,6 @@ class MiniJSONFetcher(object):
                         True,           # Don't update Video Index yet
                         True,           # Don't update Video Catalogue yet
                     )
-                    # (Mark this video as modified, so that
-                    #   mainapp.TartubeApp can update the Video Catalogue once
-                    #   the livestream operation has finished)
-                    self.livestream_manager_obj.mark_video_as_started(
-                        self.video_obj,
-                    )
 
                 elif self.video_obj.live_mode == 2 \
                 and (not 'is_live' in json_dict or not json_dict['is_live']):
@@ -11101,9 +11020,6 @@ class MiniJSONFetcher(object):
                         None,           # Reset any l/s server messages
                         True,           # Don't update Video Index yet
                         True,           # Don't update Video Catalogue yet
-                    )
-                    self.livestream_manager_obj.mark_video_as_stopped(
-                        self.video_obj,
                     )
 
                 # The video's name and description might change during the
@@ -11137,9 +11053,7 @@ class MiniJSONFetcher(object):
 
                 # The livestream broadcast has been deleted by its owner (or is
                 #   not available on the website, possibly temporarily)
-                self.livestream_manager_obj.mark_video_as_missing(
-                    self.video_obj,
-                )
+                app_obj.add_media_reg_live_vanished_dict(self.video_obj),
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()

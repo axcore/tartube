@@ -181,12 +181,12 @@ for subdir in subdir_list:
         param_list.append((icon_path + subdir + '/', [path]))
 
 for path in glob.glob('sounds/*'):
-    param_list.append((icon_path + '/', [path]))
+    param_list.append((sound_path + '/', [path]))
 
 # Setup
 setuptools.setup(
     name = 'tartube',
-    version = '2.4.346',
+    version = '2.4.358',
     description = 'GUI front-end for youtube-dl, yt-dlp and other compatible' \
     + ' video downloaders',
     long_description = long_description,

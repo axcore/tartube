@@ -2357,7 +2357,7 @@ class Video(GenericMedia):
                 app_obj,
                 self.descrip,
             )
-       
+
 
     def extract_timestamps_from_chapters(self, app_obj, chapter_list):
 
@@ -2394,7 +2394,7 @@ class Video(GenericMedia):
             app_obj,
             chapter_list,
         )
-        
+
 
     def set_slices(self, slice_list):
 

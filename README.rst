@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.260 (2 Mar 2023)**
 
-Development release: **v2.4.346 (11 Apr 2023)**
+Development release: **v2.4.358 (12 Apr 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -538,15 +538,15 @@ The procedure used to create the MS Windows installer is described in full in th
 * `6.27 Video clips`_
 * `6.27.1 Video clip preferences`_
 * `6.27.2 Quick video clips`_
-* `6.27.3 Downloading video clips`_
-* `6.27.4 Extracting video clips`_
-* `6.27.5 Video clip shortcuts`_
+* `6.27.3 Video clips in Classic Mode`_
+* `6.27.4 Frequent video clip downloads`_
+* `6.27.5 Extracting video clips`_
 * `6.28 Video slices`_
 * `6.28.1 Video slice preferences`_
 * `6.28.2 Quick video slices`_
-* `6.28.3 Downloading sliced videos`_
-* `6.28.4 Removing video slices`_
-* `6.28.5 Video slice shortcuts`_
+* `6.28.3 Video slices in Classic Mode`_
+* `6.28.4 Frequent sliced video downloads`_
+* `6.28.5 Extracting video slices`_
 * `6.29 Using youtube-dl forks`_
 * `6.30 Video comments`_
 * `6.31 Dark themes on MS Windows`_
@@ -1529,6 +1529,8 @@ If you want something simpler, then click the **Classic Mode** tab, which has an
 
 Because the videos aren't in a database, you can move them anywhere you want (once you've finished downloading them).
 
+Video clips and sliced videos can be created in this tab; see `6.27.3 Video clips in Classic Mode`_. and - see `6.28.3 Video slices in Classic Mode`_.
+
 6.23.1 Customising Classic Mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1730,27 +1732,29 @@ If the source file is a thumbnail, then the output file must also be a thumbnail
 6.27 Video clips
 ----------------
 
-**Tartube** can download parts of a video. It can also split up a video it has already downloaded. This functionality requires **FFmpeg**.
+**Tartube** can create video clips by downloading parts of a video. It can also split up a video it has already downloaded. This functionality requires **FFmpeg**. 
 
-**Tartube** can extract a list of timestamps from a video's description. It can also extract the chapter list from a video's metadata (**.info.json**) file. If you want to specify timestamps manually, or want to create a video clips one at a time, you can do that too.
+**Tartube** can extract a list of timestamps from a video's description. It can also extract the chapter list from a video's metadata (**.info.json**) file. If you prefer, you can specify your own timestamps. Using this data, you can create video clips of any length.
+
+Both video clips and the original video are normally added to **Tartube**'s database. Of course, if you create clips in the **Classic Mode** tab, then they won't be added to the database - see `6.27.3 Video clips in Classic Mode`_.
 
 It's important to be aware of the limitations of this feature.
 
-- Downloading video clips will take longer, perhaps much longer, than downloading the full video
+- Downloading video clips might take longer than downloading the full video
 - Some video formats cannot be divided into clips accurately. **.mp4** is much better than **.webm**. If you want to download video clips, we recommend downloading in **.mp4** format
 - If you want clips that start and end at a particular frame, **Tartube** is not a suitable tool. Use a dedicated video editor instead
 
 6.27.1 Video clip preferences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before you start, take a look at the video clip preferences (click **Edit > System preferences... > Operations > Clips**).
+Before you start, take a look at **Tartube**'s video clip preferences (click **Edit > System preferences... > Operations > Clips**).
 
 - It will save a lot of time if you let **Tartube** automatically extract timestamps, so most users should enable that
 - Video clips are stored in the **Video Clips** folder by default, but you can store them alongside the original video, if you prefer
 - Video clips can be added to **Tartube**'s database, either alongside or instead of the original video
 - If you're going to make a lot of video clips, you can store them in a sub-folder (one for each original video)
 
-If your database already contains a lot of videos, you can ask **Tartube** to extract timestamps from their descriptions.
+If your database already contains a lot of videos, you can ask **Tartube** to extract timestamps from their descriptions or metadata.
 
 - Click **Edit > System preferences > Files > Updates**
 - Click the button **Extract timestamps for all videos**
@@ -1760,27 +1764,54 @@ If you prefer to update videos one at a time, right-click the video and select *
 6.27.2 Quick video clips
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is the quickest way to create a video clip:
+After checking or downloading a video, you can right-click it and select **Special > Create video clips...**
 
-- After checking a video, you can right-click it and then select **Special > Download video clip...**
-- After downloading a video, you can right-click it and then select **Special > Create video clip...**
+.. image:: screenshots/example34.png
+  :alt: Create video clips window
 
-In the new dialogue window, you must specify the start of the clip. If you don't specify the end of the clip, then the end of the video is used.
+The new dialogue window contains a lot of buttons, but it's actually quite simple.
 
-Timestamps must include both minutes and seconds. Hours are optional. Leading zeroes are also optional. All of the following timestamps are valid:
+- First, choose what you want to do
 
-        **15:29**
+If you have already downloaded a video, you can select **Create clips from the downloaded video**. However, it is often quicker just to download the clips you want.
 
-        **1:15:29**
+There are two options for downloading clips. For some users, downloading with **yt-dlp** might produce better results than downloading with **FFmpeg**, but you can use whichever method you prefer.
 
-        **01:15:29**
+- Creating a single clip
 
-        **0:29**
+A timestamp is in the form **15:29**, meaning 15 minutes and 29 seconds, or **1:15:29**, meaning 1 hour, 15 minutes and 29 seconds. 
 
-Click the **Download this clip** button to get started. Alternatively, if **Tartube** has already extracted a list of timestamps for this video, you can click the **Download all clips** button instead.
+Each video clip is represented by two timestamps: a start and a stop timestamp. The start timestamp is compulsory. The stop timestamp is optional; if it isn't specified, then the video clip will end at the beginning of the *next* video clip (or at the end of the video, if there are no more.)
 
-6.27.3 Downloading video clips
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you already know the start and stop timestamps for your clip, you can use this **Download one clip** / **Create one clip** section. Enter the timestamps, enter a clip title, and then click the **Download clip** / **Create clip** button. The procedure will begin immediately.
+
+- Creating multiple clips
+
+When you use the **Download one clip** / **Create one clip** section, the timestamps are forgotten as soon as the procedure is finished. In the section below, any timestamps you add are stored in Tartube's database permanently. (You can see them by right-clicking a video and selecting **Show video > Properties... > Timestamps**).
+
+If you don't already see a list of timestamps in the window, you can click the **Reset list using video description** button. If this doesn't work, you will have to add the timestamps yourself.
+
+When you're ready, you can click one of the buttons at the bottom of the window. 
+
+**Download all clips** / **Create all clips** will use all of the clips in the list. **Download marked clips** / **Create marked clips** will use only the clips you have marked. To mark a clip, select the small button on the left edge of the row.
+
+**Download all chapters** is only available when you have selected **Download new clips using yt-dlp**. It uses **yt-dlp**'s built-in ability to download separate video chapters; the timestamps in the list above are ignored.
+
+6.27.3 Video clips in Classic Mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As mentioned above, video clips created in the **Classic Mode** tab are not added to **Tartube**'s database.
+
+To download video clips, click the **Add video clips** button. The dialogue window is similar to the one described above, but you will have to add the original video's URL. (Make sure you use the URL for a single video, not one for a channel or a playlist.)
+
+It's a good idea to add a name for the original video, too; this will help to prevent duplicate file names.
+
+When you click one of the **Download** buttons, the dialogue window disappears, and a line is added to the list at the bottom of the tab. Set up more downloads, if you like; when you've finished, click the **Download all** button.
+
+If you want to create video clips from a video you've already downloaded, or if you want to download new clips without re-entering the URL, you can right-click the same line and select **Create video clips...**
+ 
+6.27.4 Frequent video clip downloads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you frequently create video clips, then you should set up custom downloads (see `6.14 Custom downloads`_).
 
@@ -1794,14 +1825,14 @@ The next step is to check any videos, channels and playlists (for example by cli
 
 This will fetch information about the videos. In many cases, a video's description will include a list of timestamps, and in other cases the video's metadata will include a list of chapters. Assuming that you enabled the auto-extract settings (as described above), that information will have been extracted. If not, you can enter some timestamps manually: right-click a video, and select **Show video > Properties > Timestamps**.
 
-Each video clip is represented by two timestamps: a start and a stop timestamp. The start timestamp is compulsory. The stop timestamp is optional; if it isn't specified, then the video clip will end at the beginning of the *next* video clip (or at the end of the video, if there are no more.)
-
 When you're ready, perform a custom download in the normal way (for example, by clicking **Operations > Custom download all**). Videos will be downloaded as a series of video clips. (If no timestamps have been specified, then the video is downloaded whole.)
 
-6.27.4 Extracting video clips
+Don't forget that custom downloads can be enabled in the **Classic Mode** tab, if you need them. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**.
+
+6.27.5 Extracting video clips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have already downloaded a video, then you can split it into video clips.
+There is an alternative way of splitting into clips a video you've already downloaded. This method allows advanced users to customise **FFmpeg**'s behaviour during the splitting process.
 
 - Right click the video, and select **Special > Process with FFmpeg...**
 - If the **Clips** tab is visible, click it
@@ -1810,13 +1841,6 @@ If you have already downloaded a video, then you can split it into video clips.
 You can split a video using the timestamps already extracted. In the **Clips** tab (if visible), you can select **Split videos using these timestamps** to specify your own timestamps. The second method is useful if FFmpeg is acting on multiple videos at the same time.
 
 When you're ready to go, click the **Process files** button.
-
-6.27.5 Video clip shortcuts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Video clips can be downloaded from the **Classic Mode** tab. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**. Don't forget that clips can be downloaded in other formats, such as **.mp3**.
-
-Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware that the download option **--split-chapters** exists, which may be more convenient in some situations.
 
 6.28 Video slices
 -----------------
@@ -1829,49 +1853,65 @@ Unwanted parts of a video, such as adverts and intro/outro music, are called vid
 
 It's important to be aware of the limitations of this feature.
 
-- Downloading and slicing a video will take longer, perhaps much longer, than a normal download. For most users it will be quicker just to skip over (or watch!) the adverts
+- Downloading and slicing a video might take longer than a normal download. In some cases, it might be quicker just to skip over (or watch!) the adverts
 - Some video formats cannot be sliced accurately. **.mp4** is much better than **.webm**. If you want to remove slices, we recommend downloading videos in **.mp4** format
 - If you want to remove slices starting and ending at a particular frame, **Tartube** is not a suitable tool. Use a dedicated video editor instead
 
 6.28.1 Video slice preferences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before you start, take a look at the video slice preferences (click **Edit > System preferences... > Operations > Slices**).
+Before you start, take a look at **Tartube**'s video slice preferences (click **Edit > System preferences... > Operations > Slices**).
 
 - It will save a lot of time if you let **Tartube** contact **SponsorBlock** automatically, every time a video is checked or downloaded
-- Obfuscating the video's ID is recommended to protect your privacy. **SponsorBlock** will not know for sure which video you're looking for, so it will send data for a range of videos; **Tartube** will ignore the superfluous videos
+- Obfuscating the video's ID is recommended to protect your privacy. **SponsorBlock** will not know for sure which video you're looking for, so it will send data for a range of videos; **Tartube** will ignore the extra data
 
 If you want to update a video, you can right-click it and select **Check video**, which will update the video and contact **SponsorBlock** for a second time.
 
 6.28.2 Quick video slices
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is the quickest way to removes a slice from a video:
+After checking or downloading a video, you can right-click it and then select **Special > Remove video slices...**
 
-- After checking or downloading a video, you can right-click it and then select **Special > Remove video slices...**
-- Enter a start time
-- The stop time is optional. If you don't specify it, the end of the video is used
+.. image:: screenshots/example35.png
+  :alt: Remove video slices window
 
-Start/stop times should be in seconds. Fractional values are allowed:
+The new dialogue window contains a lot of buttons, but it's actually quite simple.
 
-        **20**
+- First, choose what you want to do
 
-        **55.5**
+If you have already downloaded a video, you can select **Remove slices from the downloaded video**. However, it is sometimes quicker just to download the a new copy of the video with the slices removed, in which case, you should select **Download new sliced video**.
 
-You can specify timestamps instead of seconds. Timestamps must include both minutes and seconds. Hours are optional. Leading zeroes are also optional. All of the following timestamps are valid:
+- Removing a single slice
 
-        **15:29**
+A timestamp is in the form **15:29**, meaning 15 minutes and 29 seconds, or **1:15:29**, meaning 1 hour, 15 minutes and 29 seconds.
 
-        **1:15:29**
+Each video slice is represented by two values: a start and a stop value. You can use a timestamp, or a value in seconds. The start value is compulsory. The stop value is optional; if it isn't specified, then the video slice will end at the beginning of the *next* video slice (or at the end of the video, if there are no more.)
 
-        **01:15:29**
+If you already know the start and stop values for your slice, you can use this **Download sliced video** / **Create sliced video** section. Enter the values and then click the **Download sliced video** / **Create sliced video** button. The procedure will begin immediately.
 
-        **0:29**
+- Removing multiple slices
 
-Click the **Download this sliced video** button to get started. Alternatively, if **Tartube** has already obtained slice data from **SponsorBlock**, you can click the **Download video with all slices removed** button instead.
+When you use the **Download video with one slice** / **Create video with one slice** section, the time values are forgotten as soon as the procedure is finished. In the section below, any time values you add are stored in **Tartube**'s database permanently. (You can see them by right-clicking a video and selecting **Show video > Properties... > Slices**).
 
-6.28.3 Downloading sliced videos
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you don't already see a list of time values in the window, you can click the **Contact SponsorBlock to reset list** button. If this doesn't work, you will have to add the time values yourself.
+
+SponsorBlock categorises video slices, distinguishing between (for example) adverts and intro music. In this window, it is not necessary to choose a category before clicking the **Add slice** button, since you'll be choosing for yourself which slices to remove.
+
+When you're ready, you can click one of the buttons at the bottom of the window.
+
+**Download video, removing all slices** / **Create video, removing all slices** will use all of the slices in the list. **Download video, removing marked slices** / **Create video, removing marked slices** will use only the slices you have marked. To mark a slice, select the small button on the left edge of the row.
+
+6.28.3 Video slices in Classic Mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As mentioned above, sliced videos created in the **Classic Mode** tab are not added to **Tartube**'s database.
+
+Removing video slices in the **Classic Mode** tab is very simple; it is essentially an on/off setting. To enable it, select the **Use SponsorBlock** button.
+
+This setting will not work at all unless you are using **yt-dlp**, and at least **FFmpeg** v5.1+. (Note that, at the time of writing, many users will have an older version of FFmpeg installed on their system.)
+
+6.28.4 Frequent sliced video downloads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you frequently remove slices from videos, then you should set up custom downloads (see `6.14 Custom downloads`_).
 
@@ -1879,7 +1919,7 @@ If you frequently remove slices from videos, then you should set up custom downl
 - In the new window, click **Download each video independently of its channel or playlist** to select it
 - Now click the **Slices tab**
 - You can now select **Remove slices from the video using SponsorBlock data**
-- Select which types of slice you want to remove. To remove self-promotions, select **selfpromo** in the drop-down box, and click the **Toggle** button
+- Select which types of slice you want to remove by clicking the small box on the left edge of each row
 - When you're ready, click **OK** to close the window
 
 The next step is to check any videos, channels and playlists (for example by clicking the **Check all** button in the **Videos** tab).
@@ -1895,10 +1935,12 @@ Each video slice is represented by four properties:
 
 When you're ready, perform a custom download in the normal way (for example, by clicking **Operations > Custom download all**). Tartube will download the video as a sequence of video clips, before concatenating (joining) them together into a single video. (If no slices have been specified, then the video is downloaded whole.)
 
-6.28.4 Removing video slices
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Don't forget that custom downloads can be enabled in the **Classic Mode** tab, if you need them. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**.
 
-If you have already downloaded a video, then you can remove slices from it.
+6.28.5 Extracting video slices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is an alternative way of removing slices from a video you've already downloaded. This method allows advanced users to customise FFmpeg's behaviour during the slicing process.
 
 - Right click the video, and select **Special > Process with FFmpeg...**
 - If the **Slices** tab is visible, click it
@@ -1907,13 +1949,6 @@ If you have already downloaded a video, then you can remove slices from it.
 You can slice a video using SponsorBlock data already obtained. In the **Slices** tab (if visible), you can select **Use this slice data** to specify your own video slices. The second option is useful if FFmpeg is acting on multiple videos at the same time.
 
 When you're ready to go, click the **Process files** button.
-
-6.28.5 Video slice shortcuts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Sliced videos can be downloaded from the **Classic Mode** tab. Before downloading, click the menu button in the top-right corner of the tab, and select **Enable custom downloads**. Don't forget that videos can be downloaded in other formats, such as **.mp3**.
-
-Users of `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__ should be aware that it provides support for SponsorBlock, independently of **Tartube**, using `SponSkrub <https://github.com/yt-dlp/SponSkrub>`__.  This may be more convenient in some situations.
 
 6.29 Using youtube-dl forks
 ---------------------------
