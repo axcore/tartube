@@ -66,16 +66,16 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 3 Downloads
 ===========
 
-Stable release: **v2.4.260 (2 Mar 2023)**
+Stable release: **v2.4.370 (13 Apr 2023)**
 
-Development release: **v2.4.358 (12 Apr 2023)**
+Development release: **v2.4.370 (13 Apr 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.260/install-tartube-2.4.260-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.260/tartube-2.4.260-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.370/install-tartube-2.4.370-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.370/tartube-2.4.370-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.260/python3-tartube_2.4.260.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.260/tartube-2.4.260.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.370/python3-tartube_2.4.370.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.370/tartube-2.4.370.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -92,7 +92,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.260/tartube_v2.4.260.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.370/tartube_v2.4.370.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -324,7 +324,7 @@ It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, to
 
 Linux distributions based on RHEL, such as Fedora, can install **Tartube** using the RPM package (see the links above).
 
-**Tartube** requires either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__. If it's already installed on your system, then you can start **Tartube** immediately. 
+**Tartube** requires either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__. If it's already installed on your system, then you can start **Tartube** immediately.
 
 Otherwise, if **pip** is already installed on your system, do this:
 
@@ -1003,7 +1003,7 @@ It's important to note that a custom download behaves exactly like a regular dow
 6.14.1 Default custom downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default, **Tartube** provides two custom downloads. 
+By default, **Tartube** provides two custom downloads.
 
 The custom download called **general** applies in the **Videos** tab. It is used, for example, when you right-click a channel and select **Custom download channel**.
 
@@ -1038,7 +1038,7 @@ If you need to download each individual video, one URL at a time, you can do thi
 
 - Open the window for your preferred custom download. For example, click **Edit > System preferences... > Operations > Custom**, click **general** to select it, and click the **Edit** button
 - In the new window, click **Download each video independently of its channel or playlist** to select it
-- If it is not already selected, click **Check channels/playlists/folders before each custom download** 
+- If it is not already selected, click **Check channels/playlists/folders before each custom download**
 - Click **OK** to close the window
 
 Many custom download settings only work when Tartube is downloading videos one at a time. If you enable this setting, you will be able to enable several other settings in the other tabs.
@@ -1621,7 +1621,7 @@ To disable any of these actions, simply click the same label again.
 
 **Tartube** can download a livestream while it is still broadcasting. (A livestream that has already finished is treated like any other video.)
 
-There are three different ways to download a livestream. The default method is to use **youtube-dl**, fetching the video's **.m3u** manifest before downloading it. 
+There are three different ways to download a livestream. The default method is to use **youtube-dl**, fetching the video's **.m3u** manifest before downloading it.
 
 If `streamlink <https://streamlink.github.io/>`__ is installed on your system, you can use that, instead. MS Windows users can install streamlink from **Tartube**'s main menu (click **Operations > Install streamlink**).
 
@@ -1638,7 +1638,7 @@ Livestream downloads should work on most websites. `streamlink <https://streamli
 
 **Tartube**'s livestream detection works on **YouTube**, **Odysee** and **Twitch**. It might work on other websites, after a little configuration. Here is how to set that up.
 
-Firstly, find the RSS feed for the channel or playlist. You may have to use a search engine to find out how to do that, but first try `this site <https://fetchrss.com//>`__ and `this one <https://12bytes.org/articles/tech/how-to-access-rss-feeds/>`__. 
+Firstly, find the RSS feed for the channel or playlist. You may have to use a search engine to find out how to do that, but first try `this site <https://fetchrss.com//>`__ and `this one <https://12bytes.org/articles/tech/how-to-access-rss-feeds/>`__.
 
 Secondly, right-click the channel and select **Show > Channel properties...** (alternatively, right-click a playlist and select **Show > Playlist properties...**)
 
@@ -1649,7 +1649,8 @@ Now click the **RSS feed** tab. Enter the link (URL) to the RSS feed in the box.
 
 **Tartube** can detect videos you have downloaded, but which have been since deleted by the original uploader.
 
-* Click **Edit > System preferences... > Operations > Preferences**
+* Click **Edit > System preferences... > Operations > Missing**
+* (If advanced preferences are enabled, then instead click **Edit > System preferences... > Operations > Preferences**)
 * Click the button **Add videos which have been removed from a channel/playlist to the Missing Videos folder** to select it
 
 Having enabled detection, removed videos will appear in the **Missing Videos** folder. To empty that folder, right-click it and select **Folder contents > All contents > Mark as not missing**.
@@ -1732,7 +1733,7 @@ If the source file is a thumbnail, then the output file must also be a thumbnail
 6.27 Video clips
 ----------------
 
-**Tartube** can create video clips by downloading parts of a video. It can also split up a video it has already downloaded. This functionality requires **FFmpeg**. 
+**Tartube** can create video clips by downloading parts of a video. It can also split up a video it has already downloaded. This functionality requires **FFmpeg**.
 
 **Tartube** can extract a list of timestamps from a video's description. It can also extract the chapter list from a video's metadata (**.info.json**) file. If you prefer, you can specify your own timestamps. Using this data, you can create video clips of any length.
 
@@ -1779,7 +1780,7 @@ There are two options for downloading clips. For some users, downloading with **
 
 - Creating a single clip
 
-A timestamp is in the form **15:29**, meaning 15 minutes and 29 seconds, or **1:15:29**, meaning 1 hour, 15 minutes and 29 seconds. 
+A timestamp is in the form **15:29**, meaning 15 minutes and 29 seconds, or **1:15:29**, meaning 1 hour, 15 minutes and 29 seconds.
 
 Each video clip is represented by two timestamps: a start and a stop timestamp. The start timestamp is compulsory. The stop timestamp is optional; if it isn't specified, then the video clip will end at the beginning of the *next* video clip (or at the end of the video, if there are no more.)
 
@@ -1791,7 +1792,7 @@ When you use the **Download one clip** / **Create one clip** section, the timest
 
 If you don't already see a list of timestamps in the window, you can click the **Reset list using video description** button. If this doesn't work, you will have to add the timestamps yourself.
 
-When you're ready, you can click one of the buttons at the bottom of the window. 
+When you're ready, you can click one of the buttons at the bottom of the window.
 
 **Download all clips** / **Create all clips** will use all of the clips in the list. **Download marked clips** / **Create marked clips** will use only the clips you have marked. To mark a clip, select the small button on the left edge of the row.
 
@@ -1809,7 +1810,7 @@ It's a good idea to add a name for the original video, too; this will help to pr
 When you click one of the **Download** buttons, the dialogue window disappears, and a line is added to the list at the bottom of the tab. Set up more downloads, if you like; when you've finished, click the **Download all** button.
 
 If you want to create video clips from a video you've already downloaded, or if you want to download new clips without re-entering the URL, you can right-click the same line and select **Create video clips...**
- 
+
 6.27.4 Frequent video clip downloads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1931,7 +1932,7 @@ Each video slice is represented by four properties:
 - The start and stop times, in seconds or expressed as timestamps
 - The stop time is optional. If you don't specify it, the end of the video is used
 - **Category** is the type of slice; for example, a **sponsor** slice is an advert
-- At the moment, there is only one **Action Type** available: **skip** means to remove the slice from the video
+- At the moment, there is only one **Action type** available: **skip** means to remove the slice from the video
 
 When you're ready, perform a custom download in the normal way (for example, by clicking **Operations > Custom download all**). Tartube will download the video as a sequence of video clips, before concatenating (joining) them together into a single video. (If no slices have been specified, then the video is downloaded whole.)
 
@@ -2015,7 +2016,7 @@ First, select a suitable theme pack. Tartube's installer includes `this one <htt
 - Inside that folder, create a file called **settings.ini**
 - Open the file in a text editor, and add these lines:
 
-        [Settings] 
+        [Settings]
 
         gtk-theme-name=Windows10
 
@@ -2028,7 +2029,7 @@ Note that **Windows10** is the name of the theme pack, not the name of your oper
 Now you must install the theme pack itself at the correct location.
 
 - Download the theme pack from the link above
-- Extract it, and navigate to the **gtk-3.20** folder. The files inside this folder are the ones you need to copy 
+- Extract it, and navigate to the **gtk-3.20** folder. The files inside this folder are the ones you need to copy
 - Next, in Tartube's menu, click **System > Show Tartube install folder**
 - In the new window, navigate to **msys64\\mingw64\\share\\themes**
 - Create a folder called **Windows10**, matching the theme pack's name
@@ -2194,7 +2195,7 @@ The export can then be re-imported into your current database in the normal way 
 
 A: Earlier versions of **Tartube** did in fact introduce occasional blips into the database. It's possible (though unlikely) that some blips still exist, despite the best efforts of the authors. If you really want to rebuild the database from scratch, this is how to do it.
 
-Firstly, click **Media > Export/import > Export from database...**. 
+Firstly, click **Media > Export/import > Export from database...**.
 
 In the dialogue window, it's not necessary to select the button **Include lists of videos**. Click the **OK** button. Let Tartube create the backup file. You now have a backup of the names and URLs for every channel/playlist you've added.
 
@@ -2440,7 +2441,7 @@ Therefore there will be no further releases of Tartube for 32-bit Windows. Old i
 
 The final 32-bit releases (v2.3.367) can be downloaded from here:
 
-`MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-32bit.exe/download>`__ 
+`MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-32bit.exe/download>`__
 
 `Portable edition (32-bit) <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-32bit-portable.zip/download>`__
 
