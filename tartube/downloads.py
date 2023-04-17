@@ -5621,6 +5621,12 @@ class VideoDownloader(object):
                 stderr,
             )
         ) or (
+            app_obj.ignore_twitch_not_live_flag \
+            and re.search(
+                r'ERROR. .twitch.stream.* The channel is not currently live',
+                stderr,
+            )
+        ) or (
             app_obj.ignore_yt_age_restrict_flag \
             and (
                 re.search(

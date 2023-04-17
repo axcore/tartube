@@ -24354,13 +24354,24 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton10 = self.add_checkbutton(grid,
             _(
             'Ignore \'Unable to download video thumbnail: HTTP Error 404:' \
-            + ' Not Fuund\' warnings',
+            + ' Not Found\' warnings',
             ),
             self.app_obj.ignore_thumb_404_flag,
             True,                   # Can be toggled by user
             0, 10, grid_width, 1,
         )
         checkbutton10.connect('toggled', self.on_thumb_404_button_toggled)
+        
+        checkbutton11 = self.add_checkbutton(grid,
+            _(
+            'Ignore \'ERROR: [twitch:stream] [N]: The channel is not'
+            + ' currently live\' warnings',
+            ),
+            self.app_obj.ignore_twitch_not_live_flag,
+            True,                   # Can be toggled by user
+            0, 11, grid_width, 1,
+        )
+        checkbutton11.connect('toggled', self.on_twitch_not_live_button_toggled)
 
 
     def setup_operations_custom_dl_tab(self, inner_notebook):
@@ -34731,6 +34742,27 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_json_timeout_with_comments_time(
             spinbutton.get_value(),
         )
+
+
+    def on_twitch_not_live_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_ignore_tab().
+
+        Enables/disables ignoring of the 'ERROR: twitch stream not live'
+        warning messages.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ignore_twitch_not_live_flag:
+            self.app_obj.set_ignore_twitch_not_live_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ignore_twitch_not_live_flag:
+            self.app_obj.set_ignore_twitch_not_live_flag(False)
 
 
     def on_update_combo_changed(self, combo):
