@@ -5173,6 +5173,8 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_descrip_flag = json_dict['ignore_no_descrip_flag']
         if version >= 2003403 and 'ignore_thumb_404_flag' in json_dict:
             self.ignore_thumb_404_flag = json_dict['ignore_thumb_404_flag']
+        if version >= 2004370 and 'ignore_twitch_not_live_flag' in json_dict:
+            self.ignore_twitch_not_live_flag = json_dict['ignore_twitch_not_live_flag']
 
         if version >= 5004 and 'ignore_yt_copyright_flag' in json_dict:
             self.ignore_yt_copyright_flag \
@@ -6087,6 +6089,7 @@ class TartubeApp(Gtk.Application):
             'ignore_page_given_flag': self.ignore_page_given_flag,
             'ignore_no_descrip_flag': self.ignore_no_descrip_flag,
             'ignore_thumb_404_flag': self.ignore_thumb_404_flag,
+            'ignore_twitch_not_live_flag': self.ignore_twitch_not_live_flag,
 
             'ignore_yt_copyright_flag': self.ignore_yt_copyright_flag,
             'ignore_yt_age_restrict_flag': self.ignore_yt_age_restrict_flag,
