@@ -4421,7 +4421,8 @@ class TartubeApp(Gtk.Application):
             self.disable_load_save(
                 _(
                 'Failed to load the Tartube config file (file cannot be read' \
-                + ' by this version)',
+                + ' by this version of Tartube; please install the most' \
+                + ' recent version)',
                 ),
             )
 
@@ -6355,7 +6356,12 @@ class TartubeApp(Gtk.Application):
             self.remove_db_lock_file()
             self.disable_load_save(
                 _('Failed to load the Tartube database file') \
-                + ': \n\n' + str(e),
+                + ': \n\n' + str(e) + '\n\n' \
+                + _(
+                    'If this message is unexpected, the database file may be' \
+                    + ' corrupt. Try replacing it with one of the files in' \
+                    + ' the \'.backups\' folder'
+                )
             )
 
             return False
@@ -6387,7 +6393,10 @@ class TartubeApp(Gtk.Application):
 
             self.remove_db_lock_file()
             self.disable_load_save(
-                _('Database file can\'t be read by this version of Tartube'),
+                _(
+                'Database file can\'t be read by this version of Tartube' \
+                + ' (please install the most recent version)',
+                ),
             )
 
             return False
@@ -26890,9 +26899,12 @@ class TartubeApp(Gtk.Application):
             self.ignore_thumb_404_flag = True
 
 
-    def set_ignore_yt_age_restrict_mode(self, value):
+    def set_ignore_yt_age_restrict_flag(self, flag):
 
-        self.ignore_yt_age_restrict_mode = value
+        if not flag:
+            self.ignore_yt_age_restrict_flag = False
+        else:
+            self.ignore_yt_age_restrict_flag = True
 
 
     def set_ignore_yt_copyright_flag(self, flag):
@@ -27885,7 +27897,7 @@ class TartubeApp(Gtk.Application):
     def set_video_res_default(self, value):
 
         """Called by mainwin.MainWin.set_video_res_limit() and
-        .on_video_res_combobox_changed()().
+        .on_video_res_combobox_changed().
 
         Sets the new video resolution limit. If a download operation is in
         progress, the new value is applied to the next download job.

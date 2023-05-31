@@ -658,10 +658,10 @@ class DownloadManager(threading.Thread):
                 prev_day = 6
 
             if (
-                self.utils.check_day(current_day, target_day_str) \
+                utils.check_day(current_day, target_day_str) \
                 and (not start_before_flag)
             ) or (
-                self.utils.check_day(prev_day, target_day_str) \
+                utils.check_day(prev_day, target_day_str) \
                 and stop_before_flag
             ):
                 return True

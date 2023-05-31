@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.370 (13 Apr 2023)**
 
-Development release: **v2.4.370 (13 Apr 2023)**
+Development release: **v2.4.378 (31 May 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -184,9 +184,9 @@ If you want to perform a manual installation, you can follow this procedure, whi
 5.2 Installation - MacOS
 ------------------------
 
-Installation on MacOS can sometimes be tricky. See the `GitHub <https://github.com/axcore/tartube/issues/393>`__ thread for the latest information.
+Tartube can be installed on MacOS, but it's not a one-click operation.
 
-Here there are installation guides for new computers with Apple silicon, all other MacOS computers, and a troubleshooting section.
+Here are installation guides for new computers with Apple silicon, all other MacOS computers, and a troubleshooting section.
 
 5.2.1 Installation - MacOS (Apple silicon)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,15 +199,15 @@ With thanks to m3lab-zzl:
 
 - Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 
-        **pip install pycairo**
+        **pip3 install pycairo**
 
         **brew install gobject-introspection gtk+3**
 
 - Install `Python Requests module <https://3.python-requests.org/>`__, and either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__
 
-        **pip install requests youtube-dl**
+        **pip3 install requests youtube-dl**
 
-        **pip install requests yt-dlp**
+        **pip3 install requests yt-dlp**
 
 - Install the Adwaita theme for icons used by Tartube (optional)
 
@@ -217,13 +217,13 @@ With thanks to m3lab-zzl:
 
         **brew install ffmpeg**
 
-- Download & extract the Tartube source code (see the links above)
+- Install Tartube
 
-- Open a terminal inside the extracted **Tartube** directory
+        **pip3 isntall tartube**
 
 - Now run Tartube
 
-        **python3 tartube/tartube**
+        **tartube**
 
 5.2.2 Installation - MacOS (other computers)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,7 +238,7 @@ With thanks to JeremyShih:
 
 - Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 
-        **pip install pycairo**
+        **pip3 install pycairo**
 
         **brew install gobject-introspection**
 
@@ -248,13 +248,13 @@ With thanks to JeremyShih:
 
 - Install `Python Requests module <https://3.python-requests.org/>`__
 
-        **pip install requests**
+        **pip3 install requests**
 
 - Install either `youtube-dl <https://youtube-dl.org/>`__ or `yt-dlp <https://github.com/yt-dlp/yt-dlp/>`__
 
-        **pip install youtube-dl**
+        **pip3 install youtube-dl**
 
-        **pip install yt-dlp**
+        **pip3 install yt-dlp**
 
 - Install the Adwaita theme for icons used by Tartube (optional)
 
@@ -264,13 +264,13 @@ With thanks to JeremyShih:
 
         **brew install ffmpeg**
 
-- Download & extract the Tartube source code (see the links above)
+- Install Tartube
 
-- Open a terminal inside the extracted **Tartube** directory
+        **pip3 isntall tartube**
 
 - Now run Tartube
 
-        **python3 tartube/tartube**
+        **tartube**
 
 5.2.3 Troubleshooting on MacOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
