@@ -1994,12 +1994,10 @@ class GenericEditWin(GenericConfigWin):
 
         old_value = self.retrieve_val(prop)
 
-        if type(old_value) is list:
-            self.edit_dict[prop] = text.split()
-        elif type(old_value) is tuple:
-            self.edit_dict[prop] = text.split()
+        if type(old_value) is list or type(old_value) is tuple:
+            self.edit_dict[prop] = text.splitlines()
         else:
-             self.edit_dict[prop] = text
+            self.edit_dict[prop] = text
 
 
     # (Shared support functions)
@@ -22235,6 +22233,13 @@ class SystemPrefWin(GenericPrefWin):
                 checkbutton4,
             )
 
+        else:
+            checkbutton3.connect(
+                'toggled',
+                self.on_hide_toolbar_button_toggled,
+                None,
+            )
+
         checkbutton5 = self.add_checkbutton(grid,
             _(
             'Replace stock icons with custom icons (in case stock icons' \
@@ -27288,7 +27293,10 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_output_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Display output from downloader\'s STDOUT in the Output tab'),
+            _(
+            'Display general output (from downloader\'s STDOUT) in the' \
+            + ' Output tab',
+            ),
             self.app_obj.ytdl_output_stdout_flag,
             True,               # Can be toggled by user
             0, 2, grid_width, 1,
@@ -27327,7 +27335,10 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Display output from downloader\'s STDERR in the Output tab'),
+            _(
+            'Display errors/warnings (from downloader\'s STDERR) in the' \
+            + ' Output tab',
+            ),
             self.app_obj.ytdl_output_stderr_flag,
             True,               # Can be toggled by user
             0, 5, grid_width, 1,
@@ -27470,7 +27481,10 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_terminal_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Write output from downloader\'s STDOUT to the terminal window'),
+            _(
+            'Write general output (from downloader\'s STDOUT) to the' \
+            + ' terminal window',
+            ),
             self.app_obj.ytdl_write_stdout_flag,
             True,               # Can be toggled by user
             0, 2, 1, 1,
@@ -27512,7 +27526,10 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Write output from downloader\'s STDERR to the terminal window'),
+            _(
+            'Write errors/warnings (from downloader\'s STDERR) to the' \
+            + ' terminal window',
+            ),
             self.app_obj.ytdl_write_stderr_flag,
             True,               # Can be toggled by user
             0, 5, 1, 1,
@@ -27569,7 +27586,7 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton.connect('toggled', self.on_log_system_button_toggled)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Write output from downloader\'s STDOUT to the log'),
+            _('Write general output (from downloader\'s STDOUT) to the log'),
             self.app_obj.ytdl_log_stdout_flag,
             True,               # Can be toggled by user
             0, 3, 1, 1,
@@ -27611,7 +27628,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         checkbutton5 = self.add_checkbutton(grid,
-            _('Write output from downloader\'s STDERR to the log'),
+            _('Write errors/warnings (from downloader\'s STDERR) to the log'),
             self.app_obj.ytdl_log_stderr_flag,
             True,               # Can be toggled by user
             0, 6, 1, 1,
@@ -31243,6 +31260,7 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton (Gtk.CheckButton): The widget clicked
 
             checkbutton2 (Gtk.CheckButton): Another checkbutton to modify
+                (if it exists)
 
         """
 
@@ -31254,11 +31272,16 @@ class SystemPrefWin(GenericPrefWin):
         if checkbutton.get_active() \
         and not self.app_obj.toolbar_hide_flag:
             self.app_obj.set_toolbar_hide_flag(True)
-            checkbutton2.set_sensitive(False)
+
+            if not self.app_obj.simple_prefs_flag:
+                checkbutton2.set_sensitive(False)
 
         elif not checkbutton.get_active() \
         and self.app_obj.toolbar_hide_flag:
             self.app_obj.set_toolbar_hide_flag(False)
+
+            if not self.app_obj.simple_prefs_flag:
+                checkbutton2.set_sensitive(True)
 
         self.app_obj.dialogue_manager_obj.show_msg_dialogue(
             _('The new setting will be applied when Tartube restarts'),
@@ -31578,11 +31601,13 @@ class SystemPrefWin(GenericPrefWin):
         if radiobutton.get_active():
             self.app_obj.set_livestream_dl_mode(value)
 
-            if self.app_obj.livestream_dl_mode == 'streamlink':
-                self.livestream_radiobutton4.set_active(True)
-                self.livestream_radiobutton5.set_sensitive(False)
-            else:
-                self.livestream_radiobutton5.set_sensitive(True)
+            if not self.app_obj.simple_prefs_flag:
+
+                if self.app_obj.livestream_dl_mode == 'streamlink':
+                    self.livestream_radiobutton4.set_active(True)
+                    self.livestream_radiobutton5.set_sensitive(False)
+                else:
+                    self.livestream_radiobutton5.set_sensitive(True)
 
 
     def on_livestream_replace_button_toggled(self, radiobutton):
@@ -34904,7 +34929,7 @@ class SystemPrefWin(GenericPrefWin):
 
         tree_iter = combo.get_active_iter()
         model = combo.get_model()
-        self.app_obj.main_win_obj.set_video_res(model[tree_iter][0])
+        self.app_obj.set_video_res_default(model[tree_iter][0])
 
 
     def on_worker_button_toggled(self, checkbutton, alt_flag=False):
