@@ -2194,6 +2194,10 @@ class TartubeApp(Gtk.Application):
         #   Error 404: Not Found' warnings should be ignored (in the Errors/
         #   Warnings tab)
         self.ignore_thumb_404_flag = True
+        # Flag set to True if 'ERROR: [twitch:stream] [N]: The channel is not
+        #   currently live' warnings should be ignored (in the Errors/
+        #   Warnings tab)
+        self.ignore_twitch_not_live_flag = True
 
         # Flag set to True if YouTube copyright messages should be ignored (in
         #   the Errors/Warnings tab)
@@ -5170,6 +5174,8 @@ class TartubeApp(Gtk.Application):
             self.ignore_no_descrip_flag = json_dict['ignore_no_descrip_flag']
         if version >= 2003403 and 'ignore_thumb_404_flag' in json_dict:
             self.ignore_thumb_404_flag = json_dict['ignore_thumb_404_flag']
+        if version >= 2004370 and 'ignore_twitch_not_live_flag' in json_dict:
+            self.ignore_twitch_not_live_flag = json_dict['ignore_twitch_not_live_flag']
 
         if version >= 5004 and 'ignore_yt_copyright_flag' in json_dict:
             self.ignore_yt_copyright_flag \
@@ -6084,6 +6090,7 @@ class TartubeApp(Gtk.Application):
             'ignore_page_given_flag': self.ignore_page_given_flag,
             'ignore_no_descrip_flag': self.ignore_no_descrip_flag,
             'ignore_thumb_404_flag': self.ignore_thumb_404_flag,
+            'ignore_twitch_not_live_flag': self.ignore_twitch_not_live_flag,
 
             'ignore_yt_copyright_flag': self.ignore_yt_copyright_flag,
             'ignore_yt_age_restrict_flag': self.ignore_yt_age_restrict_flag,
@@ -26897,6 +26904,14 @@ class TartubeApp(Gtk.Application):
             self.ignore_thumb_404_flag = False
         else:
             self.ignore_thumb_404_flag = True
+
+
+    def set_ignore_twitch_not_live_flag(self, flag):
+
+        if not flag:
+            self.ignore_twitch_not_live_flag = False
+        else:
+            self.ignore_twitch_not_live_flag = True
 
 
     def set_ignore_yt_age_restrict_flag(self, flag):
