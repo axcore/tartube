@@ -24366,17 +24366,16 @@ class SystemPrefWin(GenericPrefWin):
             0, 10, grid_width, 1,
         )
         checkbutton10.connect('toggled', self.on_thumb_404_button_toggled)
-        
+
         checkbutton11 = self.add_checkbutton(grid,
             _(
-            'Ignore \'ERROR: [twitch:stream] [N]: The channel is not'
-            + ' currently live\' warnings',
+            'Ignore \'The channel is not currently live\' warnings on Twitch',
             ),
             self.app_obj.ignore_twitch_not_live_flag,
             True,                   # Can be toggled by user
             0, 11, grid_width, 1,
         )
-        checkbutton11.connect('toggled', self.on_twitch_not_live_button_toggled)
+        checkbutton11.connect('toggled', self.on_twitch_live_button_toggled)
 
 
     def setup_operations_custom_dl_tab(self, inner_notebook):
@@ -34769,12 +34768,12 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def on_twitch_not_live_button_toggled(self, checkbutton):
+    def on_twitch_live_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_operations_ignore_tab().
 
-        Enables/disables ignoring of the 'ERROR: twitch stream not live'
-        warning messages.
+        Enables/disables ignoring of the Twitch 'this channel is not live'
+        error messages.
 
         Args:
 

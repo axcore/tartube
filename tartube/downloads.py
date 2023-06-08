@@ -5623,7 +5623,7 @@ class VideoDownloader(object):
         ) or (
             app_obj.ignore_twitch_not_live_flag \
             and re.search(
-                r'ERROR. .twitch.stream.* The channel is not currently live',
+                r'twitch.*The channel is not currently live',
                 stderr,
             )
         ) or (
@@ -6257,6 +6257,10 @@ class VideoDownloader(object):
                             self.download_manager_obj.register_video('other')
 
                             break
+
+                # Not a true error/warning, so don't mark it as one in the code
+                #   below
+                return
 
         # Assign the error/warning to a media data object
         if not self.is_ignorable(data):

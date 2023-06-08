@@ -714,8 +714,8 @@ class GenericContainer(GenericMedia):
         """
 
         method = app_obj.match_method
-        first = app_obj.match_first_chars
-        ignore = app_obj.match_ignore_chars * -1
+        first = int(app_obj.match_first_chars)
+        ignore = int(app_obj.match_ignore_chars * -1)
 
         # Defend against two different version of a name from the same video,
         #   one with punctuation marks stripped away, and double quotes
@@ -756,7 +756,7 @@ class GenericContainer(GenericMedia):
                         child_name[:ignore] == test_name[:ignore] \
                         or (
                             app_obj.match_nickname_flag \
-                            and child_name[:ignore] == test_name[:ignore]
+                            and child_nickname[:ignore] == test_name[:ignore]
                         )
                     )
                 ):

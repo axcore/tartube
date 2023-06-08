@@ -1,3 +1,36 @@
+v2.4.386 (8 Jun 2023)
+-------------------------------------------------------------------------------
+
+MINOR NEW FEATURES
+- Added a new setting, enabled by default, to ignore 'this channel is not live'
+    errors on Twitch. To disable it, click Edit > System preferences... >
+    Operations > Ignore, and de-select the button 'Ignore The channel is not
+    currently live'. Thanks to Lux-Hue for the patch (Git #540, #541)
+
+MINOR FIXES
+- In the preferences window, fixed a few buttons and widgets that were broken
+    after the introduction of simple/advanced display modes in the previous
+    release
+- Fixed an error that sometimes occurs when using alternative download limits
+- Fixed bad handling of yt-dlp's --reject-title option, when the argument
+    contains whitespace (Git #543)
+- When matching video names while ignoring the last N characters, an exception
+    was thrown. Fixed (Git #557)
+- Fixed a minor typo in the preferences window, fuund > found
+- YouTube messages such as 'Premieres in 6 hours', which are interpreted as
+    an error/warning by yt-dlp, are no longer displayed in Tartube's Errors/
+    Warnings tab, nor added to the database video's error/warning log
+
+MINOR NEW FEATURES
+- In the preferences window, tweaked the layout of the Output > Download log
+    tab to reduce confusion
+- Tweaked the dialogue window 'Ran out of input', seen when trying to load a
+    corrupted database file, to add additional instructions (Git #545)
+- Tweaked the dialogue window 'Failed to load the config file (cannot be read
+    by this version)' to add additional instructions
+- In the README, the MacOS installation guides have now been tested by the
+    authors, and are confirmed to be working
+
 v2.4.370 (13 Apr 2023)
 -------------------------------------------------------------------------------
 

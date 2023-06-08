@@ -9408,7 +9408,7 @@ msgstr "忽略 \"没有播放列表描述可写 \"的警告"
 
 #: .././config.py:24356
 msgid ""
-"Ignore 'Unable to download video thumbnail: HTTP Error 404: Not Fuund' "
+"Ignore 'Unable to download video thumbnail: HTTP Error 404: Not Found' "
 "warnings"
 msgstr "忽略 \"无法下载视频缩略图： HTTP 404错误： Not Found \"的警告"
 
