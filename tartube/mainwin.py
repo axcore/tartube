@@ -339,6 +339,7 @@ class MainWin(Gtk.ApplicationWindow):
                                                 # Gtk.CheckButton
         self.show_system_multi_line_checkbutton = None
                                                 # Gtk.CheckButton
+        self.error_list_copy_button = None      # Gtk.Button
         self.error_list_entry = None            # Gtk Entry
         self.error_list_togglebutton = None     # Gtk.ToggleButton
         self.error_list_container_checkbutton = None
@@ -348,8 +349,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.error_list_msg_checkbutton = None  # Gtk.CheckButton
         self.error_list_filter_toolbutton = None
                                                 # Gtk.ToolButton
-        self.error_list_cancel_toolbutton    = None
-        self.error_list_button = None           # Gtk.Button
+        self.error_list_cancel_toolbutton = None
+        self.error_list_clear_button = None     # Gtk.Button
 
 
         # IV list - other
@@ -4311,6 +4312,17 @@ class MainWin(Gtk.ApplicationWindow):
             self.on_system_multi_line_checkbutton_changed,
         )
 
+        self.error_list_copy_button = Gtk.Button()
+        hbox2.pack_end(self.error_list_copy_button, False, False, 0)
+        self.error_list_copy_button.set_label(_('Copy selected'))
+        self.error_list_copy_button.set_tooltip_text(
+            _('Copy selected errors/warnings to the clipboard')
+        )
+        self.error_list_copy_button.connect(
+            'clicked',
+            self.on_errors_list_copy,
+        )
+
         # (Third row)
         hbox3 = Gtk.HBox()
         vbox.pack_start(hbox3, False, False, 0)
@@ -4383,16 +4395,21 @@ class MainWin(Gtk.ApplicationWindow):
         self.error_list_cancel_toolbutton.set_tooltip_text(
             _('Cancel filter'),
         )
-
-        self.error_list_button = Gtk.Button()
-        hbox3.pack_end(self.error_list_button, False, False, 0)
-        self.error_list_button.set_label('     ' + _('Clear list') + '     ')
-        self.error_list_button.connect(
-            'clicked',
-            self.on_errors_list_clear,
-        )
         self.error_list_cancel_toolbutton.set_action_name(
             'app.cancel_error_filter_toolbutton',
+        )
+
+        self.error_list_clear_button = Gtk.Button()
+        hbox3.pack_end(self.error_list_clear_button, False, False, 0)
+        self.error_list_clear_button.set_label(
+            '     ' + _('Clear list') + '     ',
+        )
+        self.error_list_copy_button.set_tooltip_text(
+            _('Clear all visible errors/warnings')
+        )
+        self.error_list_clear_button.connect(
+            'clicked',
+            self.on_errors_list_clear,
         )
 
 
@@ -10571,12 +10588,22 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Reset the marker on the row for the specified channel/playlist/
             #   folder
-            tree_ref = self.video_index_row_dict[dbid]
-            model = tree_ref.get_model()
-            tree_path = tree_ref.get_path()
-            tree_iter = model.get_iter(tree_path)
 
-            model.set(tree_iter, 4, False)
+            # !!! DEBUG GIT #558
+            try:
+                tree_ref = self.video_index_row_dict[dbid]
+                model = tree_ref.get_model()
+                tree_path = tree_ref.get_path()
+                tree_iter = model.get_iter(tree_path)
+
+                model.set(tree_iter, 4, False)
+
+            except:
+                return self.app_obj.system_error(
+                    276,
+                    'Video Index reset marker request failed because row' \
+                    + ' missing from registry',
+                )
 
             if dbid in self.video_index_marker_dict:
                 del self.video_index_marker_dict[dbid]
@@ -20807,7 +20834,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         """Called from callback in self.setup_errors_tab().
 
-        In the Errors/Warnings tab, when the user clicks the 'Clear the list'
+        In the Errors/Warnings tab, when the user clicks the 'Clear list'
         button, clear the Errors List.
 
         Args:
@@ -20818,6 +20845,77 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.error_list_buffer_list = []
         self.errors_list_reset()
+
+
+    def on_errors_list_copy(self, button):
+
+        """Called from callback in self.setup_errors_tab().
+
+        In the Errors/Warnings tab, when the user clicks the 'Copy to
+        clipboard' button, copy all selected lines to the clipboard.
+
+        Args:
+
+            button (Gtk.Button): The clicked widget
+
+        """
+
+        # Based on code from self.on_errors_list_drag_data_get()
+        # For each selected line, retrieve values from the three hidden columns
+        text = ''
+
+        selection = self.errors_list_treeview.get_selection()
+        (model, path_list) = selection.get_selected_rows()
+        for tree_path in path_list:
+
+            tree_iter = model.get_iter(tree_path)
+            if tree_iter:
+
+                file_path = model[tree_iter][0]
+                source = model[tree_iter][1]
+                name = model[tree_iter][2]
+                msg = model[tree_iter][9]
+
+                # If the path, source and name are all empty strings, then it
+                #   probably wasn't a media data object that generated the
+                #   message on this line
+                if file_path !=  '' or source != '' or name != '':
+
+                    if self.app_obj.drag_error_separator_flag:
+                        text += self.drag_drop_separator + '\n'
+
+                    if self.app_obj.drag_error_path_flag:
+                        if file_path == '':
+                            text += '(' + _('unknown path') + ')\n'
+                        else:
+                            text += file_path + '\n'
+
+                    if self.app_obj.drag_error_source_flag:
+                        if source  == '':
+                            text += '(' + _('unknown URL') + ')\n'
+                        else:
+                            text += source + '\n'
+
+                    if self.app_obj.drag_error_name_flag:
+                        if name == '':
+                            text += self.app_obj.default_video_name + '\n'
+                        else:
+                            text += name + '\n'
+
+                    if self.app_obj.drag_error_msg_flag:
+
+                        # Strip newline characters; we want the whole message
+                        #    on a single line, on this occasion
+                        # (name == '' should be impossible, but for
+                        #   completeness, we'll check it anyway)
+                        if name == '':
+                            text += '(' + _('unknown message') + ')\n'
+                        else:
+                            text += re.sub(r'\n+', ' ', msg) + '\n'
+
+        # Copy the string to the clipboard
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        clipboard.set_text(text, -1)
 
 
     def on_errors_list_drag_data_get(self, treeview, drag_context, data, info,
@@ -31988,7 +32086,7 @@ class CreateProfileDialogue(Gtk.Dialog):
             else:
                 pixbuf = main_win_obj.pixbuf_dict['folder_small']
 
-            liststore.append( [pixbuf, name] )
+            liststore.append( [pixbuf, media_data_obj.name] )
 
         label2 = Gtk.Label()
         grid.attach(label2, 0, 3, 1, 1)

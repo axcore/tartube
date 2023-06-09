@@ -4199,7 +4199,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-197)
-            200-299: mainwin.py     (in use: 201-275)
+            200-299: mainwin.py     (in use: 201-276)
             300-399: downloads.py   (in use: 301-318)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
@@ -4292,8 +4292,20 @@ class TartubeApp(Gtk.Application):
         """
 
         path = os.path.abspath(os.path.join(self.data_dir, self.ytdl_log_name))
-        with open(path, 'a') as outfile:
-            outfile.write(msg + '\n')
+        # !!! DEBUG GIT #557
+#       with open(path, 'a') as outfile:
+#           outfile.write(msg + '\n')
+        if os.name == 'nt':
+
+            # Expect CP1252 encoding
+            with open(path, 'a', errors='ignore') as outfile:
+                outfile.write(msg + '\n')
+
+        else:
+
+            # Encode to UTF-8
+            with open(path, 'a', encoding='utf-8') as outfile:
+                outfile.write(msg + '\n')
 
 
     # (Config/database files load/save)
@@ -24951,7 +24963,7 @@ class TartubeApp(Gtk.Application):
         # Get a list of marked items in the Video Index
         dbid_list = []
         for this_dbid in self.main_win_obj.video_index_marker_dict.keys():
-            dbid_list.append(dbid)
+            dbid_list.append(this_dbid)
 
         # Create the profile
         self.add_profile(profile_name, dbid_list)
