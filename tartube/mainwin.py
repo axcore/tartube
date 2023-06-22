@@ -519,6 +519,14 @@ class MainWin(Gtk.ApplicationWindow):
         # Therefore, self.on_video_index_drag_data_received() knows that it is
         #   receiving media.Videos when this list is not empty
         self.video_catalogue_drag_list = []
+        # (Git #561) Dragging items from the Video Index onto itself causes
+        #   problems; self.on_window_drag_data_received() is called correctly,
+        #   immediately followed by a useless call to
+        #   self.on_window_drag_data_received()
+        # An intermediate call to Gtk.drag_cancel(context) does not work, so
+        #   we're forced to use this ugly hack, hoping that both functions
+        #   receive the same Gtk.DragContext
+        self.ignore_drag_context = None
 
         # Background colours used in the Video Catalogue to highlight
         #   livestream videos (we use different colours for a debut video)
@@ -16192,6 +16200,15 @@ class MainWin(Gtk.ApplicationWindow):
                 video_list,
             )
 
+            # (Git #561) Dragging items from the Video Index onto itself causes
+            #   problems; this function is called correctly, immediately
+            #   followed by a useless call to
+            #   self.on_window_drag_data_received()
+            # An intermediate call to Gtk.drag_cancel(context) does not work,
+            #   so we're forced to use this ugly hack, hoping that both
+            #   functions receive the same Gtk.DragContext
+            self.ignore_drag_context = drag_context
+
         else:
 
             # A media.Channel, media.Playlist or media.Folder is being dragged
@@ -22603,8 +22620,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
-    def on_window_drag_data_received(self, widget, context, x, y, data, info,
-    time):
+    def on_window_drag_data_received(self, widget, drag_context, x, y, data,
+    info, time):
 
         """Called from callback in self.setup_win().
 
@@ -22629,6 +22646,15 @@ class MainWin(Gtk.ApplicationWindow):
 
         """
 
+        # (Git #561) Ugly hack to bypass the issue described in
+        #   self.on_video_index_drag_data_received()
+        if self.ignore_drag_context is not None \
+        and self.ignore_drag_context == drag_context:
+            self.ignore_drag_context = None
+            return
+
+        # Now continue with the code for actual drag and drops into the
+        #   main window
         text = None
         if info == 0:
             text = data.get_text()
@@ -22768,7 +22794,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Without this line, the user's cursor is permanently stuck in drag
         #   and drop mode
-        context.finish(True, False, time)
+        drag_context.finish(True, False, time)
 
 
     def on_window_size_allocate(self, widget, rect):

@@ -4200,7 +4200,7 @@ class TartubeApp(Gtk.Application):
 
             100-199: mainapp.py     (in use: 101-197)
             200-299: mainwin.py     (in use: 201-276)
-            300-399: downloads.py   (in use: 301-318)
+            300-399: downloads.py   (in use: 301-310)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
             600-699: info.py        (in use: 601)
@@ -8127,6 +8127,20 @@ class TartubeApp(Gtk.Application):
                 if isinstance(media_data_obj, media.Video):
                     media_data_obj.dummy_sblock_flag = False
 
+        if version < 2004396:       # v2.4.396
+
+            # This version adds IVs to media.Scheduled objects
+            for scheduled_obj in self.scheduled_list:
+
+                scheduled_obj.autostop_time_flag = False
+                scheduled_obj.autostop_time_value = 1
+                scheduled_obj.autostop_time_unit = 'hours'
+                scheduled_obj.autostop_videos_flag = False
+                scheduled_obj.autostop_videos_value = 100
+                scheduled_obj.autostop_size_flag = False
+                scheduled_obj.autostop_size_value = 1
+                scheduled_obj.autostop_size_unit = 'GiB'
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -9181,9 +9195,12 @@ class TartubeApp(Gtk.Application):
             self.dialogue_manager_obj.show_simple_msg_dialogue(
                 _('Database check complete, problems found:') \
                 + ' ' + str(total) + '\n\n' \
-                + _(
-                'Do you want to repair these problems? (The database will be' \
-                + ' fixed, but no files will be deleted)',
+                + utils.tidy_up_long_string(
+                    _(
+                    'Do you want to repair these problems? (The database' \
+                    + ' will be fixed, but no files will be deleted)',
+                    ),
+                    self.main_win_obj.long_string_max_len,
                 ),
                 'question',
                 'yes-no',
@@ -15075,7 +15092,7 @@ class TartubeApp(Gtk.Application):
         else:
 
             msg = _(
-                'Are you sure you want to move \'{0}\' videos to \'{1}\'?',
+                'Are you sure you want to move {0} videos to \'{1}\'?',
             ).format(len(video_list), dest_obj.name)
 
         if isinstance(dest_obj, media.Folder) \
@@ -17030,8 +17047,6 @@ class TartubeApp(Gtk.Application):
                     self.fixed_missing_folder.inc_fav_count()
                 if video_obj.live_mode:
                     self.fixed_missing_folder.inc_live_count()
-                if video_obj.missing_flag:
-                    self.fixed_missing_folder.inc_missing_count()
                 if video_obj.new_flag:
                     self.fixed_missing_folder.inc_new_count()
                 if video_obj.waiting_flag:
@@ -17053,8 +17068,6 @@ class TartubeApp(Gtk.Application):
                     self.fixed_fav_folder.inc_missing_count()
                 if video_obj.live_mode:
                     self.fixed_live_folder.inc_missing_count()
-                if video_obj.missing_flag:
-                    self.fixed_missing_folder.inc_missing_count()
                 if video_obj.new_flag:
                     self.fixed_new_folder.inc_missing_count()
                 if video_obj in self.fixed_recent_folder.child_list:

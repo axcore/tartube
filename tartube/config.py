@@ -18749,6 +18749,7 @@ class ScheduledEditWin(GenericEditWin):
 
         self.setup_general_tab()
         self.setup_start_tab()
+        self.setup_stop_tab()
         self.setup_conflicts_tab()
         self.setup_media_tab()
         self.setup_limits_tab()
@@ -19133,6 +19134,168 @@ class ScheduledEditWin(GenericEditWin):
             liststore.append([
                 formats.SPECIFIED_DAYS_DICT[mini_list[0]] + ' ' + mini_list[1],
             ])
+
+
+    def setup_stop_tab(self):
+
+        """Called by self.setup_tabs().
+
+        Sets up the 'Stop' tab.
+        """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Scheduled downloads > Stop'
+        )
+
+        tab, grid = self.add_notebook_tab(_('_Stop'))
+        grid_width = 4
+
+        # Stop conditions
+        self.add_label(grid,
+            '<u>' + _('Stop conditions') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+            'N.B. When this setting is triggered, the entire download' \
+            + ' operation stops',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _('Stop download operation after this much time'),
+            None,
+            0, 2, 1, 1,
+        )
+        checkbutton.set_active(self.edit_obj.autostop_time_flag)
+        # (Signal connect appears below)
+
+        spinbutton = self.add_spinbutton(grid,
+            1, None, 1,
+            None,
+            1, 2, 1, 1,
+        )
+        spinbutton.set_value(self.edit_obj.autostop_time_value)
+        if not self.edit_obj.autostop_time_flag:
+            spinbutton.set_sensitive(False)
+        # (Signal connect appears below)
+
+        store = Gtk.ListStore(str, str)
+        for string in formats.TIME_METRIC_LIST:
+            store.append( [string, formats.TIME_METRIC_TRANS_DICT[string]] )
+
+        combo = Gtk.ComboBox.new_with_model(store)
+        grid.attach(combo, 2, 2, 1, 1)
+
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 1)
+        combo.set_entry_text_column(1)
+        combo.set_active(
+            formats.TIME_METRIC_LIST.index(
+                self.edit_obj.autostop_time_unit,
+            )
+        )
+        if not self.edit_obj.autostop_time_flag:
+            combo.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_autostop_time_button_toggled,
+            spinbutton,
+            combo,
+        )
+        spinbutton.connect(
+            'value-changed',
+            self.on_autostop_time_spinbutton_changed,
+        )
+        combo.connect('changed', self.on_autostop_time_combo_changed)
+
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Stop download operation after this many videos'),
+            None,
+            0, 3, 1, 1,
+        )
+        checkbutton2.set_active(self.edit_obj.autostop_videos_flag)
+        # (Signal connect appears below)
+
+        spinbutton2 = self.add_spinbutton(grid,
+            1, None, 1,
+            None,
+            1, 3, 1, 1,
+        )
+        spinbutton2.set_value(self.edit_obj.autostop_videos_value)
+        if not self.edit_obj.autostop_videos_flag:
+            spinbutton2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton2.connect(
+            'toggled',
+            self.on_autostop_videos_button_toggled,
+            spinbutton2,
+        )
+        spinbutton2.connect(
+            'value-changed',
+            self.on_autostop_videos_spinbutton_changed,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Stop download operation after this much disk space'),
+            None,
+            0, 4, 1, 1,
+        )
+        checkbutton3.set_active(self.edit_obj.autostop_size_flag)
+        # (Signal connect appears below)
+
+        spinbutton3 = self.add_spinbutton(grid,
+            1, None, 1,
+            None,
+            1, 4, 1, 1,
+        )
+        spinbutton3.set_value(self.edit_obj.autostop_size_value)
+        if not self.edit_obj.autostop_size_flag:
+            spinbutton3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        combo3 = self.add_combo(grid,
+            formats.FILESIZE_METRIC_LIST,
+            None,
+            2, 4, 1, 1,
+        )
+        combo3.set_active(
+            formats.FILESIZE_METRIC_LIST.index(
+                self.edit_obj.autostop_size_unit,
+            )
+        )
+        if not self.edit_obj.autostop_size_flag:
+            combo3.set_sensitive(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
+        checkbutton3.connect(
+            'toggled',
+            self.on_autostop_size_button_toggled,
+            spinbutton3,
+            combo3,
+        )
+        spinbutton3.connect(
+            'value-changed',
+            self.on_autostop_size_spinbutton_changed,
+        )
+        combo3.connect('changed', self.on_autostop_size_combo_changed)
+
+        self.add_label(grid,
+            '<i>' + _(
+                'N.B. Disk space is estimated. This setting does not apply' \
+                + ' to simulated downloads',
+            ) + '</i>',
+            0, 5, grid_width, 1,
+        )
 
 
     def setup_conflicts_tab(self):
@@ -19585,6 +19748,164 @@ class ScheduledEditWin(GenericEditWin):
             self.edit_obj.all_flag = False
         else:
             self.edit_obj.all_flag = True
+
+
+    def on_autostop_size_button_toggled(self, checkbutton, spinbutton, combo):
+
+        """Called from callback in self.setup_stop_tab().
+
+        Enables/disables auto-stopping a download operation after a certain
+        amount of disk space.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+            combo (Gtk.ComboBox): Another widget to modify
+
+        """
+
+        if not checkbutton.get_active():
+            self.edit_dict['autostop_size_flag'] = False
+            spinbutton.set_sensitive(False)
+            combo.set_sensitive(False)
+        else:
+            self.edit_dict['autostop_size_flag'] = True
+            spinbutton.set_sensitive(True)
+            combo.set_sensitive(True)
+
+
+    def on_autostop_size_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_stop_tab().
+
+        Sets the disk space unit at which a download operation is auto-stopped.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.edit_dict['autostop_size_unit'] = model[tree_iter][0]
+
+
+    def on_autostop_size_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_stop_tab().
+
+        Sets the disk space value at which a download operation is
+        auto-stopped.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.edit_dict['autostop_size_value'] = spinbutton.get_value()
+
+
+    def on_autostop_time_button_toggled(self, checkbutton, spinbutton, combo):
+
+        """Called from callback in self.setup_stop_tab().
+
+        Enables/disables auto-stopping a download operation after a certain
+        time.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+            combo (Gtk.ComboBox): Another widget to modify
+
+        """
+
+        if not checkbutton.get_active():
+            self.edit_dict['autostop_time_flag'] = False
+            spinbutton.set_sensitive(False)
+            combo.set_sensitive(False)
+        else:
+            self.edit_dict['autostop_time_flag'] = True
+            spinbutton.set_sensitive(True)
+            combo.set_sensitive(True)
+
+
+    def on_autostop_time_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_stop_tab().
+
+        Sets the time unit at which a download operation is auto-stopped.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        self.edit_dict['autostop_time_unit'] = model[tree_iter][0]
+
+
+    def on_autostop_time_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_stop_tab().
+
+        Sets the time value at which a download operation is auto-stopped.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.edit_dict['autostop_time_value'] = spinbutton.get_value()
+
+
+    def on_autostop_videos_button_toggled(self, checkbutton, spinbutton):
+
+        """Called from callback in self.setup_stop_tab().
+
+        Enables/disables auto-stopping a download operation after a certain
+        number of videos.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            spinbutton (Gtk.SpinButton): Another widget to modify
+
+        """
+
+        if not checkbutton.get_active():
+            self.edit_dict['autostop_videos_flag'] = False
+            spinbutton.set_sensitive(False)
+        else:
+            self.edit_dict['autostop_videos_flag'] = True
+            spinbutton.set_sensitive(True)
+
+
+    def on_autostop_videos_spinbutton_changed(self, spinbutton):
+
+        """Called from callback in self.setup_stop_tab().
+
+        Sets the number of videos at which a download operation is
+        auto-stopped.
+
+        Args:
+
+            spinbutton (Gtk.SpinButton): The widget clicked
+
+        """
+
+        self.edit_dict['autostop_videos_value'] = spinbutton.get_value()
 
 
     def on_clear_media_button_clicked(self, button, liststore):
@@ -23504,17 +23825,25 @@ class SystemPrefWin(GenericPrefWin):
             0, 0, grid_width, 1,
         )
 
+        self.add_label(grid,
+            '<i>' + _(
+            'N.B. Each scheduled download also has its own \'stop\' settings' \
+            + ' which override these settings',
+            ) + '</i>',
+            0, 1, grid_width, 1,
+        )
+
         checkbutton = self.add_checkbutton(grid,
             _('Stop all download operations after this much time'),
             self.app_obj.autostop_time_flag,
             True,                   # Can be toggled by user
-            0, 1, 1, 1,
+            0, 2, 1, 1,
         )
         # (Signal connect appears below)
 
         spinbutton = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.autostop_time_value,
-            1, 1, 1, 1,
+            1, 2, 1, 1,
         )
         if not self.app_obj.autostop_time_flag:
             spinbutton.set_sensitive(False)
@@ -23524,7 +23853,7 @@ class SystemPrefWin(GenericPrefWin):
             store.append( [string, formats.TIME_METRIC_TRANS_DICT[string]] )
 
         combo = Gtk.ComboBox.new_with_model(store)
-        grid.attach(combo, 2, 1, 1, 1)
+        grid.attach(combo, 2, 2, 1, 1)
 
         renderer_text = Gtk.CellRendererText()
         combo.pack_start(renderer_text, True)
@@ -23556,13 +23885,13 @@ class SystemPrefWin(GenericPrefWin):
             _('Stop all download operations after this many videos'),
             self.app_obj.autostop_videos_flag,
             True,                   # Can be toggled by user
-            0, 2, 1, 1,
+            0, 3, 1, 1,
         )
         # (Signal connect appears below)
 
         spinbutton2 = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.autostop_videos_value,
-            1, 2, 1, 1,
+            1, 3, 1, 1,
         )
         if not self.app_obj.autostop_videos_flag:
             spinbutton2.set_sensitive(False)
@@ -23583,13 +23912,13 @@ class SystemPrefWin(GenericPrefWin):
             _('Stop all download operations after this much disk space'),
             self.app_obj.autostop_size_flag,
             True,                   # Can be toggled by user
-            0, 3, 1, 1,
+            0, 4, 1, 1,
         )
         # (Signal connect appears below)
 
         spinbutton3 = self.add_spinbutton(grid,
             1, None, 1, self.app_obj.autostop_size_value,
-            1, 3, 1, 1,
+            1, 4, 1, 1,
         )
         if not self.app_obj.autostop_size_flag:
             spinbutton3.set_sensitive(False)
@@ -23597,7 +23926,7 @@ class SystemPrefWin(GenericPrefWin):
         combo3 = self.add_combo(grid,
             formats.FILESIZE_METRIC_LIST,
             None,
-            2, 3, 1, 1,
+            2, 4, 1, 1,
         )
         combo3.set_active(
             formats.FILESIZE_METRIC_LIST.index(
@@ -23626,7 +23955,7 @@ class SystemPrefWin(GenericPrefWin):
                 'N.B. Disk space is estimated. This setting does not apply' \
                 + ' to simulated downloads',
             ) + '</i>',
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
 

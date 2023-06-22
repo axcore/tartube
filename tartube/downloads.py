@@ -353,6 +353,18 @@ class DownloadManager(threading.Thread):
                 )
 
             # Auto-stop the download operation, if required
+            for scheduled_obj in self.download_list_obj.scheduled_list:
+
+                if scheduled_obj.autostop_time_flag:
+
+                    # Calculate the current time limit, in seconds
+                    unit = scheduled_obj.autostop_time_unit
+                    time_limit = scheduled_obj.autostop_time_value \
+                    * formats.TIME_METRIC_DICT[unit]
+
+                    if (time.time() - self.start_time) > time_limit:
+                        break
+
             if self.app_obj.autostop_time_flag:
 
                 # Calculate the current time limit, in seconds
@@ -1014,6 +1026,13 @@ class DownloadManager(threading.Thread):
             elif dl_type == 'sim':
                 self.total_sim_count += 1
 
+            for scheduled_obj in self.download_list_obj.scheduled_list:
+
+                if scheduled_obj.autostop_videos_flag \
+                and self.total_video_count \
+                >= scheduled_obj.autostop_videos_value:
+                    return self.stop_download_operation()
+
             if self.app_obj.autostop_videos_flag \
             and self.total_video_count >= self.app_obj.autostop_videos_value:
                 self.stop_download_operation()
@@ -1038,6 +1057,18 @@ class DownloadManager(threading.Thread):
         if size is not None:
 
             self.total_size_count += size
+
+            for scheduled_obj in self.download_list_obj.scheduled_list:
+
+                if scheduled_obj.autostop_size_flag:
+
+                    # Calculate the current limit
+                    unit = scheduled_obj.autostop_size_unit
+                    limit = scheduled_obj.autostop_size_value \
+                    * formats.FILESIZE_METRIC_DICT[unit]
+
+                    if self.total_size_count >= limit:
+                        return self.stop_download_operation()
 
             if self.app_obj.autostop_size_flag:
 
@@ -2094,6 +2125,10 @@ class DownloadList(object):
         #   not checked/downloaded
         self.final_item_id = None
 
+        # List of any media.Scheduled objects involved in the current download
+        #   operation
+        self.scheduled_list = []
+
 
         # Code
         # ----
@@ -2681,6 +2716,12 @@ class DownloadList(object):
 
             self.download_item_dict[download_item_obj.item_id] \
             = download_item_obj
+
+            # Keep track of any media.Scheduled objects involved in the
+            #   current download operation
+            if scheduled_obj is not None \
+            and not scheduled_obj in self.scheduled_list:
+                self.scheduled_list.append(scheduled_obj)
 
         # Call this function recursively for any child media data objects in
         #   the following situations:
@@ -5128,306 +5169,332 @@ class VideoDownloader(object):
             dl_stat_dict['speed'] = match.groups()[1]
             return dl_stat_dict
 
-        # Extract the data
-        stdout_list[0] = stdout_list[0].lstrip('\r')
-        if stdout_list[0] == '[download]':
+        # Extract the data. Because of the (small) possibility of a Python
+        #   IndexError, we need to wrap the whole thing in a try..except
+        try:
 
-            dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
-            if self.network_error_time is not None:
-                self.network_error_time = None
+            stdout_list[0] = stdout_list[0].lstrip('\r')
+            if stdout_list[0] == '[download]':
 
-            # Get path, filename and extension
-            if stdout_list[1] == 'Destination:':
-                path, filename, extension = self.extract_filename(
-                    ' '.join(stdout_with_spaces_list[2:]),
-                )
+                dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
+                if self.network_error_time is not None:
+                    self.network_error_time = None
 
-                dl_stat_dict['path'] = path
-                dl_stat_dict['filename'] = filename
-                dl_stat_dict['extension'] = extension
+                # Get path, filename and extension
+                if stdout_list[1] == 'Destination:':
+                    path, filename, extension = self.extract_filename(
+                        ' '.join(stdout_with_spaces_list[2:]),
+                    )
 
-                # v2.3.013 - the path to the subtitles file is being mistaken
-                #   for the path to the video file here. Only use the
-                #   destination if the path is a recognised video/audio format
-                #   (and if we don't already have it)
-                short_ext = extension[1:]
-                if self.temp_path is None \
-                and (
-                    short_ext in formats.VIDEO_FORMAT_LIST \
-                    or short_ext in formats.AUDIO_FORMAT_LIST
-                ):
-                    self.set_temp_destination(path, filename, extension)
+                    dl_stat_dict['path'] = path
+                    dl_stat_dict['filename'] = filename
+                    dl_stat_dict['extension'] = extension
 
-            # Get progress information
-            if '%' in stdout_list[1]:
-                if stdout_list[1] != '100%':
+                    # v2.3.013 - the path to the subtitles file is being
+                    #   mistaken for the path to the video file here. Only use
+                    #   the destination if the path is a recognised video/audio
+                    #   format (and if we don't already have it)
+                    short_ext = extension[1:]
+                    if self.temp_path is None \
+                    and (
+                        short_ext in formats.VIDEO_FORMAT_LIST \
+                        or short_ext in formats.AUDIO_FORMAT_LIST
+                    ):
+                        self.set_temp_destination(path, filename, extension)
 
-                    # Old format, e.g.
-                    #   [download]  27.0% of 7.55MiB at 73.63KiB/s ETA 01:16
-                    if stdout_list[3] != '~':
-                        dl_stat_dict['percent'] = stdout_list[1]
-                        dl_stat_dict['eta'] = stdout_list[7]
-                        dl_stat_dict['speed'] = stdout_list[5]
-                        dl_stat_dict['filesize'] = stdout_list[3]
-                    # New format (approx December 2022), e.g.
-                    #   [download] 8.5% of ~ 19.87MiB at 2.35MiB/s ETA 00:07
-                    #       (frag 8/94)
+                # Get progress information
+                if '%' in stdout_list[1]:
+                    if stdout_list[1] != '100%':
+
+                        # Old format, e.g.
+                        #   [download]  27.0% of 7.55MiB at 73.63KiB/s ETA
+                        #       01:16
+                        if stdout_list[3] != '~':
+                            dl_stat_dict['percent'] = stdout_list[1]
+                            dl_stat_dict['eta'] = stdout_list[7]
+                            dl_stat_dict['speed'] = stdout_list[5]
+                            dl_stat_dict['filesize'] = stdout_list[3]
+                        # New format (approx December 2022), e.g.
+                        #   [download] 8.5% of ~ 19.87MiB at 2.35MiB/s ETA
+                        #       00:07 (frag 8/94)
+                        else:
+                            dl_stat_dict['percent'] = stdout_list[1]
+                            dl_stat_dict['eta'] = stdout_list[8]
+                            dl_stat_dict['speed'] = stdout_list[6]
+                            dl_stat_dict['filesize'] = stdout_list[4]
+
                     else:
-                        dl_stat_dict['percent'] = stdout_list[1]
-                        dl_stat_dict['eta'] = stdout_list[8]
-                        dl_stat_dict['speed'] = stdout_list[6]
-                        dl_stat_dict['filesize'] = stdout_list[4]
+                        dl_stat_dict['percent'] = '100%'
+                        dl_stat_dict['eta'] = ''
+                        dl_stat_dict['speed'] = ''
+                        dl_stat_dict['filesize'] = stdout_list[3]
 
-                else:
-                    dl_stat_dict['percent'] = '100%'
-                    dl_stat_dict['eta'] = ''
-                    dl_stat_dict['speed'] = ''
-                    dl_stat_dict['filesize'] = stdout_list[3]
-
-                    # If the most recently-received filename isn't one used by
-                    #   FFmpeg, then this marks the end of a video download
-                    # (See the comments in self.__init__)
-                    if len(stdout_list) > 4 \
-                    and stdout_list[4] == 'in' \
-                    and self.temp_filename is not None \
-                    and not re.search(r'^.*\.f\d{1,3}$', self.temp_filename):
-
-                        self.confirm_new_video(
-                            self.temp_path,
+                        # If the most recently-received filename isn't one used
+                        #   by FFmpeg, then this marks the end of a video
+                        #   download
+                        # (See the comments in self.__init__)
+                        if len(stdout_list) > 4 \
+                        and stdout_list[4] == 'in' \
+                        and self.temp_filename is not None \
+                        and not re.search(
+                            r'^.*\.f\d{1,3}$',
                             self.temp_filename,
-                            self.temp_extension,
-                        )
+                        ):
+                            self.confirm_new_video(
+                                self.temp_path,
+                                self.temp_filename,
+                                self.temp_extension,
+                            )
 
+                            self.reset_temp_destination()
+
+                # Get playlist information (when downloading a channel or a
+                #   playlist, this line is received once per video)
+                # youtube-dl 'Downloading video n of n'
+                # yt-dlp: 'Downloading item n of n'
+                if stdout_list[1] == 'Downloading' \
+                and (stdout_list[2] == 'video' or stdout_list[2] == 'item') \
+                and stdout_list[4] == 'of':
+                    dl_stat_dict['playlist_index'] = int(stdout_list[3])
+                    self.video_num = int(stdout_list[3])
+                    dl_stat_dict['playlist_size'] = int(stdout_list[5])
+                    self.video_total = int(stdout_list[5])
+
+                    # If youtube-dl is about to download a channel or playlist
+                    #   into a media.Video object, decide what to do to prevent
+                    #   it
+                    if not self.dl_classic_flag:
+                        self.check_dl_is_correct_type()
+
+                # Remove the 'and merged' part of the STDOUT message when using
+                #   FFmpeg to merge the formats
+                if stdout_list[-3] == 'downloaded' \
+                and stdout_list[-1] == 'merged':
+                    stdout_list = stdout_list[:-2]
+                    stdout_with_spaces_list = stdout_with_spaces_list[:-2]
+
+                    dl_stat_dict['percent'] = '100%'
+
+                # Get file already downloaded status
+                if stdout_list[-1] == 'downloaded':
+
+                    path, filename, extension = self.extract_filename(
+                        ' '.join(stdout_with_spaces_list[1:-4]),
+                    )
+
+                    # v2.3.013 - same problem as above
+                    short_ext = extension[1:]
+                    if short_ext in formats.VIDEO_FORMAT_LIST \
+                    or short_ext in formats.AUDIO_FORMAT_LIST:
+
+                        dl_stat_dict['status'] \
+                        = formats.COMPLETED_STAGE_ALREADY
+                        dl_stat_dict['path'] = path
+                        dl_stat_dict['filename'] = filename
+                        dl_stat_dict['extension'] = extension
                         self.reset_temp_destination()
 
-            # Get playlist information (when downloading a channel or a
-            #   playlist, this line is received once per video)
-            # youtube-dl 'Downloading video n of n'
-            # yt-dlp: 'Downloading item n of n'
-            if stdout_list[1] == 'Downloading' \
-            and (stdout_list[2] == 'video' or stdout_list[2] == 'item') \
-            and stdout_list[4] == 'of':
-                dl_stat_dict['playlist_index'] = int(stdout_list[3])
-                self.video_num = int(stdout_list[3])
-                dl_stat_dict['playlist_size'] = int(stdout_list[5])
-                self.video_total = int(stdout_list[5])
+                        self.confirm_old_video(path, filename, extension)
 
-                # If youtube-dl is about to download a channel or playlist into
-                #   a media.Video object, decide what to do to prevent it
-                if not self.dl_classic_flag:
-                    self.check_dl_is_correct_type()
+                # Get filesize abort status
+                if stdout_list[-1] == 'Aborting.':
+                    dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
 
-            # Remove the 'and merged' part of the STDOUT message when using
-            #   FFmpeg to merge the formats
-            if stdout_list[-3] == 'downloaded' and stdout_list[-1] == 'merged':
-                stdout_list = stdout_list[:-2]
-                stdout_with_spaces_list = stdout_with_spaces_list[:-2]
+            elif stdout_list[0] == '[hlsnative]':
 
-                dl_stat_dict['percent'] = '100%'
+                # Get information from the native HLS extractor (see
+                #   https://github.com/rg3/youtube-dl/blob/master/youtube_dl/
+                #       downloader/hls.py#L54
+                dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
 
-            # Get file already downloaded status
-            if stdout_list[-1] == 'downloaded':
+                if len(stdout_list) == 7:
+                    segment_no = float(stdout_list[6])
+                    current_segment = float(stdout_list[4])
 
-                path, filename, extension = self.extract_filename(
-                    ' '.join(stdout_with_spaces_list[1:-4]),
-                )
+                    # Get the percentage
+                    percent \
+                    = '{0:.1f}%'.format(current_segment / segment_no * 100)
+                    dl_stat_dict['percent'] = percent
 
-                # v2.3.013 - same problem as above
-                short_ext = extension[1:]
-                if short_ext in formats.VIDEO_FORMAT_LIST \
-                or short_ext in formats.AUDIO_FORMAT_LIST:
+            # youtube-dl uses [ffmpeg], yt-dlp uses [Merger] or [ExtractAudio]
+            elif stdout_list[0] == '[ffmpeg]' \
+            or stdout_list[0] == '[Merger]' \
+            or stdout_list[0] == '[ExtractAudio]':
 
-                    dl_stat_dict['status'] = formats.COMPLETED_STAGE_ALREADY
+                # Using FFmpeg, not the the native HLS extractor
+                # A successful video download is announced in one of several
+                #   ways. Use the first announcement to update
+                #   self.video_check_dict, and ignore subsequent announcements
+                dl_stat_dict['status'] = formats.ACTIVE_STAGE_POST_PROCESS
+
+                # Get the final file extension after the merging process has
+                #   completed
+                if stdout_list[1] == 'Merging':
+                    path, filename, extension = self.extract_filename(
+                        ' '.join(stdout_with_spaces_list[4:]),
+                    )
+
                     dl_stat_dict['path'] = path
                     dl_stat_dict['filename'] = filename
                     dl_stat_dict['extension'] = extension
                     self.reset_temp_destination()
 
-                    self.confirm_old_video(path, filename, extension)
+                    self.confirm_new_video(path, filename, extension, True)
 
-            # Get filesize abort status
-            if stdout_list[-1] == 'Aborting.':
-                dl_stat_dict['status'] = formats.ERROR_STAGE_ABORT
-
-        elif stdout_list[0] == '[hlsnative]':
-
-            # Get information from the native HLS extractor (see
-            #   https://github.com/rg3/youtube-dl/blob/master/youtube_dl/
-            #       downloader/hls.py#L54
-            dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
-
-            if len(stdout_list) == 7:
-                segment_no = float(stdout_list[6])
-                current_segment = float(stdout_list[4])
-
-                # Get the percentage
-                percent = '{0:.1f}%'.format(current_segment / segment_no * 100)
-                dl_stat_dict['percent'] = percent
-
-        # youtube-dl uses [ffmpeg], yt-dlp uses [Merger] or [ExtractAudio]
-        elif stdout_list[0] == '[ffmpeg]' \
-        or stdout_list[0] == '[Merger]' \
-        or stdout_list[0] == '[ExtractAudio]':
-
-            # Using FFmpeg, not the the native HLS extractor
-            # A successful video download is announced in one of several ways.
-            #   Use the first announcement to update self.video_check_dict, and
-            #   ignore subsequent announcements
-            dl_stat_dict['status'] = formats.ACTIVE_STAGE_POST_PROCESS
-
-            # Get the final file extension after the merging process has
-            #   completed
-            if stdout_list[1] == 'Merging':
-                path, filename, extension = self.extract_filename(
-                    ' '.join(stdout_with_spaces_list[4:]),
-                )
-
-                dl_stat_dict['path'] = path
-                dl_stat_dict['filename'] = filename
-                dl_stat_dict['extension'] = extension
-                self.reset_temp_destination()
-
-                self.confirm_new_video(path, filename, extension, True)
-
-            # Get the final file extension after simple FFmpeg post-processing
-            #   (i.e. not after a file merge)
-            elif stdout_list[1] == 'Destination:':
-                path, filename, extension = self.extract_filename(
-                    ' '.join(stdout_with_spaces_list[2:]),
-                )
-
-                dl_stat_dict['path'] = path
-                dl_stat_dict['filename'] = filename
-                dl_stat_dict['extension'] = extension
-                self.reset_temp_destination()
-
-                self.confirm_new_video(path, filename, extension)
-
-            # Get final file extension after the recoding process
-            elif stdout_list[1] == 'Converting':
-                path, filename, extension = self.extract_filename(
-                    ' '.join(stdout_with_spaces_list[8:]),
-                )
-
-                dl_stat_dict['path'] = path
-                dl_stat_dict['filename'] = filename
-                dl_stat_dict['extension'] = extension
-                self.reset_temp_destination()
-
-                self.confirm_new_video(path, filename, extension)
-
-        elif (
-            isinstance(media_data_obj, media.Channel)
-            and not media_data_obj.rss \
-            and stdout_list[0] == '[youtube:channel]' \
-        ) or (
-            isinstance(media_data_obj, media.Playlist) \
-            and not media_data_obj.rss \
-            and stdout_list[0] == '[youtube:playlist]' \
-            and stdout_list[2] == 'Downloading' \
-            and stdout_list[3] == 'webpage'
-        ):
-            # YouTube only: set the channel/playlist RSS feed, if not already
-            #   set, first removing the final colon that should be there
-            # (This is the old method of setting the RSS; no longer necessary
-            #   as of v2.3.602, but retained in case it is useful in the
-            #   future)
-            container_id = re.sub(r'\:*$', '', stdout_list[1])
-            media_data_obj.update_rss_from_id(container_id)
-
-        elif (
-            not self.dl_sim_flag \
-            and stdout_list[2] == 'Downloading' \
-            and stdout_list[3] == 'webpage' \
-            and re.search(r'^\[[^\]\:]+\]', stdout_list[0]) \
-        ):
-            # (The re.search() above excludes [youtube:channel] and
-            #   [youtube:playlist], etc)
-            self.probable_video_id = re.sub(r'\:*$', '', stdout_list[1])
-
-        elif (
-            stdout_list[0] == 'Deleting' \
-            and stdout_list[1] == 'original' \
-            and stdout_list[2] == 'file' \
-            and self.stop_after_merge_flag \
-        ):
-            # (We were waiting for an FFmpeg to finish, before stopping the
-            #   download)
-            self.stop_now_flag = True
-            self.stop_after_merge_flag = False
-            return dl_stat_dict
-
-        elif stdout_list[0][0] == '{':
-
-            # JSON data, the result of a simulated download. Convert to a
-            #   python dictionary
-            if self.dl_sim_flag:
-
-                # (Try/except to check for invalid JSON)
-                try:
-                    json_dict = json.loads(stdout)
-
-                except:
-                    GObject.timeout_add(
-                        0,
-                        self.download_manager_obj.app_obj.system_error,
-                        306,
-                        'Invalid JSON data received from server',
+                # Get the final file extension after simple FFmpeg post-
+                #   processing (i.e. not after a file merge)
+                elif stdout_list[1] == 'Destination:':
+                    path, filename, extension = self.extract_filename(
+                        ' '.join(stdout_with_spaces_list[2:]),
                     )
 
-                    return dl_stat_dict
+                    dl_stat_dict['path'] = path
+                    dl_stat_dict['filename'] = filename
+                    dl_stat_dict['extension'] = extension
+                    self.reset_temp_destination()
 
-                if json_dict:
+                    self.confirm_new_video(path, filename, extension)
 
-                    # For some Classic Mode custom downloads, Tartube performs
-                    #   two consecutive download operations: one simulated
-                    #   download to fetch URLs of individual videos, and
-                    #   another to download each video separately
-                    # If we're on the first operation, the dummy media.Video
-                    #   object's URL may represent an individual video, or a
-                    #   channel or playlist
-                    # In both cases, we simply make a list of each video
-                    #   detected, along with its metadata, ready for the
-                    #   second operation
-                    if self.download_item_obj.operation_type == 'classic_sim':
+                # Get final file extension after the recoding process
+                elif stdout_list[1] == 'Converting':
+                    path, filename, extension = self.extract_filename(
+                        ' '.join(stdout_with_spaces_list[8:]),
+                    )
 
-                        # (If the URL can't be retrieved for any reason, then
-                        #   just ignore this batch of JSON)
-                        if 'webpage_url' in json_dict:
-                            self.download_manager_obj.register_classic_url(
-                                self.download_item_obj.media_data_obj,
-                                json_dict,
-                            )
+                    dl_stat_dict['path'] = path
+                    dl_stat_dict['filename'] = filename
+                    dl_stat_dict['extension'] = extension
+                    self.reset_temp_destination()
 
-                    # If youtube-dl is about to download a channel or playlist
-                    #   into a media.Video object, decide what to do to prevent
-                    #   that
-                    # The called function returns a True/False value,
-                    #   specifically to allow this code block to call
-                    #   self.confirm_sim_video when required
-                    # v1.3.063 At this point, self.video_num can be 0 for a URL
-                    #   that's an individual video, but > 0 for a URL that's
-                    #   actually a channel/playlist
-                    elif not self.video_num \
-                    or self.check_dl_is_correct_type():
-                        self.confirm_sim_video(json_dict)
+                    self.confirm_new_video(path, filename, extension)
 
-                    self.video_num += 1
-                    dl_stat_dict['playlist_index'] = self.video_num
-                    self.video_total += 1
-                    dl_stat_dict['playlist_size'] = self.video_total
+            elif (
+                isinstance(media_data_obj, media.Channel)
+                and not media_data_obj.rss \
+                and stdout_list[0] == '[youtube:channel]' \
+            ) or (
+                isinstance(media_data_obj, media.Playlist) \
+                and not media_data_obj.rss \
+                and stdout_list[0] == '[youtube:playlist]' \
+                and stdout_list[2] == 'Downloading' \
+                and stdout_list[3] == 'webpage'
+            ):
+                # YouTube only: set the channel/playlist RSS feed, if not
+                #   already set, first removing the final colon that should be
+                #   there
+                # (This is the old method of setting the RSS; no longer
+                #   necessary as of v2.3.602, but retained in case it is useful
+                #   in the future)
+                container_id = re.sub(r'\:*$', '', stdout_list[1])
+                media_data_obj.update_rss_from_id(container_id)
 
-                    dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
+            elif (
+                not self.dl_sim_flag \
+                and stdout_list[2] == 'Downloading' \
+                and stdout_list[3] == 'webpage' \
+                and re.search(r'^\[[^\]\:]+\]', stdout_list[0]) \
+            ):
+                # (The re.search() above excludes [youtube:channel] and
+                #   [youtube:playlist], etc)
+                self.probable_video_id = re.sub(r'\:*$', '', stdout_list[1])
 
-        elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
+            elif (
+                stdout_list[0] == 'Deleting' \
+                and stdout_list[1] == 'original' \
+                and stdout_list[2] == 'file' \
+                and self.stop_after_merge_flag \
+            ):
+                # (We were waiting for an FFmpeg to finish, before stopping the
+                #   download)
+                self.stop_now_flag = True
+                self.stop_after_merge_flag = False
+                return dl_stat_dict
 
-            # (Just ignore this output)
-            return dl_stat_dict
+            elif stdout_list[0][0] == '{':
 
-        else:
+                # JSON data, the result of a simulated download. Convert to a
+                #   python dictionary
+                if self.dl_sim_flag:
 
-            # The download has started
-            dl_stat_dict['status'] = formats.ACTIVE_STAGE_PRE_PROCESS
+                    # (Try/except to check for invalid JSON)
+                    try:
+                        json_dict = json.loads(stdout)
+
+                    except:
+                        GObject.timeout_add(
+                            0,
+                            self.download_manager_obj.app_obj.system_error,
+                            306,
+                            'Invalid JSON data received from server',
+                        )
+
+                        return dl_stat_dict
+
+                    if json_dict:
+
+                        # For some Classic Mode custom downloads, Tartube
+                        #   performs two consecutive download operations: one
+                        #   simulated download to fetch URLs of individual
+                        #   videos, and another to download each video
+                        #   separately
+                        # If we're on the first operation, the dummy
+                        #   media.Video object's URL may represent an
+                        #   individual video, or a channel or playlist
+                        # In both cases, we simply make a list of each video
+                        #   detected, along with its metadata, ready for the
+                        #   second operation
+                        if self.download_item_obj.operation_type \
+                        == 'classic_sim':
+
+                            # (If the URL can't be retrieved for any reason,
+                            #   then just ignore this batch of JSON)
+                            if 'webpage_url' in json_dict:
+                                self.download_manager_obj.register_classic_url(
+                                    self.download_item_obj.media_data_obj,
+                                    json_dict,
+                                )
+
+                        # If youtube-dl is about to download a channel or
+                        #   playlist into a media.Video object, decide what to
+                        #   do to prevent that
+                        # The called function returns a True/False value,
+                        #   specifically to allow this code block to call
+                        #   self.confirm_sim_video when required
+                        # v1.3.063 At this point, self.video_num can be 0 for a
+                        #   URL that's an individual video, but > 0 for a URL
+                        #   that's actually a channel/playlist
+                        elif not self.video_num \
+                        or self.check_dl_is_correct_type():
+                            self.confirm_sim_video(json_dict)
+
+                        self.video_num += 1
+                        dl_stat_dict['playlist_index'] = self.video_num
+                        self.video_total += 1
+                        dl_stat_dict['playlist_size'] = self.video_total
+
+                        dl_stat_dict['status'] = formats.ACTIVE_STAGE_CHECKING
+
+            elif stdout_list[0][0] != '[' or stdout_list[0] == '[debug]':
+
+                # (Just ignore this output)
+                return dl_stat_dict
+
+            else:
+
+                # The download has started
+                dl_stat_dict['status'] = formats.ACTIVE_STAGE_PRE_PROCESS
+
+        except:
+
+            # !!! DEBUG Git #395
+            GObject.timeout_add(
+                0,
+                self.download_manager_obj.app_obj.system_error,
+                319,
+                'VideoDownloader.extract_stdout_data() index error. This is' \
+                + ' an unresolved bug; please show the authors the URL that' \
+                + ' caused it, and this text: ' + str(stdout),
+                )
 
         return dl_stat_dict
 

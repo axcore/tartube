@@ -4513,6 +4513,21 @@ class Scheduled(object):
         #   downloads are due to start at the same time)
         self.join_mode = 'skip'
 
+        # Stop mode - three sets of IVs that behave exactly the same as the
+        #   corresponding global IVs in mainapp.TartubeApp
+        # If the flags are True, the specified values overrides the equivalent
+        #   mainapp.TartubeApp IVs
+        self.autostop_time_flag = False
+        self.autostop_time_value = 1
+        self.autostop_time_unit = 'hours'
+
+        self.autostop_videos_flag = False
+        self.autostop_videos_value = 100
+
+        self.autostop_size_flag = False
+        self.autostop_size_value = 1
+        self.autostop_size_unit = 'GiB'
+        
         # Flag set to True if Tartube should shut down after this scheduled
         #   download operation occurs, False if not
         self.shutdown_flag = False
@@ -4523,11 +4538,10 @@ class Scheduled(object):
 
         # Maximum simultaneous downloads. If the flag is True, the specified
         #   value overrides the equivalent mainapp.TartubeApp IV
-
-        # Maximum download bandwidth. If the flag is True, the specified
-        #   value overrides the equivalent mainapp.TartubeApp IV
         self.scheduled_num_worker = 2
         self.scheduled_num_worker_apply_flag = False
+        # Maximum download bandwidth. If the flag is True, the specified
+        #   value overrides the equivalent mainapp.TartubeApp IV
         self.scheduled_bandwidth = 500
         self.scheduled_bandwidth_apply_flag = False
 
