@@ -15961,7 +15961,7 @@ class VideoEditWin(GenericEditWin):
             hbox2 = Gtk.HBox()
             vbox.pack_start(hbox2, False, False, 0)
 
-            if mini_dict['ul_flag']:
+            if 'ul_flag' in mini_dict and mini_dict['ul_flag'] is True:
                 image = Gtk.Image.new_from_pixbuf(
                     main_win_obj.pixbuf_dict['uploader_small'],
                 )
@@ -15996,7 +15996,7 @@ class VideoEditWin(GenericEditWin):
             label2.set_markup(msg)
             label2.set_alignment(0, 0.5)
 
-            if mini_dict['likes']:
+            if 'likes' in mini_dict and mini_dict['likes'] != 0:
                 image = Gtk.Image.new_from_pixbuf(
                     main_win_obj.pixbuf_dict['likes_small'],
                 )
@@ -16007,7 +16007,7 @@ class VideoEditWin(GenericEditWin):
                 label3.set_text(str(mini_dict['likes']))
                 label3.set_alignment(0, 0.5)
 
-            if mini_dict['fav_flag']:
+            if 'fav_flag' in mini_dict and mini_dict['fav_flag'] is True:
                 image = Gtk.Image.new_from_pixbuf(
                     main_win_obj.pixbuf_dict['favourite_small'],
                 )

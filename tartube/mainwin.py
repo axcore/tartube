@@ -13802,15 +13802,21 @@ class MainWin(Gtk.ApplicationWindow):
         # Unless the flag is set, any invalid links remain in the textview (but
         #   in all cases, all valid links are removed from it)
         # When this function is called by self.on_classic_textbuffer_changed(),
-        #   Gtk generates a warning when we try to .set_text()
-        # The only way I can find to get around this is to replace the old
-        #   textbuffer with a new one
-        self.classic_mode_tab_replace_textbuffer()
-
+        #   Gtk generates a bunch of errors/warnings when we try to
+        #   .set_text(); the workaround is to use a timer
         if not self.app_obj.classic_duplicate_remove_flag:
-            self.classic_textbuffer.set_text(invalid_url_string)
+            GObject.timeout_add(
+                0,
+                self.classic_mode_tab_update_textbuffer,
+                invalid_url_string,
+            )
+
         else:
-            self.classic_textbuffer.set_text('')
+            GObject.timeout_add(
+                0,
+                self.classic_mode_tab_update_textbuffer,
+                '',
+            )
 
         return mod_list
 
@@ -13871,36 +13877,21 @@ class MainWin(Gtk.ApplicationWindow):
             return True
 
 
-    def classic_mode_tab_replace_textbuffer(self):
+    def classic_mode_tab_update_textbuffer(self, text):
 
-        """Called by self.classic_mode_tab_add_urls(), just before replacing
-        the contents of the Gtk.TextView at the top of the tab.
+        """Called by a timer in self.classic_mode_tab_add_urls() in order to
+        replace the contents of the Gtk.TextView at the top of the tab, without
+        generating a bunch of Gtk errors/warnings.
 
-        When that function is called by self.on_classic_textbuffer_changed(),
-        Gtk generates a warning when we try to .set_text().
+        Args:
+            text (str): The new text for the textbuffer
 
-        The only way I can find to get around this is to replace the old
-        textbuffer with a new one
         """
 
-        self.classic_textbuffer = Gtk.TextBuffer()
-        self.classic_textview.set_buffer(self.classic_textbuffer)
-
-        self.classic_mark_start = self.classic_textbuffer.create_mark(
-            'mark_start',
-            self.classic_textbuffer.get_start_iter(),
-            True,               # Left gravity
-        )
-        self.classic_mark_end = self.classic_textbuffer.create_mark(
-            'mark_end',
-            self.classic_textbuffer.get_end_iter(),
-            False,              # Not left gravity
-        )
-
-        self.classic_textbuffer.connect(
-            'changed',
-            self.on_classic_textbuffer_changed,
-        )
+        # (Prevent an infinite loop by using this flag)
+        self.classic_auto_copy_check_flag = True
+        self.classic_textbuffer.set_text(text)
+        self.classic_auto_copy_check_flag = False
 
 
     def classic_mode_tab_create_dummy_video(self, url, dest_dir, \
