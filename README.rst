@@ -219,7 +219,7 @@ With thanks to m3lab-zzl:
 
 - Install Tartube
 
-        **pip3 isntall tartube**
+        **pip3 install tartube**
 
 - Now run Tartube
 
@@ -266,7 +266,7 @@ With thanks to JeremyShih:
 
 - Install Tartube
 
-        **pip3 isntall tartube**
+        **pip3 install tartube**
 
 - Now run Tartube
 
