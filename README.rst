@@ -68,7 +68,7 @@ For a full list of new features and fixes, see `recent changes <CHANGES>`__.
 
 Stable release: **v2.4.386 (8 Jun 2023)**
 
-Development release: **v2.4.407 (30 Jun 2023)**
+Development release: **v2.4.386 (8 Jun 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -274,6 +274,14 @@ With thanks to JeremyShih:
 
 5.2.3 Troubleshooting on MacOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you can't start Tartube from a terminal window (the final step in the procedures above), try these commands (with thanks to inkhalistan):
+
+        **echo "export PATH="python3 -m site --user-base/bin:$PATH"" >> ~/.zprofile**
+
+        **source ~/.zprofile**
+
+        **tartube**
 
 If you see a **gi module not found** error, there are two possible solutions.
 
@@ -2245,7 +2253,7 @@ By default, the archive file is stored in the same folder as the video, but you 
 - Click **Store the archive file at this location** to create an archive file somewhere else, then click **Set** to choose a folder
 
 7.10 Channel downloads one video at a time
------------------------------------------
+------------------------------------------
 
 *Q: In the Progress tab, 'Max downloads' is set to 2. But when I download my favourite channel, it downloads only one video at a time!*
 
