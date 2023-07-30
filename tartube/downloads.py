@@ -3485,19 +3485,20 @@ class VideoDownloader(object):
             )
 
         # ...display it in the Output tab (if required)...
+        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
-                ' '.join(cmd_list),
+                display_cmd,
             )
 
         # ...and the terminal (if required)
         if app_obj.ytdl_write_system_cmd_flag:
-            print(' '.join(cmd_list))
+            print(display_cmd)
 
         # ...and the downloader log (if required)
         if app_obj.ytdl_log_system_cmd_flag:
-            app_obj.write_downloader_log(' '.join(cmd_list))
+            app_obj.write_downloader_log(display_cmd)
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
@@ -6962,19 +6963,20 @@ class ClipDownloader(object):
         )
 
         # ...display it in the Output tab (if required)...
+        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
-                ' '.join(cmd_list),
+                display_cmd,
             )
 
         # ...and the terminal (if required)
         if app_obj.ytdl_write_system_cmd_flag:
-            print(' '.join(cmd_list))
+            print(display_cmd)
 
         # ...and the downloader log (if required)
         if app_obj.ytdl_log_system_cmd_flag:
-            app_obj.write_downloader_log(' '.join(cmd_list))
+            app_obj.write_downloader_log(display_cmd)
 
         # Write an additional message in the Output tab, in the same style
         #   as those produced by youtube-dl/FFmpeg (and therefore not
@@ -7153,19 +7155,20 @@ class ClipDownloader(object):
         )
 
         # ...display it in the Output tab (if required)...
+        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
-                ' '.join(cmd_list),
+                display_cmd,
             )
 
         # ...and the terminal (if required)
         if app_obj.ytdl_write_system_cmd_flag:
-            print(' '.join(cmd_list))
+            print(display_cmd)
 
         # ...and the downloader log (if required)
         if app_obj.ytdl_log_system_cmd_flag:
-            app_obj.write_downloader_log(' '.join(cmd_list))
+            app_obj.write_downloader_log(display_cmd)
 
         # Write an additional message in the Output tab, in the same style
         #   as those produced by youtube-dl/FFmpeg (and therefore not
@@ -7459,19 +7462,20 @@ class ClipDownloader(object):
             )
 
             # ...display it in the Output tab (if required)...
+            display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
             if app_obj.ytdl_output_system_cmd_flag:
                 app_obj.main_win_obj.output_tab_write_system_cmd(
                     self.download_worker_obj.worker_id,
-                    ' '.join(cmd_list),
+                    display_cmd,
                 )
 
             # ...and the terminal (if required)
             if app_obj.ytdl_write_system_cmd_flag:
-                print(' '.join(cmd_list))
+                print(display_cmd)
 
             # ...and the downloader log (if required)
             if app_obj.ytdl_log_system_cmd_flag:
-                app_obj.write_downloader_log(' '.join(cmd_list))
+                app_obj.write_downloader_log(display_cmd)
 
             # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
@@ -7727,19 +7731,20 @@ class ClipDownloader(object):
             )
 
             # ...display it in the Output tab (if required)...
+            display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
             if app_obj.ytdl_output_system_cmd_flag:
                 app_obj.main_win_obj.output_tab_write_system_cmd(
                     self.download_worker_obj.worker_id,
-                    ' '.join(cmd_list),
+                    display_cmd,
                 )
 
             # ...and the terminal (if required)
             if app_obj.ytdl_write_system_cmd_flag:
-                print(' '.join(cmd_list))
+                print(display_cmd)
 
             # ...and the downloader log (if required)
             if app_obj.ytdl_log_system_cmd_flag:
-                app_obj.write_downloader_log(' '.join(cmd_list))
+                app_obj.write_downloader_log(display_cmd)
 
             # Write an additional message in the Output tab, in the same style
             #   as those produced by youtube-dl/FFmpeg (and therefore not
@@ -9301,7 +9306,7 @@ class StreamDownloader(object):
         # Display the (modified) command in the Output tab and/or terminal (if
         #   required)...
         if app_obj.ytdl_output_system_cmd_flag:
-            self.show_cmd(' '.join(cmd_list))
+            self.show_cmd(utils.prepare_system_cmd_for_display(cmd_list))
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
@@ -9386,7 +9391,7 @@ class StreamDownloader(object):
         )
 
         # ...and display it in the Output tab and/or terminal, if required
-        self.show_cmd(' '.join(cmd_list))
+        self.show_cmd(utils.prepare_system_cmd_for_display(cmd_list))
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
@@ -9529,7 +9534,7 @@ class StreamDownloader(object):
         )
 
         # ...and display it in the Output tab and/or terminal, if required
-        self.show_cmd(' '.join(cmd_list))
+        self.show_cmd(utils.prepare_system_cmd_for_display(cmd_list))
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)

@@ -4015,6 +4015,46 @@ def parse_options(text):
     return return_list
 
 
+def prepare_system_cmd_for_display(cmd_list):
+
+    """Can be called by anything.
+
+    Adapts a system command (for example, the output of a call to
+    utils.generate_ytdl_system_cmd() ) for display, typically in the Output tab
+    or terminal window.
+
+    The command is expressed as a list of items, the first of which is the
+    binary (e.g. 'yt-dlp'), and the rest of which are switches and their
+    arguments.
+
+    Adds double quotes to any arguments containing whitespace characters, then
+    returns the list as a single string.
+
+    Args:
+
+        cmd_list (list): The list described above
+
+    Return values:
+
+        The system command as a string, suitable for display in the Output tab
+            and elsewhere
+
+    """
+
+    mod_list = []
+    for item in cmd_list:
+
+        first = item[0:1]
+
+        if len(item) > 1 and ' ' in item and first != '-' and first != '"' \
+        and first != '\'':
+            mod_list.append('"' + item + '"')
+        else:
+            mod_list.append(item)
+
+    return ' '.join(mod_list)
+
+
 def rename_file(app_obj, old_path, new_path):
 
     """Can be called by anything.

@@ -21497,15 +21497,8 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Copy it to the clipboard
-        if cmd_list:
-            char = ' '
-            system_cmd = char.join(cmd_list)
-
-        else:
-            system_cmd = ''
-
         clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        clipboard.set_text(system_cmd, -1)
+        clipboard.set_text(utils.prepare_system_cmd_for_display(cmd_list), -1)
 
 
     def on_classic_progress_list_get_path(self, menu_item, dummy_obj):
@@ -38659,15 +38652,9 @@ class SystemCmdDialogue(Gtk.Dialog):
         )
 
         # Display it in the textbuffer
-        if cmd_list:
-            char = ' '
-            system_cmd = char.join(cmd_list)
-
-        else:
-            system_cmd = ''
-
-        self.textbuffer.set_text(system_cmd)
-        return system_cmd
+        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
+        self.textbuffer.set_text(display_cmd)
+        return display_cmd
 
 
     # Callback class methods

@@ -4527,7 +4527,7 @@ class Scheduled(object):
         self.autostop_size_flag = False
         self.autostop_size_value = 1
         self.autostop_size_unit = 'GiB'
-        
+
         # Flag set to True if Tartube should shut down after this scheduled
         #   download operation occurs, False if not
         self.shutdown_flag = False

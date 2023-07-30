@@ -13,5 +13,5 @@ If using MS Windows, are you using Windows 10, Windows 7, or something else?
 ### What version of Tartube are you using?
 In Tartube's main window, click Help > About
 
-###If your bug report is "I can't download this video", please provide a link to the video
+### If your bug report is "I can't download this video", please provide a link to the video
 This will save a lot of time!
