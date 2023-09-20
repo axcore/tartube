@@ -1064,14 +1064,24 @@ class TartubeApp(Gtk.Application):
         #   If 0, the moviepy procedure is allowed to hang indefinitely
         self.refresh_moviepy_timeout = 10
 
-        # Paths to the post-processor binaries. If neither is set, we assume
-        #   that FFmpeg and AVConv are in the user's path. If one is set to any
+        # Paths to the post-processor binaries. If not set, we assume that
+        #   FFmpeg and/or AVConv are in the user's path. If one is set to any
         #   value besides None, it is passed to youtube-dl. If both are set,
         #   then one of them is passed to youtube-dl: AVConv if the download
         #   option 'prefer_avconv' applies, FFmpeg if not
-        # None of these values are used on MS Windows
+        # Note that, for MS Windows, we assume that only the MSYS2 version of
+        #   FFmpeg (installable via Tartube's main menu) will work, so the user
+        #   can set self.ffmpeg_path to either None or self.default_ffmpeg_path
         # Default path to the FFmpeg binary
-        self.default_ffmpeg_path = '/usr/bin/ffmpeg'
+        if os.name == 'nt':
+            if 'PROGRAMFILES(X86)' in os.environ:
+                self.default_ffmpeg_path = \
+                '..\\..\\..\\mingw64\\bin\\ffmpeg.exe'
+            else:
+                self.default_ffmpeg_path = \
+                '..\\..\\..\\mingw32\\bin\\ffmpeg.exe'
+        else:
+            self.default_ffmpeg_path = '/usr/bin/ffmpeg'
         # Path to the FFmpeg binary
         self.ffmpeg_path = None
         # Default path to the AVConv binary

@@ -26863,10 +26863,7 @@ class SystemPrefWin(GenericPrefWin):
 
         if os.name == 'nt':
             entry.set_sensitive(False)
-            entry.set_text(_('Install from main menu'))
             button.set_sensitive(False)
-            button2.set_sensitive(False)
-            button3.set_sensitive(False)
 
         # (Signal connects from above)
         button.connect('clicked', self.on_set_ffmpeg_button_clicked, entry)

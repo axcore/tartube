@@ -1506,9 +1506,9 @@ class OptionsParser(object):
                 if self.app_obj.block_livestreams_flag:
 
                     if value == '':
-                        value = '!is_live'
+                        value = '\!is_live'
                     else:
-                        value += ' \& !is_live'
+                        value += ' \& \!is_live'
 
                 if value != '':
                     options_list.append(option_holder_obj.switch)
