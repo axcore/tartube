@@ -47,9 +47,6 @@ duplicates
 - Certain websites operate an "only one opinion allowed" policy. If you think
 that the censors will remove a video, against the wishes of its creators and
 before you've had a chance to watch it, Tartube can make an archive copy
-- Certain websites frequently place restrictions on a video, not because it is
-unsuitable for some audiences, but for purely political reasons. Tartube can,
-in some circumstances, see videos that are region-blocked and/or age-restricted
 - Certain websites manipulate search results, repeatedly unsubscribe people
 from their favourite channels and/or deliberately conceal videos that they
 don't like. Tartube won't do any of those things
@@ -186,7 +183,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name = 'tartube',
-    version = '2.4.416',
+    version = '2.4.429',
     description = 'GUI front-end for youtube-dl, yt-dlp and other compatible' \
     + ' video downloaders',
     long_description = long_description,
@@ -207,6 +204,11 @@ setuptools.setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
     keywords = 'tartube video download youtube',
     packages = setuptools.find_packages(
@@ -218,8 +220,8 @@ setuptools.setup(
         'feedparser',
 #        'pgi',
         'pygobject',
-        'matplotlib',
-        'playsound',
+#        'matplotlib',
+#        'playsound',
         'requests',
     ],
     scripts = [script_exec],

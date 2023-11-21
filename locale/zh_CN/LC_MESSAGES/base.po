@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-30 09:16+0100\n"
+"POT-Creation-Date: 2023-11-20 18:33+0000\n"
 "PO-Revision-Date: 2023-03-23 18:24+0800\n"
 "Last-Translator: archblue <phrc001@gmail.com>\n"
 "Language-Team: en_US\n"
@@ -37,7 +37,7 @@ msgstr "大"
 msgid "Enormous"
 msgstr "超大"
 
-#: .././mainapp.py:1089
+#: .././mainapp.py:1099
 msgid ""
 "Failed to convert a thumbnail from .webp to .jpg. No more conversions will "
 "be attempted until you install FFmpeg on your system, or (if FFmpeg is "
@@ -48,68 +48,68 @@ msgstr ""
 "无法将缩略图从.webp格式转换为.jpg格式。请在确认系统上已安装 FFmpeg 并设置了正"
 "确路径后，重启Tartue尝试再次转换。如想禁止本消息显示，请禁用缩略图转换功能"
 
-#: .././mainapp.py:2368
+#: .././mainapp.py:2382
 msgid ""
 "TRANSLATOR'S NOTE: Videos in the Videos tab can be displayed in one of "
 "several formats"
 msgstr "转码提示：Videos标签页中的视频支持多种显示方式"
 
-#: .././mainapp.py:2375
+#: .././mainapp.py:2389
 msgid "_Basic list"
 msgstr "简单列表(_B)"
 
-#: .././mainapp.py:2380
+#: .././mainapp.py:2394
 msgid "Basic list with _container names"
 msgstr "带容器名称的简单列表"
 
-#: .././mainapp.py:2385
+#: .././mainapp.py:2399
 msgid "_Thumbnails"
 msgstr "缩略图(_T)"
 
-#: .././mainapp.py:2390
+#: .././mainapp.py:2404
 msgid "Thumbnails and _extra labels"
 msgstr "带超大标签的缩略图(_E)"
 
-#: .././mainapp.py:2395
+#: .././mainapp.py:2409
 msgid "T_humbnails and container names"
 msgstr "带容器名称的缩略图(_H)"
 
-#: .././mainapp.py:2400
+#: .././mainapp.py:2414
 msgid "Th_umbnails, container names and extra labels"
 msgstr "带超大标签和容器名称的缩略图(_U)"
 
-#: .././mainapp.py:2405
+#: .././mainapp.py:2419
 msgid "_Grid"
 msgstr "网格视图(_G)"
 
-#: .././mainapp.py:2410
+#: .././mainapp.py:2424
 msgid "G_rid with extra labels"
 msgstr "带超大标签的网格视图(_R)"
 
-#: .././mainapp.py:3638
+#: .././mainapp.py:3652
 msgid ""
 "Tartube can't create the folder in which its configuration file is saved"
 msgstr "Tartube无法创建配置文件夹"
 
 #. Load/save has been disabled. Show the error message in a dialogue
 #. window, then shut down
-#: .././mainapp.py:3685
+#: .././mainapp.py:3699
 msgid "Tartube failed to start because:"
 msgstr "Tartue启动失败，原因是："
 
-#: .././mainapp.py:3693
+#: .././mainapp.py:3707
 msgid "If you don't know how to resolve this error, please contact the authors"
 msgstr "如果你不知道如何此错误，请联系开发者"
 
-#: .././mainapp.py:3923
+#: .././mainapp.py:3937
 msgid "Because of an error, file load/save has been disabled"
 msgstr "由于不知名错误，文件保存/加载功能将被禁用"
 
-#: .././mainapp.py:3932
+#: .././mainapp.py:3946
 msgid "Because of the error, file load/save has been disabled"
 msgstr "由于该错误文件保存/加载功能将被禁用"
 
-#: .././mainapp.py:4034
+#: .././mainapp.py:4048
 msgid ""
 "TRANSLATOR'S NOTE: In Tartube, there is a small set of'operations', each "
 "with a unique name. Most operations use a separate Python file. Two or more "
@@ -118,213 +118,213 @@ msgid ""
 "Operation literally"
 msgstr ""
 
-#: .././mainapp.py:4042
+#: .././mainapp.py:4056
 msgid ""
 "TRANSLATOR'S NOTE: Download operations can download videos or fetch a list "
 "of downloadable videos (usually called 'checking' the videos)"
 msgstr ""
 
-#: .././mainapp.py:4047
+#: .././mainapp.py:4061
 msgid "TRANSLATOR'S NOTE: Update operations update youtube-dl, FFmpeg, etc"
 msgstr ""
 
-#: .././mainapp.py:4051
+#: .././mainapp.py:4065
 msgid ""
 "TRANSLATOR'S NOTE: Refresh operations examine the files in Tartube's data "
 "folder, and update the database accordingly"
 msgstr ""
 
-#: .././mainapp.py:4056
+#: .././mainapp.py:4070
 msgid ""
 "TRANSLATOR'S NOTE: Info operations fetch a list of available formats/"
 "subtitles for a video"
 msgstr ""
 
-#: .././mainapp.py:4060
+#: .././mainapp.py:4074
 msgid ""
 "TRANSLATOR'S NOTE: Tidy operations remove or convert files in Tartube's data "
 "folder"
 msgstr ""
 
-#: .././mainapp.py:4064
+#: .././mainapp.py:4078
 msgid ""
 "TRANSLATOR'S NOTE: Process operations convert videos using FFmpeg or AVConv"
 msgstr ""
 
-#: .././mainapp.py:4069
+#: .././mainapp.py:4083
 msgid "There is a download operation in progress."
 msgstr "有一个下载操作正在进行中。"
 
-#: .././mainapp.py:4071
+#: .././mainapp.py:4085
 msgid "There is an update operation in progress."
 msgstr "有一个更新操作正在进行中。"
 
-#: .././mainapp.py:4073
+#: .././mainapp.py:4087
 msgid "There is a refresh operation in progress."
 msgstr "有一个刷新操作正在进行中。"
 
-#: .././mainapp.py:4075
+#: .././mainapp.py:4089
 msgid "There is an info operation in progress."
 msgstr "有一个信息拉取操作正在进行中。"
 
-#: .././mainapp.py:4077
+#: .././mainapp.py:4091
 msgid "There is a tidy operation in progress."
 msgstr "有一个文件整理操作正在进行中。"
 
-#: .././mainapp.py:4079
+#: .././mainapp.py:4093
 msgid "There is a process operation in progress."
 msgstr "有一个视频转码操作正在进行中。"
 
-#: .././mainapp.py:4084
+#: .././mainapp.py:4098
 msgid "Are you sure you want to quit Tartube?"
 msgstr "确认关闭Tartue吗？"
 
-#: .././mainapp.py:4349
+#: .././mainapp.py:4363
 msgid "Failed to load the Tartube config file (failed sanity check)"
 msgstr "无法加载Tartube配置文件（健全性检查失败）"
 
-#: .././mainapp.py:4372
+#: .././mainapp.py:4386
 msgid "Failed to load the Tartube config file (file is locked)"
 msgstr "无法加载 Tartube 配置文件（文件已被其他应用锁定）"
 
-#: .././mainapp.py:4402
+#: .././mainapp.py:4416
 msgid "Failed to load the Tartube config file (JSON load failure)"
 msgstr "无法加载 Tartube 配置文件（JSON解析失败）"
 
-#: .././mainapp.py:4420
+#: .././mainapp.py:4434
 msgid "Failed to load the Tartube config file (file is invalid)"
 msgstr "无法加载 Tartube 配置文件（文件损坏）"
 
-#: .././mainapp.py:4438
+#: .././mainapp.py:4452
 msgid ""
 "Failed to load the Tartube config file (file cannot be read by this version "
 "of Tartube; please install the most recent version)"
 msgstr ""
 
-#: .././mainapp.py:4454
+#: .././mainapp.py:4468
 msgid "Failed to load the Tartube config file (missing file type)"
 msgstr "无法加载 Tartube 配置文件（缺少文件后缀名）"
 
-#: .././mainapp.py:5711
+#: .././mainapp.py:5753
 msgid "Failed to save the Tartube config file (failed sanity check)"
 msgstr "无法加载 Tartube 配置文件（健全性检查失败）"
 
-#: .././mainapp.py:6179
+#: .././mainapp.py:6223
 msgid "Failed to save the Tartube config file (file is locked)"
 msgstr "无法加载 Tartube 配置文件（文件已被其他应用锁定）"
 
-#: .././mainapp.py:6181 .././mainapp.py:8280 .././mainapp.py:8343
-#: .././mainapp.py:8349
+#: .././mainapp.py:6225 .././mainapp.py:8324 .././mainapp.py:8387
+#: .././mainapp.py:8393
 msgid "File load/save has been disabled"
 msgstr "文件加载/保存功能已禁用"
 
-#: .././mainapp.py:6200
+#: .././mainapp.py:6244
 msgid "Failed to save the Tartube config file (file already in use)"
 msgstr "无法保存Tartue配置文件 (文件正在使用中)"
 
-#: .././mainapp.py:6219
+#: .././mainapp.py:6263
 msgid "Failed to save the Tartube config file"
 msgstr "无法保存Tartue配置文件"
 
-#: .././mainapp.py:6329 .././mainapp.py:6344 .././mainapp.py:6377
+#: .././mainapp.py:6373 .././mainapp.py:6388 .././mainapp.py:6421
 msgid "Failed to load the Tartube database file"
 msgstr "无法加载Tartue数据库文件"
 
-#: .././mainapp.py:6380
+#: .././mainapp.py:6424
 msgid ""
 "If this message is unexpected, the database file may be corrupt. Try "
 "replacing it with one of the files in the '.backups' folder"
 msgstr ""
 
-#: .././mainapp.py:6398
+#: .././mainapp.py:6442
 msgid "The Tartube database file is invalid"
 msgstr "Tartue数据库文件无效"
 
-#: .././mainapp.py:6416
+#: .././mainapp.py:6460
 msgid ""
 "Database file can't be read by this version of Tartube (please install the "
 "most recent version)"
 msgstr ""
 
-#: .././mainapp.py:6825
+#: .././mainapp.py:6869
 msgid "Tartube is applying an essential database update"
 msgstr "Tartube正在进行必要的数据库更新"
 
-#: .././mainapp.py:6827
+#: .././mainapp.py:6871
 msgid "This might take a few minutes, so please be patient"
 msgstr "本操作可能需要几分钟，请耐心等待"
 
-#: .././mainapp.py:7879
+#: .././mainapp.py:7923
 msgid "General (default) download options"
 msgstr "通用（默认）下载选项"
 
-#: .././mainapp.py:7885
+#: .././mainapp.py:7929
 msgid "Download options for the Classic Mode tab"
 msgstr "经典模式下载选项"
 
-#: .././mainapp.py:8274 .././mainapp.py:8339 .././mainapp.py:8348
+#: .././mainapp.py:8318 .././mainapp.py:8383 .././mainapp.py:8392
 msgid "Failed to save the Tartube database file"
 msgstr "无法保存Tarbue数据库"
 
-#: .././mainapp.py:8277
+#: .././mainapp.py:8321
 msgid "(Could not make a backup copy of the existing file)"
 msgstr "(无法创建现有文件的备份副本)"
 
-#: .././mainapp.py:8319
+#: .././mainapp.py:8363
 msgid "Failed to save the Tartube database file (file already in use)"
 msgstr "无法保存Tartue配置文件 (文件正在使用中)"
 
-#: .././mainapp.py:8341
+#: .././mainapp.py:8385
 msgid "A backup of the previous file can be found at:"
 msgstr "可以在以下位置找到先前文件的备份："
 
-#: .././mainapp.py:8522 .././mainapp.py:8532
+#: .././mainapp.py:8566 .././mainapp.py:8576
 msgid "Database file created"
 msgstr "已创建数据库文件"
 
-#: .././mainapp.py:8907
+#: .././mainapp.py:8951
 msgid "Tartube's database can't be checked while an operation is in progress"
 msgstr "操作正在进行时无法检查 Tartube 的数据库"
 
-#: .././mainapp.py:9161
+#: .././mainapp.py:9205
 msgid "Database check complete, no inconsistencies found"
 msgstr "数据库检查完成，未发现不一致问题"
 
-#: .././mainapp.py:9196
+#: .././mainapp.py:9240
 msgid "Database check complete, problems found:"
 msgstr "数据库检查完成，发现以下问题："
 
-#: .././mainapp.py:9200
+#: .././mainapp.py:9244
 msgid ""
 "Do you want to repair these problems? (The database will be fixed, but no "
 "files will be deleted)"
 msgstr "您要修复这些问题吗？（数据库将被修复，但不会删除任何文件）"
 
-#: .././mainapp.py:9413
+#: .././mainapp.py:9457
 msgid "Database inconsistencies repaired"
 msgstr "已修复数据库不一致问题"
 
-#: .././mainapp.py:10804 .././config.py:29850
+#: .././mainapp.py:10844 .././config.py:29892
 msgid "Please select Tartube's data folder"
 msgstr "请选择Tartube的数据存放文件夹"
 
-#: .././mainapp.py:11261
+#: .././mainapp.py:11301
 msgid ""
 "A download operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "如果一个或多个配置窗口仍处于打开状态，则无法启动下载操作"
 
-#: .././mainapp.py:11285 .././mainapp.py:11310
+#: .././mainapp.py:11325 .././mainapp.py:11350
 #, python-brace-format
 msgid "You only have {0} / {1} Gb remaining on your device"
 msgstr "您的设备上只剩下 {0} / {1} Gb"
 
-#: .././mainapp.py:11313 .././mainapp.py:17807 .././mainapp.py:17928
-#: .././mainapp.py:18115 .././mainwin.py:23014
+#: .././mainapp.py:11353 .././mainapp.py:17895 .././mainapp.py:18016
+#: .././mainapp.py:18203 .././mainwin.py:23014
 msgid "Are you sure you want to continue?"
 msgstr "确认关闭Tartue吗？"
 
-#: .././mainapp.py:11405
+#: .././mainapp.py:11445
 msgid ""
 "1. Copy URLs into the box at the top\n"
 "2. Select a destination and a format\n"
@@ -336,297 +336,297 @@ msgstr ""
 "3. 点击“添加链接”\n"
 "4. 点击“全部下载”"
 
-#: .././mainapp.py:11413
+#: .././mainapp.py:11453
 msgid "There is nothing to check!"
 msgstr "没有什么可检查的！"
 
-#: .././mainapp.py:11417
+#: .././mainapp.py:11457
 msgid "There is nothing to download!"
 msgstr "没有什么可下载的！"
 
-#: .././mainapp.py:11710
+#: .././mainapp.py:11751
 msgid "Download operation complete"
 msgstr "下载完成"
 
-#: .././mainapp.py:11712
+#: .././mainapp.py:11753
 msgid "Download operation halted"
 msgstr "下载操作已停止"
 
-#: .././mainapp.py:11716
+#: .././mainapp.py:11757
 msgid "Videos downloaded:"
 msgstr "下载的视频："
 
-#: .././mainapp.py:11717 .././config.py:31157 .././config.py:31219
+#: .././mainapp.py:11758 .././config.py:31199 .././config.py:31261
 msgid "Videos checked:"
 msgstr "检查的视频："
 
-#: .././mainapp.py:11724
+#: .././mainapp.py:11765
 msgid "Clips downloaded:"
 msgstr "下载的剪辑："
 
-#: .././mainapp.py:11727
+#: .././mainapp.py:11768
 msgid "Video slices removed:"
 msgstr "删除的视频片段："
 
-#: .././mainapp.py:11732
+#: .././mainapp.py:11773
 msgid "Total download:"
 msgstr ""
 
-#: .././mainapp.py:11737 .././mainapp.py:12433 .././mainapp.py:12948
-#: .././mainapp.py:13352
+#: .././mainapp.py:11778 .././mainapp.py:12474 .././mainapp.py:12989
+#: .././mainapp.py:13393
 msgid "Time taken:"
 msgstr "所需时间："
 
-#: .././mainapp.py:11933
+#: .././mainapp.py:11974
 msgid ""
 "An update operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "如果一个或多个配置窗口仍处于打开状态，则无法启动更新操作"
 
-#: .././mainapp.py:12136
+#: .././mainapp.py:12177
 msgid "Installation failed"
 msgstr "安装失败"
 
-#: .././mainapp.py:12138
+#: .././mainapp.py:12179
 msgid "Installation complete"
 msgstr "安装完成"
 
-#: .././mainapp.py:12142
+#: .././mainapp.py:12183
 msgid "Update operation failed"
 msgstr "升级失败"
 
-#: .././mainapp.py:12144
+#: .././mainapp.py:12185
 msgid "Update operation halted"
 msgstr "停止更新"
 
-#: .././mainapp.py:12146
+#: .././mainapp.py:12187
 msgid "Update operation complete"
 msgstr "更新完成"
 
-#: .././mainapp.py:12148
+#: .././mainapp.py:12189
 msgid "version:"
 msgstr "版本："
 
-#: .././mainapp.py:12152
+#: .././mainapp.py:12193
 msgid "(unknown)"
 msgstr "（未知）"
 
-#: .././mainapp.py:12254
+#: .././mainapp.py:12295
 msgid ""
 "A refresh operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "如果一个或多个配置窗口仍处于打开状态，则无法启动刷新操作"
 
-#: .././mainapp.py:12267
+#: .././mainapp.py:12308
 msgid ""
 "During a refresh operation, Tartube analyses its data folder, looking for "
 "videos that haven't yet been added to its database"
 msgstr ""
 "在刷新操作期间，Tartube将分析数据文件夹，查找尚未添加到其数据库中的视频"
 
-#: .././mainapp.py:12271
+#: .././mainapp.py:12312
 msgid ""
 "You only need to perform a refresh operation if you have manually copied "
 "videos into Tartube's data folder"
 msgstr "当您手动复制视频到 Tartube 的数据文件夹中时，需要执行刷新操作"
 
-#: .././mainapp.py:12278
+#: .././mainapp.py:12319
 msgid ""
 "Before starting a refresh operation, you should click the 'Check all' button "
 "in the main window"
 msgstr "在开始刷新操作之前，您应该单击主窗口中的“全选”按钮"
 
-#: .././mainapp.py:12285
+#: .././mainapp.py:12326
 msgid ""
 "Before starting a refresh operation, you should right-click the channel and "
 "select 'Check channel'"
 msgstr "在开始刷新操作之前，您应该右键单击频道并选择“检查频道”"
 
-#: .././mainapp.py:12292
+#: .././mainapp.py:12333
 msgid ""
 "Before starting a refresh operation, you should right-click the playlist and "
 "select 'Check playlist'"
 msgstr "在开始刷新操作之前，您应该右键单击播放列表并选择“检查播放列表”"
 
-#: .././mainapp.py:12299
+#: .././mainapp.py:12340
 msgid ""
 "Before starting a refresh operation, you should right-click the folder and "
 "select 'Check folder'"
 msgstr "在开始刷新操作之前，您应该右键单击文件夹并选择“检查文件夹”"
 
-#: .././mainapp.py:12304
+#: .././mainapp.py:12345
 msgid "Are you sure you want to proceed with the refresh operation?"
 msgstr "是否确实要继续刷新操作？"
 
-#: .././mainapp.py:12428
+#: .././mainapp.py:12469
 msgid "Refresh operation complete"
 msgstr "刷新完成"
 
-#: .././mainapp.py:12430
+#: .././mainapp.py:12471
 msgid "Refresh operation halted"
 msgstr "停止刷新"
 
-#: .././mainapp.py:12544
+#: .././mainapp.py:12585
 msgid ""
 "An info operation cannot start if one or more configuration windows are "
 "still open"
 msgstr "如果一个或多个配置窗口仍处于打开状态，则无法启动信息拉取操作"
 
-#: .././mainapp.py:12669
+#: .././mainapp.py:12710
 msgid "Operation failed"
 msgstr "转码失败"
 
-#: .././mainapp.py:12671 .././mainwin.py:33233 .././downloads.py:531
+#: .././mainapp.py:12712 .././mainwin.py:33233 .././downloads.py:531
 msgid "Operation complete"
 msgstr "转码完成"
 
-#: .././mainapp.py:12673
+#: .././mainapp.py:12714
 msgid "Click the Output tab to see the results"
 msgstr "请单击输出选项卡查看结果"
 
-#: .././mainapp.py:12686
+#: .././mainapp.py:12727
 msgid "A new release is available!"
 msgstr "新版本可用！"
 
-#: .././mainapp.py:12688
+#: .././mainapp.py:12729
 msgid "Your installation is up to date!"
 msgstr "您的安装是最新的！"
 
-#: .././mainapp.py:12690
+#: .././mainapp.py:12731
 msgid "Installed version:"
 msgstr "安装版本："
 
-#: .././mainapp.py:12695
+#: .././mainapp.py:12736
 msgid "Stable release:"
 msgstr "稳定版本："
 
-#: .././mainapp.py:12700
+#: .././mainapp.py:12741
 msgid "Stable release: not found"
 msgstr "稳定版本：未找到"
 
-#: .././mainapp.py:12703
+#: .././mainapp.py:12744
 msgid "Development release:"
 msgstr "开发版本："
 
-#: .././mainapp.py:12705
+#: .././mainapp.py:12746
 msgid "Development release: not found"
 msgstr "开发版本：未找到"
 
-#: .././mainapp.py:12841
+#: .././mainapp.py:12882
 msgid ""
 "A tidy operation cannot start if one or more configuration windows are still "
 "open"
 msgstr "如果一个或多个配置窗口仍处于打开状态，则无法启动其他操作"
 
-#: .././mainapp.py:12943
+#: .././mainapp.py:12984
 msgid "Tidy operation complete"
 msgstr "清理完成"
 
-#: .././mainapp.py:12945
+#: .././mainapp.py:12986
 msgid "Tidy operation halted"
 msgstr "停止清理"
 
-#: .././mainapp.py:13093 .././mainwin.py:23710 .././config.py:14938
+#: .././mainapp.py:13134 .././mainwin.py:23710 .././config.py:14938
 msgid "Livestream has started"
 msgstr "直播已经开始"
 
-#: .././mainapp.py:13341
+#: .././mainapp.py:13382
 msgid "Process operation complete"
 msgstr "转码已完成"
 
-#: .././mainapp.py:13343
+#: .././mainapp.py:13384
 msgid "Process operation halted"
 msgstr "转码已停止"
 
-#: .././mainapp.py:13347
+#: .././mainapp.py:13388
 msgid "Files processed:"
 msgstr "处理的文件："
 
-#: .././mainapp.py:13348
+#: .././mainapp.py:13389
 msgid "Errors:"
 msgstr "错误："
 
-#: .././mainapp.py:14702 .././mainapp.py:14911
+#: .././mainapp.py:14743 .././mainapp.py:14952
 msgid ""
 "Cannot move the channel/playlist/folder because a container with the same "
 "name already exists"
 msgstr "无法重命名频道/播放列表/文件夹，因为同名项目已存在"
 
-#: .././mainapp.py:14724 .././mainapp.py:14932
+#: .././mainapp.py:14765 .././mainapp.py:14973
 msgid "Cannot move anything to:"
 msgstr "无法移动内容到："
 
-#: .././mainapp.py:14726 .././mainapp.py:14934
+#: .././mainapp.py:14767 .././mainapp.py:14975
 msgid ""
 "because a file or folder with the same name already exists (although "
 "Tartube's database doesn't know anything about it)"
 msgstr "同名的文件或文件夹已存在（尽管 Tartube 的数据库对此一无所知）"
 
-#: .././mainapp.py:14730
+#: .././mainapp.py:14771
 msgid ""
 "You probably created that file/folder accidentally, in which case you should "
 "delete it manually before trying again"
 msgstr ""
 "您可能意外创建了该文件/文件夹，在这种情况下，您应该在重试之前手动删除它"
 
-#: .././mainapp.py:14744 .././mainapp.py:14952
+#: .././mainapp.py:14785 .././mainapp.py:14993
 msgid "Are you sure you want to move this channel:"
 msgstr "确认移动这个频道："
 
-#: .././mainapp.py:14746 .././mainapp.py:14954
+#: .././mainapp.py:14787 .././mainapp.py:14995
 msgid "Are you sure you want to move this playlist:"
 msgstr "确认移动这个播放列表："
 
-#: .././mainapp.py:14748 .././mainapp.py:14956
+#: .././mainapp.py:14789 .././mainapp.py:14997
 msgid "Are you sure you want to move this folder:"
 msgstr "确认移动这个文件夹："
 
-#: .././mainapp.py:14753
+#: .././mainapp.py:14794
 msgid ""
 "This procedure will move all downloaded files to the top level of Tartube's "
 "data folder"
 msgstr "本操作将会将所有下载文件移动到Tartube数据文件夹的顶层"
 
-#: .././mainapp.py:14791 .././mainapp.py:15011
+#: .././mainapp.py:14832 .././mainapp.py:15052
 #, python-brace-format
 msgid "Could not move '{0}' (filesystem error)"
 msgstr "无法移动“{0}”（文件系统错误）"
 
-#: .././mainapp.py:14859
+#: .././mainapp.py:14900
 msgid "Channels, playlists and folders can only be dragged into a folder"
 msgstr "频道、播放列表和文件夹只能拖入一个文件夹中"
 
-#: .././mainapp.py:14872
+#: .././mainapp.py:14913
 #, python-brace-format
 msgid "The fixed folder '{0}' cannot be moved (but it can still be hidden)"
 msgstr "固定文件夹“{0}”无法移动（但仍可隐藏）"
 
-#: .././mainapp.py:14885
+#: .././mainapp.py:14926
 #, python-brace-format
 msgid "The folder '{0}' can only contain videos"
 msgstr "文件夹“{0}”只能存放视频"
 
-#: .././mainapp.py:14897
+#: .././mainapp.py:14938
 #, python-brace-format
 msgid "The folder '{0}' can only contain other folders and videos"
 msgstr "文件夹“{0}”只能存放子文件夹和视频"
 
-#: .././mainapp.py:14939
+#: .././mainapp.py:14980
 msgid ""
 "You probably created that file/folder accidentally, in which case, you "
 "should delete it manually before trying again"
 msgstr ""
 "您可能意外创建了该文件/文件夹，在这种情况下，您应该在重试之前手动删除它"
 
-#: .././mainapp.py:14958
+#: .././mainapp.py:14999
 msgid "into this folder:"
 msgstr "进入文件夹："
 
-#: .././mainapp.py:14962
+#: .././mainapp.py:15003
 msgid "This procedure will move all downloaded files to the new location"
 msgstr "本操作将会把所有下载的文件移动到新位置"
 
-#: .././mainapp.py:14968 .././mainapp.py:15101
+#: .././mainapp.py:15009 .././mainapp.py:15142
 msgid ""
 "WARNING: The destination folder is marked as temporary, so everything inside "
 "it will be DELETED when Tartube restarts!"
@@ -634,313 +634,313 @@ msgstr ""
 "警告：目标文件夹被标记为临时文件夹，当 Tartube 重启时，其中的所有内容都将被删"
 "除！"
 
-#: .././mainapp.py:15079
+#: .././mainapp.py:15120
 msgid "Videos cannot be dragged into this folder"
 msgstr "无法将视频拖到此文件夹中"
 
-#: .././mainapp.py:15089
+#: .././mainapp.py:15130
 #, python-brace-format
 msgid "Are you sure you want to move the video to '{0}'?"
 msgstr "确定要将视频移动到“{0}”中吗？"
 
-#: .././mainapp.py:15095
+#: .././mainapp.py:15136
 #, python-brace-format
 msgid "Are you sure you want to move {0} videos to '{1}'?"
 msgstr ""
 
 #. Show confirmation dialogue
-#: .././mainapp.py:15236
+#: .././mainapp.py:15324
 msgid "Videos moved"
 msgstr "移动的视频"
 
-#: .././mainapp.py:15237
+#: .././mainapp.py:15325
 msgid "Videos not moved"
 msgstr "未移动视频"
 
-#: .././mainapp.py:15635
+#: .././mainapp.py:15723
 msgid ""
 "Are you SURE you want to delete files? This procedure cannot be reversed!"
 msgstr "您确定要删除这些文件吗？删除的文件不可恢复！"
 
-#: .././mainapp.py:15652
+#: .././mainapp.py:15740
 msgid ""
 "Are you SURE you want to remove these items from your database? This "
 "procedure cannot be reversed!"
 msgstr "您确定要从数据库中删除这些项目吗？删除项目将不可恢复！"
 
-#: .././mainapp.py:17791 .././mainapp.py:17912 .././mainapp.py:18099
+#: .././mainapp.py:17879 .././mainapp.py:18000 .././mainapp.py:18187
 #, python-brace-format
 msgid "The channel contains {0} item(s), so this action may take a while"
 msgstr "频道共包含{0}项，因此本操作可能需要一段时间"
 
-#: .././mainapp.py:17797 .././mainapp.py:17918 .././mainapp.py:18105
+#: .././mainapp.py:17885 .././mainapp.py:18006 .././mainapp.py:18193
 #, python-brace-format
 msgid "The playlist contains {0} item(s), so this action may take a while"
 msgstr "播放列表共包含{0}项，因此本操作可能需要一段时间"
 
-#: .././mainapp.py:17803 .././mainapp.py:17924 .././mainapp.py:18111
+#: .././mainapp.py:17891 .././mainapp.py:18012 .././mainapp.py:18199
 #, python-brace-format
 msgid "The folder contains {0} item(s), so this action may take a while"
 msgstr "文件夹共包含{0}项，因此本操作可能需要一段时间"
 
-#: .././mainapp.py:18177
+#: .././mainapp.py:18265
 msgid "You did not give the folder a new name"
 msgstr "您没有为文件夹指定新名称"
 
-#: .././mainapp.py:18188 .././mainapp.py:24125 .././mainapp.py:24268
-#: .././mainapp.py:24404 .././mainwin.py:18672 .././config.py:29135
+#: .././mainapp.py:18276 .././mainapp.py:24213 .././mainapp.py:24356
+#: .././mainapp.py:24492 .././mainwin.py:18672 .././config.py:29177
 #, python-brace-format
 msgid "The name '{0}' is not allowed"
 msgstr "不允许使用名称“{0}”"
 
-#: .././mainapp.py:18205 .././mainapp.py:24154 .././mainapp.py:24284
-#: .././mainapp.py:24433
+#: .././mainapp.py:18293 .././mainapp.py:24242 .././mainapp.py:24372
+#: .././mainapp.py:24521
 msgid "That name is not permitted on your system"
 msgstr "您的文件系统上不允许使用该名称"
 
-#: .././mainapp.py:18236
+#: .././mainapp.py:18324
 #, python-brace-format
 msgid "Failed to rename '{0}'"
 msgstr "“{0}”重命名失败"
 
 #. Confirm the result
-#: .././mainapp.py:18438
+#: .././mainapp.py:18526
 msgid "Search/replace complete"
 msgstr "搜索/替换完成"
 
-#: .././mainapp.py:18439
+#: .././mainapp.py:18527
 #, python-brace-format
 msgid "Updated URLs: {0}"
 msgstr "更新地址：{0}"
 
-#: .././mainapp.py:18440
+#: .././mainapp.py:18528
 #, python-brace-format
 msgid "Errors: {0}"
 msgstr "错误：{0}"
 
-#: .././mainapp.py:18715
+#: .././mainapp.py:18803
 msgid "Select where to save the database export"
 msgstr "请选择数据库导出的保存位置"
 
-#: .././mainapp.py:18845
+#: .././mainapp.py:18933
 msgid "There is nothing to export!"
 msgstr "没有什么可导出的！"
 
-#: .././mainapp.py:18887 .././mainapp.py:18934 .././mainapp.py:18989
-#: .././config.py:30995
+#: .././mainapp.py:18975 .././mainapp.py:19022 .././mainapp.py:19077
+#: .././config.py:31037
 msgid "Failed to save the database export file:"
 msgstr "无法保存数据库导出文件："
 
-#: .././mainapp.py:18999 .././config.py:30985
+#: .././mainapp.py:19087 .././config.py:31027
 msgid "Database export file saved to:"
 msgstr "数据库导出文件保存到："
 
-#: .././mainapp.py:19264
+#: .././mainapp.py:19352
 msgid "Select the database export"
 msgstr "选择要导出的数据库"
 
-#: .././mainapp.py:19282 .././mainapp.py:19295 .././mainapp.py:19333
+#: .././mainapp.py:19370 .././mainapp.py:19383 .././mainapp.py:19421
 msgid "Failed to load the database export file"
 msgstr "无法加载数据库导出文件"
 
-#: .././mainapp.py:19314
+#: .././mainapp.py:19402
 msgid "The database export file is invalid"
 msgstr "数据库导出文件无效"
 
-#: .././mainapp.py:19349
+#: .././mainapp.py:19437
 msgid "The database export file is invalid (or empty)"
 msgstr "数据库导出文件无效（或为空）"
 
-#: .././mainapp.py:19396
+#: .././mainapp.py:19484
 msgid "Nothing was imported from the database export file"
 msgstr "未从数据库导出文件导入任何内容"
 
 #. Show a confirmation
-#: .././mainapp.py:19410
+#: .././mainapp.py:19498
 msgid "Imported into database"
 msgstr "导入数据库"
 
-#: .././mainapp.py:19411 .././mainwin.py:1898 .././config.py:740
-#: .././config.py:1108 .././config.py:18242 .././config.py:22235
+#: .././mainapp.py:19499 .././mainwin.py:1898 .././config.py:740
+#: .././config.py:1108 .././config.py:18242 .././config.py:22238
 msgid "Videos"
 msgstr "视频"
 
-#: .././mainapp.py:19412 .././config.py:743 .././config.py:18275
-#: .././config.py:22268
+#: .././mainapp.py:19500 .././config.py:743 .././config.py:18275
+#: .././config.py:22271
 msgid "Channels"
 msgstr "频道"
 
-#: .././mainapp.py:19413 .././config.py:746 .././config.py:18286
-#: .././config.py:22279
+#: .././mainapp.py:19501 .././config.py:746 .././config.py:18286
+#: .././config.py:22282
 msgid "Playlists"
 msgstr "播放列表"
 
-#: .././mainapp.py:19414 .././config.py:749
+#: .././mainapp.py:19502 .././config.py:749
 msgid "Folders"
 msgstr "文件夹"
 
-#: .././mainapp.py:20186
+#: .././mainapp.py:20274
 msgid ""
 "The video file is missing from Tartube's data folder (try downloading the "
 "video again!)"
 msgstr "Tartube数据文件夹中缺少视频文件（请尝试再次下载视频！"
 
-#: .././mainapp.py:20541
+#: .././mainapp.py:20629
 msgid "Select where to save the custom download export"
 msgstr "请选择自定义下载导出位置"
 
-#: .././mainapp.py:20598
+#: .././mainapp.py:20686
 msgid "Failed to save the custom download export file:"
 msgstr "无法保存自定义下载导出文件："
 
-#: .././mainapp.py:20608
+#: .././mainapp.py:20696
 msgid "Custom download exported to:"
 msgstr "将自定义下载导出到："
 
-#: .././mainapp.py:20636
+#: .././mainapp.py:20724
 msgid "Select the custom download export file"
 msgstr "选择自定义下载导出文件"
 
-#: .././mainapp.py:20655
+#: .././mainapp.py:20743
 msgid "Failed to load the custom download export file"
 msgstr "无法加载自定义下载导出文件"
 
-#: .././mainapp.py:20674
+#: .././mainapp.py:20762
 msgid "The custom download export file is invalid"
 msgstr "自定义下载导出文件无效"
 
-#: .././mainapp.py:20687
+#: .././mainapp.py:20775
 msgid "The custom download export file is invalid (or empty)"
 msgstr "自定义下载导出文件无效（或为空）"
 
-#: .././mainapp.py:21334 .././mainapp.py:21703
+#: .././mainapp.py:21422 .././mainapp.py:21791
 msgid "Select where to save the options export"
 msgstr "请选择选项导出位置"
 
-#: .././mainapp.py:21382 .././mainapp.py:21751
+#: .././mainapp.py:21470 .././mainapp.py:21839
 msgid "Failed to save the options export file:"
 msgstr "无法保存选项到导出文件："
 
-#: .././mainapp.py:21392
+#: .././mainapp.py:21480
 msgid "Download options exported to to:"
 msgstr "将选项导出到："
 
-#: .././mainapp.py:21420 .././mainapp.py:21789
+#: .././mainapp.py:21508 .././mainapp.py:21877
 msgid "Select the options export file"
 msgstr "选择选项导出文件"
 
-#: .././mainapp.py:21439 .././mainapp.py:21808
+#: .././mainapp.py:21527 .././mainapp.py:21896
 msgid "Failed to load the options export file"
 msgstr "无法加载选项导出文件"
 
-#: .././mainapp.py:21458 .././mainapp.py:21827
+#: .././mainapp.py:21546 .././mainapp.py:21915
 msgid "The options export file is invalid"
 msgstr "选项导出文件无效"
 
-#: .././mainapp.py:21471 .././mainapp.py:21840
+#: .././mainapp.py:21559 .././mainapp.py:21928
 msgid "The options export file is invalid (or empty)"
 msgstr "选项导出文件无效（或为空）"
 
-#: .././mainapp.py:21761
+#: .././mainapp.py:21849
 msgid "FFmpeg options exported to to:"
 msgstr "FFmpeg 选项导出到："
 
-#: .././mainapp.py:22809
+#: .././mainapp.py:22897
 msgid "Please select a destination folder"
 msgstr "请选择目标文件夹"
 
 #. Prompt for confirmation
-#: .././mainapp.py:22875
+#: .././mainapp.py:22963
 msgid "Are you sure you want to clear this list?"
 msgstr "是否确实要清空此列表吗？"
 
 #. Prompt for confirmation
-#: .././mainapp.py:22919
+#: .././mainapp.py:23007
 msgid "Are you sure you want to clear downloaded videos?"
 msgstr "您确定要清空下载的视频吗？"
 
-#: .././mainapp.py:22969
+#: .././mainapp.py:23057
 msgid "Only downloaded videos can be used to create video clips"
 msgstr ""
 
-#: .././mainapp.py:22977
+#: .././mainapp.py:23065
 msgid "You can create video clips from only one video at a time!"
 msgstr ""
 
-#: .././mainapp.py:23042 .././mainwin.py:19213
+#: .././mainapp.py:23130 .././mainwin.py:19213
 msgid "Only checked/downloaded videos can be processed by FFmpeg"
 msgstr "只有选中/下载的视频才能被FFmpeg处理"
 
-#: .././mainapp.py:23149
+#: .././mainapp.py:23237
 msgid "No destination(s) to show"
 msgstr "没有要显示的目的文件夹"
 
-#: .././mainapp.py:23196
+#: .././mainapp.py:23284
 msgid "No video(s) have been downloaded"
 msgstr "尚未下载任何视频"
 
 #. Prompt for confirmation
-#: .././mainapp.py:23323
+#: .././mainapp.py:23411
 msgid "Are you sure you want to remove the selected item(s)?"
 msgstr "确认要删除所选项目？"
 
-#: .././mainapp.py:24115
+#: .././mainapp.py:24203
 msgid "You must give the channel a name"
 msgstr "您必须为频道命名"
 
-#: .././mainapp.py:24135 .././mainapp.py:24414
+#: .././mainapp.py:24223 .././mainapp.py:24502
 msgid "You must enter a valid URL"
 msgstr "您必须输入有效的网址"
 
-#: .././mainapp.py:24258
+#: .././mainapp.py:24346
 msgid "You must give the folder a name"
 msgstr "您必须为文件夹命名"
 
-#: .././mainapp.py:24394
+#: .././mainapp.py:24482
 msgid "You must give the playlist a name"
 msgstr "您必须为播放列表命名"
 
-#: .././mainapp.py:24602 .././mainapp.py:24929
+#: .././mainapp.py:24690 .././mainapp.py:25017
 msgid "No channels, playlists or folders are marked for download"
 msgstr "没有频道、播放列表或文件夹被标记为下载"
 
-#: .././mainapp.py:24616 .././mainapp.py:24943
+#: .././mainapp.py:24704 .././mainapp.py:25031
 #, python-brace-format
 msgid "The maximum number of profiles permitted is {0}"
 msgstr "允许的最大配置文件数是 {0}个"
 
-#: .././mainapp.py:24641 .././mainapp.py:24968
+#: .././mainapp.py:24729 .././mainapp.py:25056
 #, python-brace-format
 msgid "A profile called '{0}' already exists"
 msgstr "名为“{0}”的配置文件已存在"
 
-#: .././mainapp.py:24659 .././mainapp.py:24986
+#: .././mainapp.py:24747 .././mainapp.py:25074
 #, python-brace-format
 msgid "Created the profile '{0}'"
 msgstr "已创建配置文件“{0}”"
 
-#: .././mainapp.py:24719
+#: .././mainapp.py:24807
 msgid "There were no livestream alerts to cancel"
 msgstr "没有要取消的直播提醒"
 
-#: .././mainapp.py:24721
+#: .././mainapp.py:24809
 msgid "Livestream alerts for 1 video were cancelled"
 msgstr "Livestream alerts for 1 video were canceled"
 
-#: .././mainapp.py:24724
+#: .././mainapp.py:24812
 #, python-brace-format
 msgid "Livestream alerts for {0} videos were cancelled"
 msgstr "Livestream alerts for {0} videos were canceled"
 
-#: .././mainapp.py:24780
+#: .././mainapp.py:24868
 msgid "Restart Tartube to see the new theme!"
 msgstr "请重新启动Tartube以应用新主题！"
 
-#: .././mainapp.py:24781
+#: .././mainapp.py:24869
 msgid "Tartube failed to set the new theme"
 msgstr "Tartube未能设置新主题"
 
-#: .././mainapp.py:25311
+#: .././mainapp.py:25399
 msgid ""
 "Before trying to reset channel/playlist names, you must check or download at "
 "one least one video from each!"
@@ -948,15 +948,15 @@ msgstr ""
 "在尝试重置频道/播放列表名称之前，您必须在每个频道/播放列表中至少检查或下载一"
 "个视频！"
 
-#: .././mainapp.py:25388
+#: .././mainapp.py:25476
 msgid "All Tartube data has been saved"
 msgstr "所有Tartube数据均已保存"
 
-#: .././mainapp.py:25415
+#: .././mainapp.py:25503
 msgid "Database saved"
 msgstr "数据库已保存"
 
-#: .././mainapp.py:25715 .././mainwin.py:17548
+#: .././mainapp.py:25803 .././mainwin.py:17548
 msgid ""
 "Files cannot be recovered, after being deleted. Are you sure you want to "
 "continue?"
@@ -965,51 +965,51 @@ msgstr "文件删除后无法恢复。您确定要继续吗？"
 #. Because livestream operations run silently in the background, when
 #. the user goes to the trouble of clicking a menu item in the
 #. main window's menu, tell them why nothing is happening
-#: .././mainapp.py:25786
+#: .././mainapp.py:25874
 msgid "Cannot update existing livestreams because"
 msgstr "无法更新现有直播，因为"
 
-#: .././mainapp.py:25788
+#: .././mainapp.py:25876
 msgid "there is another operation running"
 msgstr "有另一个操作正在运行"
 
-#: .././mainapp.py:25790
+#: .././mainapp.py:25878
 msgid "they are currently being updated"
 msgstr "它们目前正在更新中"
 
-#: .././mainapp.py:25792
+#: .././mainapp.py:25880
 msgid "one or more configuration windows are open"
 msgstr "一个或多个配置窗口已打开"
 
-#: .././mainapp.py:25794
+#: .././mainapp.py:25882
 msgid "there are no livestreams to update"
 msgstr "没有要更新的直播"
 
-#: .././mainapp.py:25866
+#: .././mainapp.py:25954
 msgid "There is already a channel with that name"
 msgstr "同名频道已存在"
 
-#: .././mainapp.py:25868
+#: .././mainapp.py:25956
 msgid "There is already a playlist with that name"
 msgstr "同名播放列表已存在"
 
-#: .././mainapp.py:25870
+#: .././mainapp.py:25958
 msgid "There is already a folder with that name"
 msgstr "同名文件夹已存在"
 
-#: .././mainapp.py:25875
+#: .././mainapp.py:25963
 msgid "The folder already contains a channel with that name"
 msgstr "文件夹已包含同名频道"
 
-#: .././mainapp.py:25879
+#: .././mainapp.py:25967
 msgid "The folder already contains a playlist with that name"
 msgstr "文件夹已包含同名播放列表"
 
-#: .././mainapp.py:25884
+#: .././mainapp.py:25972
 msgid "The folder already contains another folder with that name"
 msgstr "文件夹已包含同名子文件夹"
 
-#: .././mainapp.py:25888
+#: .././mainapp.py:25976
 msgid "(so please choose a different name)"
 msgstr "（请选择其他名称）"
 
@@ -1085,7 +1085,7 @@ msgid "_Change theme..."
 msgstr "更换主题(_C)..."
 
 #. Media column
-#: .././mainwin.py:1460 .././config.py:19378
+#: .././mainwin.py:1460 .././config.py:19381
 msgid "_Media"
 msgstr "媒体(_M)"
 
@@ -1183,7 +1183,7 @@ msgstr "运行测试代码(_T)"
 
 #. Operations column
 #. Add this tab...
-#: .././mainwin.py:1687 .././config.py:23974
+#: .././mainwin.py:1687 .././config.py:23977
 msgid "_Operations"
 msgstr "操作(_O)"
 
@@ -1311,7 +1311,7 @@ msgstr "文件夹"
 msgid "Add a new folder"
 msgstr "添加新文件夹"
 
-#: .././mainwin.py:1983 .././mainwin.py:12797 .././config.py:23768
+#: .././mainwin.py:1983 .././mainwin.py:12797 .././config.py:23771
 msgid "Check"
 msgstr "检查"
 
@@ -1329,8 +1329,8 @@ msgstr "检查所有视频、频道、播放列表和文件夹"
 #: .././mainwin.py:2004 .././mainwin.py:24942 .././mainwin.py:24954
 #: .././mainwin.py:24959 .././mainwin.py:24967 .././mainwin.py:25253
 #: .././mainwin.py:25265 .././mainwin.py:25949 .././mainwin.py:27260
-#: .././mainwin.py:27272 .././mainwin.py:27298 .././config.py:23644
-#: .././config.py:23770
+#: .././mainwin.py:27272 .././mainwin.py:27298 .././config.py:23647
+#: .././config.py:23773
 msgid "Download"
 msgstr "下载"
 
@@ -1349,7 +1349,7 @@ msgstr "停止"
 msgid "Stop the current operation"
 msgstr "停止当前操作"
 
-#: .././mainwin.py:2066 .././config.py:20221
+#: .././mainwin.py:2066 .././config.py:20224
 msgid "System preferences"
 msgstr "首选项"
 
@@ -1394,7 +1394,7 @@ msgid "TRANSLATOR'S NOTE: Main window tabs are defined here"
 msgstr ""
 
 #: .././mainwin.py:2182 .././config.py:4988 .././config.py:12802
-#: .././config.py:21463 .././config.py:22707
+#: .././config.py:21466 .././config.py:22710
 msgid "_Videos"
 msgstr "视频(_V)"
 
@@ -1499,8 +1499,8 @@ msgstr "上传时间"
 
 #: .././mainwin.py:2562 .././mainwin.py:29138 .././mainwin.py:32080
 #: .././mainwin.py:33513 .././config.py:3117 .././config.py:12826
-#: .././config.py:21961 .././config.py:23644 .././config.py:24752
-#: .././config.py:27064 .././config.py:27347
+#: .././config.py:21964 .././config.py:23647 .././config.py:24755
+#: .././config.py:27080 .././config.py:27363
 msgid "Name"
 msgstr "名称"
 
@@ -1712,7 +1712,7 @@ msgid "Format:"
 msgstr "格式："
 
 #. (Dummy items in the combo)
-#: .././mainwin.py:3463 .././mainwin.py:21086 .././config.py:24752
+#: .././mainwin.py:3463 .././mainwin.py:21086 .././config.py:24755
 msgid "Default"
 msgstr "默认"
 
@@ -1797,14 +1797,14 @@ msgid "Process with FFmpeg"
 msgstr ""
 
 #. (Signal connect appears below)
-#: .././mainwin.py:3901 .././config.py:6852 .././config.py:21236
-#: .././config.py:23709
+#: .././mainwin.py:3901 .././config.py:6852 .././config.py:21239
+#: .././config.py:23712
 msgid "Move up"
 msgstr "上移"
 
 #. (Signal connect appears below)
-#: .././mainwin.py:3917 .././config.py:6856 .././config.py:21245
-#: .././config.py:23718
+#: .././mainwin.py:3917 .././config.py:6856 .././config.py:21248
+#: .././config.py:23721
 msgid "Move down"
 msgstr "下移"
 
@@ -1864,35 +1864,35 @@ msgstr "最大页面行数"
 msgid "TRANSLATOR'S NOTE: Main window's Errors / Warnings tab"
 msgstr ""
 
-#: .././mainwin.py:4192 .././config.py:23389
+#: .././mainwin.py:4192 .././config.py:23392
 msgid "Show Tartube errors"
 msgstr "显示Tartue错误"
 
-#: .././mainwin.py:4205 .././config.py:23397
+#: .././mainwin.py:4205 .././config.py:23400
 msgid "Show Tartube warnings"
 msgstr "显示Tartue警告"
 
-#: .././mainwin.py:4218 .././config.py:23405
+#: .././mainwin.py:4218 .././config.py:23408
 msgid "Show operation errors"
 msgstr "显示操作错误"
 
-#: .././mainwin.py:4236 .././config.py:23416
+#: .././mainwin.py:4236 .././config.py:23419
 msgid "Show operation warnings"
 msgstr "显示操作警告"
 
-#: .././mainwin.py:4259 .././config.py:23427
+#: .././mainwin.py:4259 .././config.py:23430
 msgid "Show dates"
 msgstr "显示日期"
 
-#: .././mainwin.py:4277 .././config.py:23438
+#: .././mainwin.py:4277 .././config.py:23441
 msgid "Show channel/playlist/folder names"
 msgstr "显示频道/播放列表/文件夹名称"
 
-#: .././mainwin.py:4295 .././config.py:23449
+#: .././mainwin.py:4295 .././config.py:23452
 msgid "Show video names"
 msgstr "显示视频名称"
 
-#: .././mainwin.py:4313 .././config.py:23460
+#: .././mainwin.py:4313 .././config.py:23463
 msgid "Show full messages"
 msgstr "显示完整消息"
 
@@ -1911,7 +1911,7 @@ msgstr "筛选消息"
 #: .././mainwin.py:4413 .././mainwin.py:35218 .././mainwin.py:36327
 #: .././config.py:11822 .././config.py:12026 .././config.py:12470
 #: .././config.py:12701 .././config.py:15229 .././config.py:15425
-#: .././config.py:17291 .././config.py:19508
+#: .././config.py:17291 .././config.py:19511
 msgid "Clear list"
 msgstr "清空列表"
 
@@ -1985,7 +1985,7 @@ msgstr "自定义下载标记的视频、频道、播放列表和文件夹"
 msgid "Checking..."
 msgstr "检查中..."
 
-#: .././mainwin.py:5400 .././mainwin.py:5991 .././formats.py:1203
+#: .././mainwin.py:5400 .././mainwin.py:5991 .././formats.py:1204
 msgid "Checking"
 msgstr "检查中"
 
@@ -1993,7 +1993,7 @@ msgstr "检查中"
 msgid "Downloading..."
 msgstr "下载中..."
 
-#: .././mainwin.py:5405 .././mainwin.py:5993 .././formats.py:1200
+#: .././mainwin.py:5405 .././mainwin.py:5993 .././formats.py:1201
 msgid "Downloading"
 msgstr "下载中"
 
@@ -2420,7 +2420,7 @@ msgid "_Download"
 msgstr "下载(_D)"
 
 #: .././mainwin.py:7414 .././mainwin.py:7999 .././mainwin.py:8619
-#: .././config.py:22155
+#: .././config.py:22158
 msgid "_Temporary"
 msgstr "缓存(_T)"
 
@@ -2692,7 +2692,7 @@ msgstr "启用自定义下载(_C)"
 msgid "Custom downloads _preferences..."
 msgstr "自定义下载选项(_P)..."
 
-#: .././mainwin.py:8776 .././config.py:21788
+#: .././mainwin.py:8776 .././config.py:21791
 msgid "_Update"
 msgstr "更新(_U)"
 
@@ -2915,7 +2915,7 @@ msgstr "下载"
 #. then use a Glib timer to restore it (after some small fraction of a
 #. second)
 #: .././mainwin.py:12803 .././mainwin.py:25097 .././mainwin.py:26166
-#: .././config.py:18264 .././config.py:22257
+#: .././config.py:18264 .././config.py:22260
 msgid "Other"
 msgstr "其他"
 
@@ -2937,7 +2937,7 @@ msgstr "总计(_S)"
 msgid "TRANSLATOR'S NOTE: Extra items for the Errors/Warnings tab"
 msgstr ""
 
-#: .././mainwin.py:15057 .././config.py:15712 .././config.py:23644
+#: .././mainwin.py:15057 .././config.py:15712 .././config.py:23647
 msgid "Time"
 msgstr "时间"
 
@@ -3558,7 +3558,7 @@ msgstr "<b>提示</b>：您也可以单击<b>媒体>重置频道/播放列表名
 msgid "Type"
 msgstr "类型"
 
-#: .././mainwin.py:29138 .././config.py:21961
+#: .././mainwin.py:29138 .././config.py:21964
 msgid "URL"
 msgstr "链接"
 
@@ -4183,8 +4183,8 @@ msgstr "导入到数据库"
 msgid "Choose which items to import"
 msgstr "选择要导入的项目"
 
-#: .././mainwin.py:33497 .././config.py:24802 .././config.py:27116
-#: .././config.py:27397
+#: .././mainwin.py:33497 .././config.py:24805 .././config.py:27132
+#: .././config.py:27413
 msgid "Import"
 msgstr "导入"
 
@@ -4653,7 +4653,7 @@ msgstr ""
 msgid "Empty the whole folder"
 msgstr "清空整个文件夹"
 
-#: .././mainwin.py:37003 .././config.py:18460
+#: .././mainwin.py:37003
 msgid "Remove videos after days"
 msgstr "几天后删除视频"
 
@@ -4750,9 +4750,9 @@ msgstr "选择应将哪些名称重置为原始网站上的名称"
 #. 'Reset' button
 #. (Signal connect appears below)
 #: .././mainwin.py:37432 .././config.py:1237 .././config.py:5507
-#: .././config.py:6140 .././config.py:6294 .././config.py:25032
-#: .././config.py:26093 .././config.py:26121 .././config.py:26847
-#: .././config.py:26888 .././config.py:26963
+#: .././config.py:6140 .././config.py:6294 .././config.py:25035
+#: .././config.py:26108 .././config.py:26136 .././config.py:26866
+#: .././config.py:26904 .././config.py:26979
 msgid "Reset"
 msgstr "重置"
 
@@ -4875,8 +4875,8 @@ msgstr ""
 #. (Signal connect appears below)
 #: .././mainwin.py:38045 .././config.py:5836 .././config.py:6136
 #: .././config.py:6290 .././config.py:8511 .././config.py:8532
-#: .././config.py:8553 .././config.py:25028 .././config.py:26726
-#: .././config.py:26843 .././config.py:26884 .././config.py:26959
+#: .././config.py:8553 .././config.py:25031 .././config.py:26741
+#: .././config.py:26862 .././config.py:26900 .././config.py:26975
 msgid "Set"
 msgstr "设置"
 
@@ -4966,7 +4966,7 @@ msgid ""
 "window menu, click Operations > Test youtube-dl"
 msgstr ""
 
-#: .././mainwin.py:38756 .././config.py:25494
+#: .././mainwin.py:38756 .././config.py:25509
 msgid "Test"
 msgstr "测试"
 
@@ -5125,7 +5125,7 @@ msgstr "周"
 msgid "Days"
 msgstr "天"
 
-#: .././config.py:583 .././config.py:18955
+#: .././config.py:583 .././config.py:18958
 msgid "Hours"
 msgstr "小时"
 
@@ -5366,7 +5366,7 @@ msgstr "切片选项"
 msgid "Remove slices from the video using SponsorBlock data (requires FFmpeg)"
 msgstr "使用SponsorBlock数据从视频中移除切片（需要FFmpeg）"
 
-#: .././config.py:3461 .././config.py:18992 .././config.py:19499
+#: .././config.py:3461 .././config.py:18995 .././config.py:19502
 msgid "Remove"
 msgstr "删除"
 
@@ -5407,7 +5407,7 @@ msgstr "最小延迟（以分钟为单位；实际延迟随机化）。"
 msgid "TRANSLATOR'S NOTE: Custom downloads > Mirrors"
 msgstr ""
 
-#: .././config.py:3609 .././config.py:26067
+#: .././config.py:3609 .././config.py:26082
 msgid "_Mirrors"
 msgstr "镜像(_M)"
 
@@ -5431,7 +5431,7 @@ msgstr "从Invidious而不是YouTube获取视频"
 msgid "Obtain the video from this YouTube front-end:"
 msgstr "从当有YouTube前端下载视频："
 
-#: .././config.py:3664 .././config.py:26099
+#: .././config.py:3664 .././config.py:26114
 msgid "Type the exact text that replaces www.youtube.com e.g."
 msgstr "输入替换 www.youtube.com 的准确文本，例如"
 
@@ -5549,7 +5549,7 @@ msgid "TRANSLATOR'S NOTE: Download options > Downloads"
 msgstr ""
 
 #. Add this tab...
-#: .././config.py:4877 .././config.py:4888 .././config.py:24344
+#: .././config.py:4877 .././config.py:4888 .././config.py:24347
 msgid "_Downloads"
 msgstr "下载"
 
@@ -5710,7 +5710,7 @@ msgid "TRANSLATOR'S NOTE: Download options > Files"
 msgstr ""
 
 #. Add this tab...
-#: .././config.py:5336 .././config.py:20887
+#: .././config.py:5336 .././config.py:20890
 msgid "_Files"
 msgstr "文件(_F)"
 
@@ -5919,8 +5919,8 @@ msgid "Number of comments"
 msgstr "评论数"
 
 #: .././config.py:5554 .././config.py:5698 .././config.py:5845
-#: .././config.py:18986 .././config.py:19489 .././config.py:23691
-#: .././config.py:24793 .././config.py:27107 .././config.py:27388
+#: .././config.py:18989 .././config.py:19492 .././config.py:23694
+#: .././config.py:24796 .././config.py:27123 .././config.py:27404
 msgid "Add"
 msgstr "添加"
 
@@ -5952,13 +5952,13 @@ msgstr "输出类型"
 msgid "Output template"
 msgstr "输出模板"
 
-#: .././config.py:5709 .././config.py:5856 .././config.py:23727
-#: .././config.py:24851 .././config.py:27165 .././config.py:27446
+#: .././config.py:5709 .././config.py:5856 .././config.py:23730
+#: .././config.py:24854 .././config.py:27181 .././config.py:27462
 msgid "Delete"
 msgstr "删除"
 
-#: .././config.py:5718 .././config.py:5865 .././config.py:22073
-#: .././config.py:24867 .././config.py:27183 .././config.py:27462
+#: .././config.py:5718 .././config.py:5865 .././config.py:22076
+#: .././config.py:24870 .././config.py:27199 .././config.py:27478
 msgid "Refresh list"
 msgstr "刷新列表"
 
@@ -6373,8 +6373,8 @@ msgstr ""
 
 #. Add this tab...
 #: .././config.py:7248 .././config.py:14636 .././config.py:17076
-#: .././config.py:18125 .././config.py:18770 .././config.py:20565
-#: .././config.py:27560
+#: .././config.py:18125 .././config.py:18773 .././config.py:20568
+#: .././config.py:27576
 msgid "_General"
 msgstr "全局(_G)"
 
@@ -7455,7 +7455,7 @@ msgid "TRANSLATOR'S NOTE: Video properties > General"
 msgstr ""
 
 #: .././config.py:14641 .././config.py:17080 .././config.py:18129
-#: .././config.py:18775
+#: .././config.py:18778
 msgid "General properties"
 msgstr "一般属性"
 
@@ -7567,7 +7567,7 @@ msgstr "当直播开始时，在系统的网络浏览器中打开它"
 msgid "When the livestream starts, begin downloading it immediately"
 msgstr "当直播开始时，立即开始下载"
 
-#: .././config.py:15021 .././config.py:25529
+#: .././config.py:15021 .././config.py:25544
 msgid "When a livestream stops, download it (overwriting any earlier file)"
 msgstr "当直播停止时，开始下载（覆盖任何早期文件）。"
 
@@ -7599,7 +7599,7 @@ msgstr ""
 msgid "_Timestamps"
 msgstr "时间戳(_T)"
 
-#: .././config.py:15115 .././config.py:25624
+#: .././config.py:15115 .././config.py:25639
 msgid "Timestamps"
 msgstr "时间戳"
 
@@ -7830,15 +7830,15 @@ msgstr "未命名播放列表"
 msgid "TRANSLATOR'S NOTE: Channel properties > History"
 msgstr ""
 
-#: .././config.py:17351 .././config.py:18380 .././config.py:22398
+#: .././config.py:17351 .././config.py:18380 .././config.py:22401
 msgid "_History"
 msgstr "历史记录(_H)"
 
-#: .././config.py:17356 .././config.py:18385 .././config.py:22405
+#: .././config.py:17356 .././config.py:18385 .././config.py:22408
 msgid "Download history"
 msgstr "下载历史记录"
 
-#: .././config.py:17370 .././config.py:18399 .././config.py:22419
+#: .././config.py:17370 .././config.py:18399 .././config.py:22422
 msgid "Draw"
 msgstr ""
 
@@ -8017,15 +8017,15 @@ msgstr "可以包含任何内容"
 msgid "TRANSLATOR'S NOTE: Folder properties > Statistics"
 msgstr ""
 
-#: .././config.py:18227 .././config.py:22218
+#: .././config.py:18227 .././config.py:22221
 msgid "_Statistics"
 msgstr "统计(_S)"
 
-#: .././config.py:18232 .././config.py:22225
+#: .././config.py:18232 .././config.py:22228
 msgid "Statistics"
 msgstr "统计"
 
-#: .././config.py:18253 .././config.py:22246
+#: .././config.py:18253 .././config.py:22249
 msgid "Downloaded"
 msgstr "下载"
 
@@ -8057,2481 +8057,2492 @@ msgstr "最新视频"
 
 #: .././config.py:18443
 msgid ""
-"When videos are checked/downloaded, older videos are removed from this folder"
-msgstr "当视频被检查/下载时，旧视频将会从此文件夹中删除"
+"When videos are checked/downloaded, older downloaded videos are removed from "
+"this folder"
+msgstr ""
 
-#: .././config.py:18615
+#: .././config.py:18460
+msgid "Remove downloaded videos after days"
+msgstr ""
+
+#: .././config.py:18618
 msgid ""
 "TRANSLATOR'S NOTE: Scheduled downloads window starts here. In the menu, "
 "click Edit > System preferences... Scheduling > Start. In the 'Scheduled "
 "download name' box, add a name. Then click the Add button"
 msgstr ""
 
-#: .././config.py:18621
+#: .././config.py:18624
 msgid "Scheduled download"
 msgstr "计划下载"
 
-#: .././config.py:18767
+#: .././config.py:18770
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > General"
 msgstr ""
 
-#: .././config.py:18780 .././config.py:23678
+#: .././config.py:18783 .././config.py:23681
 msgid "Scheduled download name"
 msgstr "计划下载名称"
 
-#: .././config.py:18792
+#: .././config.py:18795
 msgid "Download mode"
 msgstr "下载模式"
 
-#: .././config.py:18797
+#: .././config.py:18800
 msgid "Check channels, playlist and folders"
 msgstr "检查频道、播放列表和文件夹"
 
-#: .././config.py:18798
+#: .././config.py:18801
 msgid "Download channels, playlists and folders"
 msgstr "下载频道、播放列表和文件夹"
 
-#: .././config.py:18799
+#: .././config.py:18802
 msgid "Perform a custom download"
 msgstr "执行自定义下载"
 
-#: .././config.py:18811
+#: .././config.py:18814
 msgid "Custom download name"
 msgstr "自定义下载名称"
 
-#: .././config.py:18869
+#: .././config.py:18872
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > Start"
 msgstr ""
 
-#: .././config.py:18872 .././config.py:23619
+#: .././config.py:18875 .././config.py:23622
 msgid "_Start"
 msgstr "开始(_S)"
 
-#: .././config.py:18877
+#: .././config.py:18880
 msgid "Start conditions"
 msgstr "开始条件"
 
-#: .././config.py:18882 .././config.py:23644
+#: .././config.py:18885 .././config.py:23647
 msgid "Start mode"
 msgstr "启动模式"
 
-#: .././config.py:18887
+#: .././config.py:18890
 msgid "Perform this download at regular intervals"
 msgstr "定期执行该下载"
 
-#: .././config.py:18888
+#: .././config.py:18891
 msgid "Perform this download when Tartube starts"
 msgstr "在Tartube启动时执行此下载"
 
-#: .././config.py:18890
+#: .././config.py:18893
 msgid "Perform this download some time after Tartube starts"
 msgstr "在Tartube启动后的一段时间内进执行此下载"
 
-#: .././config.py:18893
+#: .././config.py:18896
 msgid "Perform this download at specified times"
 msgstr "在指定时间执行此下载"
 
-#: .././config.py:18894
+#: .././config.py:18897
 msgid "Disable this scheduled download"
 msgstr "禁用此计划下载"
 
-#: .././config.py:18968
+#: .././config.py:18971
 msgid "Minutes"
 msgstr "分钟"
 
-#: .././config.py:19095
+#: .././config.py:19098
 msgid "Interval time"
 msgstr "间隔时间"
 
-#: .././config.py:19105
+#: .././config.py:19108
 msgid "Start times"
 msgstr "开始时间"
 
-#: .././config.py:19147
+#: .././config.py:19150
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > Stop"
 msgstr ""
 
-#: .././config.py:19150 .././config.py:24265
+#: .././config.py:19153 .././config.py:24268
 msgid "_Stop"
 msgstr "停止(_S)"
 
-#: .././config.py:19155
+#: .././config.py:19158
 msgid "Stop conditions"
 msgstr ""
 
-#: .././config.py:19161
+#: .././config.py:19164
 msgid ""
 "N.B. When this setting is triggered, the entire download operation stops"
 msgstr ""
 
-#: .././config.py:19168
+#: .././config.py:19171
 msgid "Stop download operation after this much time"
 msgstr ""
 
-#: .././config.py:19219
+#: .././config.py:19222
 msgid "Stop download operation after this many videos"
 msgstr ""
 
-#: .././config.py:19248
+#: .././config.py:19251
 msgid "Stop download operation after this much disk space"
 msgstr ""
 
-#: .././config.py:19294 .././config.py:23955
+#: .././config.py:19297 .././config.py:23958
 msgid ""
 "N.B. Disk space is estimated. This setting does not apply to simulated "
 "downloads"
 msgstr "注意：磁盘空间是估算的，此设置不适用于模拟下载"
 
-#: .././config.py:19309
+#: .././config.py:19312
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > Conflicts"
 msgstr ""
 
-#: .././config.py:19312
+#: .././config.py:19315
 msgid "_Conflicts"
 msgstr "冲突(_C)"
 
-#: .././config.py:19316
+#: .././config.py:19319
 msgid "Conflict settings"
 msgstr "冲突选项"
 
-#: .././config.py:19321
+#: .././config.py:19324
 msgid "If another scheduled download is running:"
 msgstr "如果另一个计划下载正在运行："
 
-#: .././config.py:19328
+#: .././config.py:19331
 msgid "Add channels, playlists and folders to the end of the queue"
 msgstr "将频道、播放列表和文件夹添加到队列的末端"
 
-#: .././config.py:19334
+#: .././config.py:19337
 msgid "Add channels, playlists and folders to the beginning of the queue"
 msgstr "将频道、播放列表和文件夹添加到队列的首端"
 
-#: .././config.py:19341
+#: .././config.py:19344
 msgid "Do nothing, just wait until the next scheduled download time"
 msgstr "什么都不做，只是等待下一次预定的下载时间"
 
-#: .././config.py:19356
+#: .././config.py:19359
 msgid "This scheduled download takes priority over others"
 msgstr "此预定下载要优先下载"
 
-#: .././config.py:19359
+#: .././config.py:19362
 msgid "Other scheduled downloads won't start until this one is finished"
 msgstr "本次下载完成后，其他预定的下载才可开始"
 
-#: .././config.py:19375
+#: .././config.py:19378
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > Media"
 msgstr ""
 
-#: .././config.py:19383
+#: .././config.py:19386
 msgid "Media to download"
 msgstr "可供下载的媒体"
 
-#: .././config.py:19389
+#: .././config.py:19392
 msgid "Check/download everything"
 msgstr "检查/下载全部"
 
-#: .././config.py:19397
+#: .././config.py:19400
 msgid "Only check/download the media below"
 msgstr "仅检查/下载以下媒体"
 
-#: .././config.py:19411
+#: .././config.py:19414
 msgid ""
 "Hint: you can drag and drop channels, playlists and your own folders here"
 msgstr "提示：你可以在这里拖放频道、播放列表和你自己的文件夹"
 
-#: .././config.py:19551
+#: .././config.py:19554
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > Limits"
 msgstr ""
 
-#: .././config.py:19554 .././config.py:24018
+#: .././config.py:19557 .././config.py:24021
 msgid "_Limits"
 msgstr "限制(_L)"
 
-#: .././config.py:19559 .././config.py:24025
+#: .././config.py:19562 .././config.py:24028
 msgid "Performance limits"
 msgstr "性能限制"
 
-#: .././config.py:19564 .././config.py:24030
+#: .././config.py:19567 .././config.py:24033
 msgid "Limits are applied when you start downloading a video/channel/playlist"
 msgstr "当你开始下载一个视频/频道/播放列表时，就会应用限制"
 
-#: .././config.py:19570
+#: .././config.py:19573
 msgid ""
 "These limits override the default and alternative limits specified elsewhere"
 msgstr "这些限制覆盖了其他地方规定的默认和备选限制"
 
-#: .././config.py:19576 .././config.py:24036 .././config.py:24107
+#: .././config.py:19579 .././config.py:24039 .././config.py:24110
 msgid "Limit simultaneous downloads to"
 msgstr "将下载并发数限制为"
 
-#: .././config.py:19591 .././config.py:24054 .././config.py:24129
+#: .././config.py:19594 .././config.py:24057 .././config.py:24132
 msgid "Limit download speed to"
 msgstr "将下载速度限制为"
 
-#: .././config.py:19619
+#: .././config.py:19622
 msgid "TRANSLATOR'S NOTE: Scheduled downloads > Other"
 msgstr ""
 
-#: .././config.py:19622
+#: .././config.py:19625
 msgid "_Other"
 msgstr "其他(_O)"
 
-#: .././config.py:19626
+#: .././config.py:19629
 msgid "Other settings"
 msgstr "其他选项"
 
-#: .././config.py:19632
+#: .././config.py:19635
 msgid ""
 "Ignore time-saving preferences, and check/download the whole channel/"
 "playlist/folder"
 msgstr "忽略节省时间设置，检查/下载整个频道/播放列表/文件夹"
 
-#: .././config.py:19640
+#: .././config.py:19643
 msgid "Shut down Tartube when this scheduled download has finished"
 msgstr "当这个预定下载完成后，关闭Tartube"
 
-#: .././config.py:20217
+#: .././config.py:20220
 msgid ""
 "TRANSLATOR'S NOTE: System preferences window starts here. In the menu, click "
 "Edit > System preferences..."
 msgstr ""
 
-#: .././config.py:20561
+#: .././config.py:20564
 msgid "TRANSLATOR'S NOTE: System preferences > General"
 msgstr ""
 
-#: .././config.py:20589
+#: .././config.py:20592
 msgid "TRANSLATOR'S NOTE: System preferences > General > Application"
 msgstr ""
 
-#: .././config.py:20596
+#: .././config.py:20599
 msgid "_Application"
 msgstr "应用(_A)"
 
-#: .././config.py:20603
+#: .././config.py:20606
 msgid "Application details"
 msgstr "应用详情"
 
-#: .././config.py:20608
+#: .././config.py:20611
 msgid "Version"
 msgstr "版本"
 
-#: .././config.py:20626
+#: .././config.py:20629
 msgid "Locale override"
 msgstr "语言覆盖"
 
-#: .././config.py:20635
+#: .././config.py:20638
 msgid "Use your system locale"
 msgstr "使用系统语言"
 
-#: .././config.py:20643
+#: .././config.py:20646
 msgid "Current locale"
 msgstr "当前语言"
 
-#: .././config.py:20652
+#: .././config.py:20655
 msgid "Unrecognised locale"
 msgstr "未识别语言"
 
-#: .././config.py:20722
+#: .././config.py:20725
 msgid "Preferences mode"
 msgstr ""
 
-#: .././config.py:20749
+#: .././config.py:20752
 msgid "Hide advanced preferences"
 msgstr ""
 
-#: .././config.py:20751
+#: .././config.py:20754
 msgid "Show advanced preferences"
 msgstr ""
 
-#: .././config.py:20769
+#: .././config.py:20772
 msgid "TRANSLATOR'S NOTE: System preferences > General > Modules"
 msgstr ""
 
-#: .././config.py:20772
+#: .././config.py:20775
 msgid "_Modules"
 msgstr "模块(_M)"
 
-#: .././config.py:20777
+#: .././config.py:20780
 msgid "Module availability"
 msgstr "模块可用性"
 
-#: .././config.py:20783
+#: .././config.py:20786
 msgid "feedparser module is available (required for detecting livestreams)"
 msgstr "feedparser模块可用（检测直播时需要）"
 
-#: .././config.py:20792
+#: .././config.py:20795
 msgid "matplotlib module is available (draws graphs)"
 msgstr "matplotlib模块可用（绘制图形）"
 
-#: .././config.py:20800
+#: .././config.py:20803
 msgid "moviepy module is available (finds the length of videos, if unknown)"
 msgstr "moviepy模块可用（如果未知，只能显示视频长度）。"
 
-#: .././config.py:20810
+#: .././config.py:20813
 msgid "playsound module is available (sound an alarm when a livestream starts)"
 msgstr "playound模块可用（当直播开始时发出警报声）"
 
-#: .././config.py:20820
+#: .././config.py:20823
 msgid ""
 "XDG module is available (saves the config file in the standard location)"
 msgstr "XDG模块可用（将配置文件保存在标准位置）"
 
-#: .././config.py:20830
+#: .././config.py:20833
 msgid ""
 "Notify module is available (shows desktop notifications; Linux/*BSD only)"
 msgstr "Notify模块可用（显示桌面通知，仅Linux/BSD可用）"
 
-#: .././config.py:20840
+#: .././config.py:20843
 msgid "Module preferences"
 msgstr "模块选项"
 
-#: .././config.py:20846
+#: .././config.py:20849
 msgid ""
 "Use 'moviepy' module to get a video's duration, if not known (may be slow)"
 msgstr "如果视频时长未知，使用'moviepy'模块获取相关信息（可能很慢）"
 
-#: .././config.py:20858
+#: .././config.py:20861
 msgid "Timeout applied when moviepy checks a video file"
 msgstr "moviepy检查视频文件时超时时间"
 
-#: .././config.py:20883
+#: .././config.py:20886
 msgid "TRANSLATOR'S NOTE: System preferences > Files > xxx"
 msgstr ""
 
-#: .././config.py:20923
+#: .././config.py:20926
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Device"
 msgstr ""
 
-#: .././config.py:20926
+#: .././config.py:20929
 msgid "_Device"
 msgstr "设备(_D)"
 
-#: .././config.py:20931
+#: .././config.py:20934
 msgid "Device preferences"
 msgstr "设备选项"
 
-#: .././config.py:20936
+#: .././config.py:20939
 msgid "Size of device"
 msgstr "设备总空间"
 
-#: .././config.py:20953
+#: .././config.py:20956
 msgid "Free space on device"
 msgstr "设备可用空间"
 
-#: .././config.py:20971
+#: .././config.py:20974
 msgid ""
 "Before checking/downloading videos, warn user if disk space is less than"
 msgstr "在检查/下载视频之前，如果磁盘空间小于此值则发出警告"
 
-#: .././config.py:20996
+#: .././config.py:20999
 msgid "Halt downloads if disk space is less than"
 msgstr "如果磁盘空间小于此值，则停止下载"
 
-#: .././config.py:21052
+#: .././config.py:21055
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Config"
 msgstr ""
 
-#: .././config.py:21055
+#: .././config.py:21058
 msgid "_Config"
 msgstr "配置(_C)"
 
-#: .././config.py:21059
+#: .././config.py:21062
 msgid "Configuration preferences"
 msgstr "配置选项"
 
-#: .././config.py:21064
+#: .././config.py:21067
 msgid "Tartube configuration file loaded from"
 msgstr "Tartube配置文件加载自"
 
-#: .././config.py:21076
+#: .././config.py:21079
 msgid "Default location for Tartube configuration"
 msgstr "Tartube配置文件的默认位置"
 
-#: .././config.py:21088
+#: .././config.py:21091
 msgid "Alternative location for Tartube configuration"
 msgstr "Tartube配置文件的备选位置"
 
-#: .././config.py:21113
+#: .././config.py:21116
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Database"
 msgstr ""
 
-#: .././config.py:21116
+#: .././config.py:21119
 msgid "D_atabase"
 msgstr "数据库(_A)"
 
-#: .././config.py:21121
+#: .././config.py:21124
 msgid "Database preferences"
 msgstr "数据库选项"
 
-#: .././config.py:21126
+#: .././config.py:21129
 msgid "Current data folder"
 msgstr "当前数据文件夹"
 
-#: .././config.py:21139
+#: .././config.py:21142
 msgid "Current database"
 msgstr "当前数据库"
 
-#: .././config.py:21156
+#: .././config.py:21159
 msgid "Recent data folders"
 msgstr "最近的数据文件夹"
 
-#: .././config.py:21172
+#: .././config.py:21175
 msgid "Add new database"
 msgstr "添加新的数据库"
 
-#: .././config.py:21174
+#: .././config.py:21177
 msgid "Change to a different data folder"
 msgstr "更改到不同的数据文件夹"
 
-#: .././config.py:21181
+#: .././config.py:21184
 msgid "Check and repair database"
 msgstr "检查并修复数据库"
 
-#: .././config.py:21184
+#: .././config.py:21187
 msgid "Check for inconsistencies, and repair them"
 msgstr "检查不一致之处，并加以修复"
 
-#: .././config.py:21189
+#: .././config.py:21192
 msgid "Dump database to JSON"
 msgstr "将数据库转储为JSON格式"
 
-#: .././config.py:21192
+#: .././config.py:21195
 msgid "Convert databases to JSON, even when Tartube can't load them"
 msgstr "即使在Tartube无法加载，也要将数据库转换为JSON"
 
-#: .././config.py:21197
+#: .././config.py:21200
 msgid "Switch to this database"
 msgstr "切换为此数据库"
 
-#: .././config.py:21199
+#: .././config.py:21202
 msgid "Switch to the selected data folder"
 msgstr "切换到选定的数据文件夹"
 
-#: .././config.py:21209
+#: .././config.py:21212
 msgid "Forget"
 msgstr "忘记"
 
-#: .././config.py:21212
+#: .././config.py:21215
 msgid "Remove the selected data folder from the list"
 msgstr "从列表中删除选定的数据文件夹"
 
-#: .././config.py:21222
+#: .././config.py:21225
 msgid "Forget all"
 msgstr "忘记所有"
 
-#: .././config.py:21225
+#: .././config.py:21228
 msgid "Forget every folder in this list (except the current one)"
 msgstr "忘记这个列表中的每一个文件夹（除了当前文件夹）。"
 
-#: .././config.py:21239
+#: .././config.py:21242
 msgid "Move the selected folder up the list"
 msgstr "将选定的文件夹移动到列表上方"
 
-#: .././config.py:21248
+#: .././config.py:21251
 msgid "Move the selected folder down the list"
 msgstr "将选定的文件夹移动到列表下方"
 
-#: .././config.py:21276
+#: .././config.py:21279
 msgid ""
 "On startup, load the first database on the list (not the most recently-use "
 "one)"
 msgstr "在启动时，加载列表中的第一个数据库（不是最近使用的那个）"
 
-#: .././config.py:21286
+#: .././config.py:21289
 msgid "If one database is in use, try to load others"
 msgstr "如果默认数据库被使用，尝试加载其他数据库"
 
-#: .././config.py:21294
+#: .././config.py:21297
 msgid "New databases are added to this list"
 msgstr "新的数据库被添加到该列表中"
 
-#: .././config.py:21340
+#: .././config.py:21343
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Backups"
 msgstr ""
 
-#: .././config.py:21343
+#: .././config.py:21346
 msgid "_Backups"
 msgstr "备份(_B)"
 
-#: .././config.py:21348
+#: .././config.py:21351
 msgid "Backup preferences"
 msgstr "备份选项"
 
-#: .././config.py:21353
+#: .././config.py:21356
 msgid ""
 "When saving the database, Tartube makes a backup copy of its database file"
 msgstr "保存数据库时，Tartube会制作数据库文件的备份副本"
 
-#: .././config.py:21361
+#: .././config.py:21364
 msgid "Delete the backup as soon as the database has been saved"
 msgstr "数据库保存完毕后，立即删除备份"
 
-#: .././config.py:21368
+#: .././config.py:21371
 msgid "Keep the backup file, replacing any previous backup file"
 msgstr "保留备份文件，替换之前的任何备份文件"
 
-#: .././config.py:21377
+#: .././config.py:21380
 msgid "Make a new backup file once per day"
 msgstr "每天制作一次新的备份文件"
 
-#: .././config.py:21386
+#: .././config.py:21389
 msgid "Make a new backup file every time the database is saved"
 msgstr "每次保存数据库时，制作一个新的备份文件"
 
-#: .././config.py:21419
+#: .././config.py:21422
 msgid "Export preferences"
 msgstr "导出选项"
 
-#: .././config.py:21424
+#: .././config.py:21427
 msgid "Separator used in CSV exports"
 msgstr "CSV导出时使用的分隔符"
 
-#: .././config.py:21459
+#: .././config.py:21462
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Videos"
 msgstr ""
 
-#: .././config.py:21470
+#: .././config.py:21473
 msgid "Video matching preferences"
 msgstr "视频匹配选项"
 
-#: .././config.py:21475
+#: .././config.py:21478
 msgid "When matching videos on the filesystem:"
 msgstr "当在文件系统上匹配视频时："
 
-#: .././config.py:21481
+#: .././config.py:21484
 msgid "The video names must match exactly"
 msgstr "视频名称必须完全匹配"
 
-#: .././config.py:21488
+#: .././config.py:21491
 msgid "The first # characters must match exactly"
 msgstr "前面的#个字符必须完全匹配"
 
-#: .././config.py:21502
+#: .././config.py:21505
 msgid "Ignore the last # characters; the remaining name must match exactly"
 msgstr "忽略最后的#个字符；其余的名字必须完全匹配"
 
-#: .././config.py:21540
+#: .././config.py:21543
 msgid "Video matching recommended preferences"
 msgstr "视频匹配推荐选项"
 
-#: .././config.py:21546
+#: .././config.py:21549
 msgid "Check the video's original name and the downloaded file name"
 msgstr "检查视频的原始名称和下载的文件名称"
 
-#: .././config.py:21558
+#: .././config.py:21561
 msgid ""
 "N.B. If disabled, custom file templates will interfere with video matching"
 msgstr "注意：如果禁用，自定义文件模板将干扰视频匹配"
 
-#: .././config.py:21578
+#: .././config.py:21581
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Delete"
 msgstr ""
 
-#: .././config.py:21582
+#: .././config.py:21585
 msgid "D_elete"
 msgstr "删除(_E)"
 
-#: .././config.py:21589
+#: .././config.py:21592
 msgid "Automatic video deletion/removal preferences"
 msgstr "自动删除视频选项"
 
-#: .././config.py:21595
+#: .././config.py:21598
 msgid ""
 "Deleted videos are re-downloaded without an archive file. See the Operations "
 "> Archive tab"
 msgstr "被删除的视频在重新下载时没有存档文件。请参阅 \"操作\">\"存档 \"选项卡"
 
-#: .././config.py:21602
+#: .././config.py:21605
 msgid "Automatically delete downloaded videos"
 msgstr "自动删除下载的视频"
 
-#: .././config.py:21618 .././config.py:21642 .././formats.py:451
+#: .././config.py:21621 .././config.py:21645 .././formats.py:452
 msgid "days"
 msgstr "天"
 
-#: .././config.py:21624
+#: .././config.py:21627
 msgid "Remove downloaded videos from the database (but don't delete files)"
 msgstr "从数据库中删除下载的视频（但不要删除文件）"
 
-#: .././config.py:21647
+#: .././config.py:21650
 msgid "Only delete/remove videos which have been watched"
 msgstr "只删除已经观看过的视频"
 
-#: .././config.py:21659
+#: .././config.py:21662
 msgid "Delete/remove files:"
 msgstr "删除的文件："
 
-#: .././config.py:21665
+#: .././config.py:21668
 msgid "When the database is loaded"
 msgstr "当数据库被加载时"
 
-#: .././config.py:21672
+#: .././config.py:21675
 msgid "After every download operation"
 msgstr "每次下载操作后"
 
-#: .././config.py:21716
+#: .././config.py:21719
 msgid "Manual video deletion/removal preferences"
 msgstr "手动删除视频选项"
 
-#: .././config.py:21721
+#: .././config.py:21724
 msgid "Show dialogue window before removing video(s)"
 msgstr "在删除视频前显示对话窗口"
 
-#: .././config.py:21732
+#: .././config.py:21735
 msgid "When removing videos, remove all files from the filesystem"
 msgstr "当删除视频时，从文件系统中删除所有文件"
 
-#: .././config.py:21744
+#: .././config.py:21747
 msgid "Show dialogue window before removing channels/playlists/folders"
 msgstr "在删除频道/播放列表/文件夹之前显示对话窗口"
 
-#: .././config.py:21758
+#: .././config.py:21761
 msgid "When removing containers, remove all files from the filesystem"
 msgstr "移除容器时，从文件系统中移除所有文件"
 
-#: .././config.py:21784
+#: .././config.py:21787
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Update"
 msgstr ""
 
-#: .././config.py:21795
+#: .././config.py:21798
 msgid "Update video descriptions"
 msgstr "更新视频描述"
 
-#: .././config.py:21802
+#: .././config.py:21805
 msgid "These procedures might take a long time on a large database"
 msgstr "这些操作在大型数据库中可能需要很长的时间"
 
-#: .././config.py:21809
+#: .././config.py:21812
 msgid "Update from description files, and set the line lengths to:"
 msgstr "从描述文件中更新，并将行长设置为："
 
-#: .././config.py:21828
+#: .././config.py:21831
 msgid "Clear descriptions (does not modify the description files)"
 msgstr "清除描述（不修改描述文件）"
 
-#: .././config.py:21851
+#: .././config.py:21854
 msgid "Video timestamps"
 msgstr "视频时间戳"
 
-#: .././config.py:21855
+#: .././config.py:21858
 msgid "Extract timestamps for all videos"
 msgstr "提取所有视频的时间戳"
 
-#: .././config.py:21863
+#: .././config.py:21866
 msgid "Remove timestamps from all videos"
 msgstr "删除所有视频的时间戳"
 
-#: .././config.py:21873 .././config.py:25991
+#: .././config.py:21876 .././config.py:26006
 msgid "Video comments"
 msgstr "视频评论"
 
-#: .././config.py:21877
+#: .././config.py:21880
 msgid "Extract comments for all videos"
 msgstr "提取所有视频的评论"
 
-#: .././config.py:21885
+#: .././config.py:21888
 msgid "Remove comments from all videos"
 msgstr "删除所有视频的评论"
 
-#: .././config.py:21895
+#: .././config.py:21898
 msgid ""
 "Comments are extracted from each video's metadata file, so this procedure "
 "may take a long time"
 msgstr "评论是从每个视频的元数据文件中提取的，所以这个过程可能需要很长的时间"
 
-#: .././config.py:21915
+#: .././config.py:21918
 msgid "TRANSLATOR'S NOTE: System preferences > Files > URLs"
 msgstr ""
 
-#: .././config.py:21919
+#: .././config.py:21922
 msgid "U_RLs"
 msgstr "URL(_R)"
 
-#: .././config.py:21926
+#: .././config.py:21929
 msgid "Update channel/playlist URLs"
 msgstr "更新频道/播放列表URL"
 
-#: .././config.py:21931
+#: .././config.py:21934
 msgid "Confirm every change"
 msgstr "确认每一次的改变"
 
-#: .././config.py:22014
+#: .././config.py:22017
 msgid "Pattern"
 msgstr "模式"
 
-#: .././config.py:22025
+#: .././config.py:22028
 msgid "Substitution"
 msgstr "替换"
 
-#: .././config.py:22036
+#: .././config.py:22039
 msgid "This pattern is a regex"
 msgstr "正则表达式模式"
 
-#: .././config.py:22048
+#: .././config.py:22051
 msgid "Search and replace text in the selected URLs"
 msgstr "在选定的URL中搜索和替换文本"
 
-#: .././config.py:22063
+#: .././config.py:22066
 msgid "Open URLs"
 msgstr "打开链接"
 
-#: .././config.py:22151
+#: .././config.py:22154
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Temporary"
 msgstr ""
 
-#: .././config.py:22161
+#: .././config.py:22164
 msgid "Temporary folder preferences"
 msgstr "缓存文件夹首选项"
 
-#: .././config.py:22166
+#: .././config.py:22169
 msgid "Empty temporary folders when Tartube shuts down"
 msgstr "Tartube关闭时清空缓存文件夹"
 
-#: .././config.py:22175
+#: .././config.py:22178
 msgid "(N.B. Temporary folders are always emptied when Tartube starts up)"
 msgstr "(注意：当Tartube启动时，临时文件夹总是被清空的）"
 
-#: .././config.py:22183
+#: .././config.py:22186
 msgid "Open temporary folders (on the desktop) when Tartube shuts down"
 msgstr "Tartube关闭时打开缓存文件夹"
 
-#: .././config.py:22214
+#: .././config.py:22217
 msgid "TRANSLATOR'S NOTE: System preferences > Files > Statistics"
 msgstr ""
 
-#: .././config.py:22230
+#: .././config.py:22233
 msgid "The Tartube database contains:"
 msgstr "Tartube数据库包含："
 
-#: .././config.py:22290
+#: .././config.py:22293
 msgid "Custom folders"
 msgstr "自定义文件夹"
 
-#: .././config.py:22313
+#: .././config.py:22316
 msgid "Calculate"
 msgstr "计算"
 
-#: .././config.py:22394
+#: .././config.py:22397
 msgid "TRANSLATOR'S NOTE: System preferences > Files > History"
 msgstr ""
 
-#: .././config.py:22448
+#: .././config.py:22451
 msgid "TRANSLATOR'S NOTE: System preferences > Windows"
 msgstr ""
 
 #. Add this tab...
-#: .././config.py:22452
+#: .././config.py:22455
 msgid "_Windows"
 msgstr "窗口(_W)"
 
-#: .././config.py:22482
+#: .././config.py:22485
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Main Window"
 msgstr ""
 
-#: .././config.py:22486
+#: .././config.py:22489
 msgid "_Main window"
 msgstr "主窗口(_M)"
 
-#: .././config.py:22493
+#: .././config.py:22496
 msgid "Main window preferences"
 msgstr "主窗口选项"
 
-#: .././config.py:22498
+#: .././config.py:22501
 msgid "Remember size of the main window"
 msgstr "记住主窗口的尺寸"
 
-#: .././config.py:22506
+#: .././config.py:22509
 msgid "Remember slider positions"
 msgstr "记住滑块的位置"
 
-#: .././config.py:22515
+#: .././config.py:22518
 msgid "Reset both"
 msgstr "重置两者"
 
-#: .././config.py:22531
+#: .././config.py:22534
 msgid "Don't show the main window toolbar"
 msgstr "不显示主窗口的工具条"
 
-#: .././config.py:22541
+#: .././config.py:22544
 msgid "Don't show labels in the main window toolbar"
 msgstr "不要在主窗口的工具栏上显示标签"
 
-#: .././config.py:22566
+#: .././config.py:22569
 msgid ""
 "Replace stock icons with custom icons (in case stock icons are not visible)"
 msgstr "用自定义的图标替换默认图标（以防默认图标不可见）"
 
-#: .././config.py:22578
+#: .././config.py:22581
 msgid "Show tooltips for videos, channels, playlists and folders"
 msgstr "显示视频、频道、播放列表和文件夹的工具提示"
 
-#: .././config.py:22587
+#: .././config.py:22590
 msgid "Show errors/warnings in tooltips (but not in the Videos tab)"
 msgstr "在工具提示中显示错误/警告（但不在视频标签中）"
 
-#: .././config.py:22610
+#: .././config.py:22613
 msgid "Disable the download buttons in the toolbar and the Videos tab"
 msgstr "禁用工具栏和 \"视频 \"选项卡中的下载按钮"
 
-#: .././config.py:22620
+#: .././config.py:22623
 msgid "In the Progress tab, hide finished downloads"
 msgstr "在\"进度\"选项卡中，隐藏已完成的下载"
 
-#: .././config.py:22629
+#: .././config.py:22632
 msgid "Show downloads in reverse order"
 msgstr "按倒序显示下载"
 
-#: .././config.py:22638
+#: .././config.py:22641
 msgid "In the Progress/Classic Mode tabs, remember the width of (some) columns"
 msgstr "在\"进度\"/\"经典模式\"选项卡中，记住（某些）列的宽度"
 
-#: .././config.py:22648
+#: .././config.py:22651
 msgid "When Tartube starts, automatically open the Classic Mode tab"
 msgstr "当Tartube启动时，自动打开\"经典模式\"选项卡"
 
-#: .././config.py:22664
+#: .././config.py:22667
 msgid ""
 "In the Classic Mode tab, when adding URLs, remove duplicates rather than "
 "retaining them"
 msgstr "在“经典模式”选项卡中，在添加URL时，删除重复的内容而不是保留它们"
 
-#: .././config.py:22678
+#: .././config.py:22681
 msgid ""
 "In the Errors/Warnings tab, don't reset the tab title when it is clicked"
 msgstr "在 \"错误/警告 \"选项卡中，当它被点击时，不要重置选项卡的标题"
 
-#: .././config.py:22704
+#: .././config.py:22707
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Videos"
 msgstr ""
 
-#: .././config.py:22712
+#: .././config.py:22715
 msgid "Video Index (left side of the Videos tab)"
 msgstr "视频索引（“视频”选项卡的左侧）"
 
-#: .././config.py:22717
+#: .././config.py:22720
 msgid "Show a 'Custom download all' button"
 msgstr "显示一个 \"自定义下载全部 \"的按钮"
 
-#: .././config.py:22727
+#: .././config.py:22730
 msgid "While checking/downloading videos, show free disk space"
 msgstr "在检查/下载视频时，显示可用的磁盘空间"
 
-#: .././config.py:22738
+#: .././config.py:22741
 msgid "Allow each row to be marked for checking/downloading"
 msgstr "允许对每一行进行标记，以便检查/下载"
 
-#: .././config.py:22749
+#: .././config.py:22752
 msgid "Show smaller icons"
 msgstr "显示较小的图标"
 
-#: .././config.py:22758
+#: .././config.py:22761
 msgid ""
 "Show detailed statistics about the videos in each channel / playlist / folder"
 msgstr "显示每个频道/播放列表/文件夹中视频的详细统计数据"
 
-#: .././config.py:22769
+#: .././config.py:22772
 msgid ""
 "After clicking on a folder, automatically expand/collapse the tree around it"
 msgstr "点击一个文件夹后，自动展开/折叠其周围的树状结构"
 
-#: .././config.py:22780
+#: .././config.py:22783
 msgid "Expand the whole tree, not just the level beneath the clicked folder"
 msgstr "展开整个树，而不仅仅是被点击的文件夹下面的那一层"
 
-#: .././config.py:22801
+#: .././config.py:22804
 msgid "Video Catalogue (right side of the Videos tab)"
 msgstr "视频目录（视频选项卡的右侧）"
 
-#: .././config.py:22807
+#: .././config.py:22810
 msgid "Show 'today' and 'yesterday' as the date, when possible"
 msgstr "如果可能，将 \"今天 \"和 \"昨天 \"显示为日期"
 
-#: .././config.py:22815
+#: .././config.py:22818
 msgid "Show livestreams with a different background colour"
 msgstr "用不同的背景颜色显示直播节目"
 
-#: .././config.py:22823
+#: .././config.py:22826
 msgid "Use same background colours for livestream and debut videos"
 msgstr "在直播和首发视频中使用相同的背景颜色"
 
-#: .././config.py:22846
+#: .././config.py:22849
 msgid "Channel and playlist names are clickable (grid mode only)"
 msgstr "频道和播放列表的名称是可以点击的（仅网格模式）"
 
-#: .././config.py:22854
+#: .././config.py:22857
 msgid "Show nicknames (not video file names)"
 msgstr "显示昵称（而不是视频文件名）"
 
-#: .././config.py:22875
+#: .././config.py:22878
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Drag"
 msgstr ""
 
-#: .././config.py:22878
+#: .././config.py:22881
 msgid "_Drag"
 msgstr "拖动(_D)"
 
-#: .././config.py:22882
+#: .././config.py:22885
 msgid "Drag and drop preferences"
 msgstr "拖放选项"
 
-#: .././config.py:22888
+#: .././config.py:22891
 msgid "When dragging and dropping videos to an external application..."
 msgstr "当拖放视频到一个外部应用程序时..."
 
-#: .././config.py:22894
+#: .././config.py:22897
 msgid "Transfer the video's full file path"
 msgstr "传递视频的完整文件路径"
 
-#: .././config.py:22902
+#: .././config.py:22905
 msgid "Transfer the video's source URL"
 msgstr "传递视频的源URL"
 
-#: .././config.py:22910
+#: .././config.py:22913
 msgid "Transfer the video's name"
 msgstr "传递视频文件名"
 
-#: .././config.py:22918 .././config.py:22980
+#: .././config.py:22921 .././config.py:22983
 msgid "Transfer error/warning messages"
 msgstr ""
 
-#: .././config.py:22926
+#: .././config.py:22929
 msgid "Transfer the thumbnail's full file path"
 msgstr "传递缩略图的完整文件路径"
 
-#: .././config.py:22934 .././config.py:22991
+#: .././config.py:22937 .././config.py:22994
 msgid "Add a text separator before each item"
 msgstr ""
 
-#: .././config.py:22943
+#: .././config.py:22946
 msgid ""
 "When dragging and dropping messages from the Errors/Warnings tab to an "
 "external application..."
 msgstr ""
 
-#: .././config.py:22950
+#: .././config.py:22953
 msgid "Transfer the video/channel/playlist file path"
 msgstr ""
 
-#: .././config.py:22958
+#: .././config.py:22961
 msgid "Transfer the video/channel/playlist URL"
 msgstr ""
 
-#: .././config.py:22969
+#: .././config.py:22972
 msgid "Transfer the video/channel/playlist name"
 msgstr ""
 
-#: .././config.py:23015
+#: .././config.py:23018
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Tray"
 msgstr ""
 
-#: .././config.py:23019
+#: .././config.py:23022
 msgid "_Tray"
 msgstr "系统托盘(_T)"
 
-#: .././config.py:23025
+#: .././config.py:23028
 msgid "System tray preferences"
 msgstr "系统托盘选项"
 
-#: .././config.py:23030
+#: .././config.py:23033
 msgid "Show Tartube in the system tray"
 msgstr "在系统托盘中显示Tartube"
 
-#: .././config.py:23039
+#: .././config.py:23042
 msgid "Start Tartube in the system tray"
 msgstr "在系统托盘中启动Tartube"
 
-#: .././config.py:23050
+#: .././config.py:23053
 msgid "Close to the tray, rather than closing the application"
 msgstr "关闭到托盘，而不是关闭应用程序"
 
-#: .././config.py:23062
+#: .././config.py:23065
 msgid ""
 "After closing to the tray, restore the window's position (does not work on "
 "Wayland)"
 msgstr "关闭到托盘再打开时，可恢复窗口的位置（在Wayland上不起作用）"
 
-#: .././config.py:23105
+#: .././config.py:23108
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Dialogues"
 msgstr ""
 
-#: .././config.py:23109
+#: .././config.py:23112
 msgid "D_ialogues"
 msgstr "对话框"
 
-#: .././config.py:23115
+#: .././config.py:23118
 msgid "Dialogue window preferences"
 msgstr "对话框选项"
 
-#: .././config.py:23120
+#: .././config.py:23123
 msgid "When adding channels/playlists, keep the dialogue window open"
 msgstr "添加频道/播放列表时，保持对话窗口打开"
 
-#: .././config.py:23130
+#: .././config.py:23133
 msgid "When the dialogue window opens, add URLs from the system clipboard"
 msgstr "当对话窗口打开时，从系统剪贴板上添加URL"
 
-#: .././config.py:23151
+#: .././config.py:23154
 msgid "When adding YouTube channels, remind the user to copy the correct URL"
 msgstr "在添加YouTube频道时，提醒用户复制正确的URL"
 
-#: .././config.py:23163
+#: .././config.py:23166
 msgid "Debugging preferences"
 msgstr "调试选项"
 
-#: .././config.py:23169
+#: .././config.py:23172
 msgid ""
 "Temporarily disable message dialogue windows (display messages in terminal "
 "instead)"
 msgstr "暂时禁用信息对话窗口（在终端显示信息）"
 
-#: .././config.py:23181
+#: .././config.py:23184
 msgid ""
 "N.B. Tartube shows a dialogue window after checking or downloading videos"
 msgstr "注：Tartube在检查或下载视频后会显示一个对话窗"
 
-#: .././config.py:23189
+#: .././config.py:23192
 msgid "That dialogue window can be disabled in the Operations > Actions tab"
 msgstr "该对话窗口可以在 \"操作\">\"操作 \"选项卡中禁用"
 
-#: .././config.py:23209
+#: .././config.py:23212
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Colours"
 msgstr ""
 
-#: .././config.py:23213
+#: .././config.py:23216
 msgid "_Colours"
 msgstr "颜色(_C)"
 
-#: .././config.py:23220
+#: .././config.py:23223
 msgid "Video catalogue colour preferences"
 msgstr "视频目录颜色选项"
 
-#: .././config.py:23228
+#: .././config.py:23231
 msgid "Waiting livestreams"
 msgstr "等待直播"
 
-#: .././config.py:23234
+#: .././config.py:23237
 msgid "Broadcasting livestreams"
 msgstr "进行中直播"
 
-#: .././config.py:23240
+#: .././config.py:23243
 msgid "Waiting debut videos"
 msgstr "等选首播视频"
 
-#: .././config.py:23246
+#: .././config.py:23249
 msgid "Broadcasting debut videos"
 msgstr "正在首播视频"
 
-#: .././config.py:23252
+#: .././config.py:23255
 msgid "Selected videos"
 msgstr "选中的视频"
 
-#: .././config.py:23258
+#: .././config.py:23261
 msgid "Selected waiting videos"
 msgstr "选定的等待视频"
 
-#: .././config.py:23264
+#: .././config.py:23267
 msgid "Selected broadcasting videos"
 msgstr "选定的直播视频"
 
-#: .././config.py:23270
+#: .././config.py:23273
 msgid "Drag and Drop notification"
 msgstr "拖放通知"
 
-#: .././config.py:23276
+#: .././config.py:23279
 msgid "Drag and Drop background 1"
 msgstr "拖放背景 1"
 
-#: .././config.py:23282
+#: .././config.py:23285
 msgid "Drag and Drop background 2"
 msgstr "拖放背景 2"
 
-#: .././config.py:23313
+#: .././config.py:23316
 msgid "Custom colour:"
 msgstr "自定义颜色："
 
-#: .././config.py:23336
+#: .././config.py:23339
 msgid "Default colour:"
 msgstr "默认颜色："
 
-#: .././config.py:23373
+#: .././config.py:23376
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Errors/Warnings"
 msgstr ""
 
-#: .././config.py:23378
+#: .././config.py:23381
 msgid "_Errors/Warnings"
 msgstr "错误/警告(_E)"
 
-#: .././config.py:23384
+#: .././config.py:23387
 msgid "Errors/Warnings tab preferences"
 msgstr "错误/警告选项卡选项"
 
-#: .././config.py:23484
+#: .././config.py:23487
 msgid "TRANSLATOR'S NOTE: System preferences > Windows > Websites"
 msgstr ""
 
-#: .././config.py:23488
+#: .././config.py:23491
 msgid "_Websites"
 msgstr "网站(_W)"
 
-#: .././config.py:23495
+#: .././config.py:23498
 msgid "YouTube error/warning preferences"
 msgstr "YouTube 错误/警告选项"
 
-#: .././config.py:23500
+#: .././config.py:23503
 msgid "Ignore YouTube copyright errors"
 msgstr "忽略 YouTube 版权错误"
 
-#: .././config.py:23508
+#: .././config.py:23511
 msgid "Ignore YouTube age-restriction errors"
 msgstr "忽略 YouTube 年龄限制错误"
 
-#: .././config.py:23516
+#: .././config.py:23519
 msgid "Ignore YouTube deletion by uploader errors"
 msgstr "忽略上传者错误导致的 YouTube 删除"
 
-#: .././config.py:23524
+#: .././config.py:23527
 msgid "Ignore YouTube payment errors"
 msgstr "忽略 YouTube 付款错误"
 
-#: .././config.py:23533 .././config.py:27565
+#: .././config.py:23536 .././config.py:27581
 msgid "General preferences"
 msgstr "全局选项"
 
-#: .././config.py:23539
+#: .././config.py:23542
 msgid ""
 "Ignore any errors/warnings which match lines in this list (applies to all "
 "websites)"
 msgstr "忽略与此列表中的行匹配的任何错误/警告（适用于所有网站）"
 
-#: .././config.py:23553
+#: .././config.py:23556
 msgid "These are ordinary strings"
 msgstr "这些是普通的字符串"
 
-#: .././config.py:23560
+#: .././config.py:23563
 msgid "These are regular expressions (regexes)"
 msgstr "这些是正则表达式（regexes）"
 
-#: .././config.py:23589
+#: .././config.py:23592
 msgid "TRANSLATOR'S NOTE: System preferences > Scheduling"
 msgstr ""
 
 #. Add this tab...
-#: .././config.py:23593
+#: .././config.py:23596
 msgid "_Scheduling"
 msgstr "计划(_S)"
 
-#: .././config.py:23616
+#: .././config.py:23619
 msgid "TRANSLATOR'S NOTE: System preferences > Scheduling > Start"
 msgstr ""
 
-#: .././config.py:23624
+#: .././config.py:23627
 msgid "Scheduled download preferences"
 msgstr "计划下载选项"
 
-#: .././config.py:23645
+#: .././config.py:23648
 msgid "Priority"
 msgstr "优先级"
 
-#: .././config.py:23645
+#: .././config.py:23648
 msgid "Whole"
 msgstr "全部"
 
-#: .././config.py:23645
+#: .././config.py:23648
 msgid "Shutdown"
 msgstr "关闭"
 
-#: .././config.py:23645
+#: .././config.py:23648
 msgid "D/L All"
 msgstr "下载全部"
 
-#: .././config.py:23646
+#: .././config.py:23649
 msgid "Join mode"
 msgstr "加入模式"
 
-#: .././config.py:23700 .././config.py:24815 .././config.py:27129
-#: .././config.py:27410
+#: .././config.py:23703 .././config.py:24818 .././config.py:27145
+#: .././config.py:27426
 msgid "Edit"
 msgstr "编辑"
 
-#: .././config.py:23772 .././formats.py:1229
+#: .././config.py:23775 .././formats.py:1230
 msgid "Custom"
 msgstr "自定义"
 
-#: .././config.py:23816
+#: .././config.py:23819
 msgid "TRANSLATOR'S NOTE: System preferences > Scheduling > Stop"
 msgstr ""
 
-#: .././config.py:23819
+#: .././config.py:23822
 msgid "S_top"
 msgstr "停止(_T)"
 
-#: .././config.py:23824
+#: .././config.py:23827
 msgid "Scheduled stop preferences"
 msgstr "计划停止选项"
 
-#: .././config.py:23830
+#: .././config.py:23833
 msgid ""
 "N.B. Each scheduled download also has its own 'stop' settings which override "
 "these settings"
 msgstr ""
 
-#: .././config.py:23837
+#: .././config.py:23840
 msgid "Stop all download operations after this much time"
 msgstr "下载多少时间之后，停止所有下载"
 
-#: .././config.py:23885
+#: .././config.py:23888
 msgid "Stop all download operations after this many videos"
 msgstr "下载多少个视频之后，停止所有下载"
 
-#: .././config.py:23912
+#: .././config.py:23915
 msgid "Stop all download operations after this much disk space"
 msgstr "占用多少磁盘空间之后，停止所有下载"
 
-#: .././config.py:23970
+#: .././config.py:23973
 msgid "TRANSLATOR'S NOTE: System preferences > Operations"
 msgstr ""
 
-#: .././config.py:24014
+#: .././config.py:24017
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Limits"
 msgstr ""
 
-#: .././config.py:24080
+#: .././config.py:24083
 msgid "Overriding video format options, limit video resolution to"
 msgstr "覆盖视频格式选项，将视频分辨率限制为"
 
-#: .././config.py:24102
+#: .././config.py:24105
 msgid "Alternative performance limits"
 msgstr "备选的性能限制"
 
-#: .././config.py:24160
+#: .././config.py:24163
 msgid "Alternative limits apply between"
 msgstr "备选限制适用于"
 
-#: .././config.py:24200
+#: .././config.py:24203
 msgid "and"
 msgstr "和"
 
-#: .././config.py:24228
+#: .././config.py:24231
 msgid "On days"
 msgstr "哪些天"
 
-#: .././config.py:24261
+#: .././config.py:24264
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Stop"
 msgstr ""
 
-#: .././config.py:24272
+#: .././config.py:24275
 msgid "Time-saving settings"
 msgstr "省时设置"
 
-#: .././config.py:24278
+#: .././config.py:24281
 msgid ""
 "Stop checking/downloading a channel/playlist when it finds videos you "
 "already have"
 msgstr "当可在本地找到目标视频时，停止检查/下载对应的频道/播放列表"
 
-#: .././config.py:24289
+#: .././config.py:24292
 msgid "Stop after this many videos (when checking)"
 msgstr "多少个视频后停止（检查时）"
 
-#: .././config.py:24304
+#: .././config.py:24307
 msgid "Stop after this many videos (when downloading)"
 msgstr "多少个视频后停止（下载时）"
 
-#: .././config.py:24340
+#: .././config.py:24343
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Downloads"
 msgstr ""
 
-#: .././config.py:24351
+#: .././config.py:24354
 msgid "Download operation preferences"
 msgstr "下载选项"
 
-#: .././config.py:24357
+#: .././config.py:24360
 msgid "Automatically update downloader before every download operation"
 msgstr "在每次下载前自动更新下载器"
 
-#: .././config.py:24369
+#: .././config.py:24372
 msgid "Automatically save files at the end of all operations"
 msgstr "在所有操作结束时自动保存文件"
 
-#: .././config.py:24381
+#: .././config.py:24384
 msgid "For simulated downloads, don't check a video in a folder more than once"
 msgstr "模拟下载时，每个视频只检查一次"
 
-#: .././config.py:24395
+#: .././config.py:24398
 msgid "If a download stalls, restart it after this many minutes"
 msgstr "如果下载停滞不前，在多少钟后重新启动"
 
-#: .././config.py:24417
+#: .././config.py:24420
 msgid "Maximum restarts after a stalled download (0 for no maximum)"
 msgstr "下载停滞后的最大重启次数（0表示无限制）。"
 
-#: .././config.py:24450
+#: .././config.py:24453
 msgid "Apply a timeout (in minutes) when checking a video"
 msgstr "检查视频个超时时间（分钟）"
 
-#: .././config.py:24462
+#: .././config.py:24465
 msgid "Without comments"
 msgstr "没有评论"
 
-#: .././config.py:24478
+#: .././config.py:24481
 msgid "With comments"
 msgstr "有评论"
 
-#: .././config.py:24511
+#: .././config.py:24514
 msgid "Assign anonymous error/warning messages to the most probable video"
 msgstr "将匿名的错误/警告信息分配给最有可能的视频"
 
-#: .././config.py:24522
+#: .././config.py:24525
 msgid "Add censored, age-restricted and other blocked videos to the database"
 msgstr "在数据库中添加经过审查的、有年龄限制的和其他被封锁的视频"
 
-#: .././config.py:24535
+#: .././config.py:24538
 msgid ""
 "Extract playlist IDs from each video, and store them in the parent channel/"
 "playlist"
 msgstr "从每个视频中提取播放列表ID，并将其存储在父频道/播放列表中"
 
-#: .././config.py:24546
+#: .././config.py:24549
 msgid ""
 "Convert .webp thumbnails into .jpg thumbnails (using  FFmpeg) after "
 "downloading them"
 msgstr ""
 
-#: .././config.py:24557
+#: .././config.py:24560
 msgid ""
 "...but don't delete the original thumbnails (enable before embedding "
 "thumbnails in videos)"
 msgstr ""
 
-#: .././config.py:24592
+#: .././config.py:24595
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Ignore"
 msgstr ""
 
-#: .././config.py:24596
+#: .././config.py:24599
 msgid "_Ignore"
 msgstr "忽略"
 
-#: .././config.py:24603
+#: .././config.py:24606
 msgid "Ignore downloader errors/warnings"
 msgstr "忽略下载器的错误/警告"
 
-#: .././config.py:24608
+#: .././config.py:24611
 msgid "TRANSLATOR'S NOTE: These error messages are always in English"
 msgstr ""
 
-#: .././config.py:24612
+#: .././config.py:24615
 msgid "Ignore 'Child process exited with non-zero code' errors"
 msgstr "忽略 \"子进程以非零代码退出 \"的错误"
 
-#: .././config.py:24621
+#: .././config.py:24624
 msgid ""
 "Ignore 'Unable to download video data' and 'Unable to extract video data' "
 "errors"
 msgstr "忽略 \"无法下载视频数据 \"和 \"无法提取视频数据 \"错误"
 
-#: .././config.py:24631
+#: .././config.py:24634
 msgid "Ignore 'Did not get any data blocks' errors"
 msgstr "忽略 \"没有得到任何数据块 \"的错误"
 
-#: .././config.py:24640
+#: .././config.py:24643
 msgid "Ignore 'Requested formats are incompatible for merge' warnings"
 msgstr "忽略 \"要求的格式与合并不兼容 \"的警告"
 
-#: .././config.py:24649
+#: .././config.py:24652
 msgid "Ignore 'No video formats found' errors"
 msgstr "忽略 \"没有找到视频格式 \"的错误"
 
-#: .././config.py:24657
+#: .././config.py:24660
 msgid "Ignore 'There are no annotations to write' warnings"
 msgstr "忽略 \"没有注释可写 \"的警告"
 
-#: .././config.py:24665
+#: .././config.py:24668
 msgid "Ignore 'Video doesn't have subtitles' warnings"
 msgstr "忽略 \"视频没有字幕 \"的警告"
 
-#: .././config.py:24673
+#: .././config.py:24676
 msgid "Ignore 'A channel/user page was given' warnings"
 msgstr "忽略 \"给出了一个频道/用户页 \"的警告"
 
-#: .././config.py:24681
+#: .././config.py:24684
 msgid "Ignore 'There's no playlist description to write' warnings"
 msgstr "忽略 \"没有播放列表描述可写 \"的警告"
 
-#: .././config.py:24690
+#: .././config.py:24693
 msgid ""
 "Ignore 'Unable to download video thumbnail: HTTP Error 404: Not Found' "
 "warnings"
 msgstr "忽略 \"无法下载视频缩略图： HTTP 404错误： Not Found \"的警告"
 
-#: .././config.py:24701
+#: .././config.py:24704
 msgid "Ignore 'The channel is not currently live' warnings on Twitch"
 msgstr ""
 
-#: .././config.py:24723
+#: .././config.py:24726
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Custom"
 msgstr ""
 
-#: .././config.py:24726
+#: .././config.py:24729
 msgid "_Custom"
 msgstr "自定义(_C)"
 
-#: .././config.py:24731
+#: .././config.py:24734
 msgid "Custom downloads"
 msgstr "自定义下载"
 
-#: .././config.py:24752 .././config.py:27064
+#: .././config.py:24755 .././config.py:27080
 msgid "Classic Mode"
 msgstr "经典模式"
 
-#: .././config.py:24824 .././config.py:27138 .././config.py:27419
+#: .././config.py:24827 .././config.py:27154 .././config.py:27435
 msgid "Export"
 msgstr "导出"
 
-#: .././config.py:24833 .././config.py:27147 .././config.py:27428
+#: .././config.py:24836 .././config.py:27163 .././config.py:27444
 msgid "Clone"
 msgstr "克隆"
 
-#: .././config.py:24842 .././config.py:27156
+#: .././config.py:24845 .././config.py:27172
 msgid "Use in Classic Mode tab"
 msgstr "在“经典模式”选项卡中使用"
 
-#: .././config.py:24945
+#: .././config.py:24948
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Archive"
 msgstr ""
 
-#: .././config.py:24949
+#: .././config.py:24952
 msgid "_Archive"
 msgstr "归档(_A)"
 
-#: .././config.py:24957
+#: .././config.py:24960
 msgid "Archive file preferences"
 msgstr "归档选项"
 
-#: .././config.py:24963
+#: .././config.py:24966
 msgid ""
 "Allow downloader to create its own archive file (so deleted videos are not "
 "re-downloaded)"
 msgstr "允许下载器创建自己的存档文件（因此删除的视频不会重新下载）"
 
-#: .././config.py:24982
+#: .././config.py:24985
 msgid "Store the archive file in the same location as the video"
 msgstr "将存档文件存储在与视频相同的位置"
 
-#: .././config.py:24990
+#: .././config.py:24993
 msgid ""
 "N.B. Archive files are never stored in system folders like 'Unsorted Videos'"
 msgstr "注：存档文件永远不会存储在系统文件夹中，例如“未排序的视频”"
 
-#: .././config.py:24999
+#: .././config.py:25002
 msgid "Store the archive file in Tartube's data directory"
 msgstr "将存档文件存储在Tartube的数据目录中"
 
-#: .././config.py:25010
+#: .././config.py:25013
 msgid "Store the archive file at this location:"
 msgstr "将存档文件存储在以下位置："
 
-#: .././config.py:25090
+#: .././config.py:25041
+msgid ""
+"Update the archive file when videos are moved into a database folder "
+"(YouTube only)"
+msgstr ""
+
+#: .././config.py:25105
 msgid "Classic Mode tab preferences"
 msgstr "经典模式选项卡选项"
 
-#: .././config.py:25096
+#: .././config.py:25111
 msgid "Create an archive file when downloading from the Classic Mode tab"
 msgstr "从“经典模式”选项卡下载时创建存档文件"
 
-#: .././config.py:25107
+#: .././config.py:25122
 msgid ""
 "This setting should only be enabled when downloading channels and playlists"
 msgstr "此设置应仅在下载频道和播放列表时启用"
 
-#: .././config.py:25127
+#: .././config.py:25142
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Livestreams"
 msgstr ""
 
-#: .././config.py:25131
+#: .././config.py:25146
 msgid "Li_vestreams"
 msgstr "直播(_V)"
 
-#: .././config.py:25139
+#: .././config.py:25154
 msgid "Livestream preferences (compatible websites only)"
 msgstr "直播选项(只对兼容网站有效)"
 
-#: .././config.py:25145
+#: .././config.py:25160
 msgid "Do not check/download any livestream [yt-dlp only]"
 msgstr "不要检查/下载任何直播 [仅限 yt-dlp]"
 
-#: .././config.py:25156
+#: .././config.py:25171
 msgid "Detect livestreams announced within this many days"
 msgstr "检测多少天内宣布的直播"
 
-#: .././config.py:25171
+#: .././config.py:25186
 msgid "How often to check the status of livestreams (in minutes)"
 msgstr "检查直播频率（分钟）"
 
-#: .././config.py:25190
+#: .././config.py:25205
 msgid "Check more frequently when a livestream is due to start"
 msgstr "更频繁地检查直播开始时间"
 
-#: .././config.py:25233
+#: .././config.py:25248
 msgid "Broadcasting livestream preferences (compatible websites only)"
 msgstr "广播直播选项（仅限兼容网站）"
 
-#: .././config.py:25241
+#: .././config.py:25256
 msgid ""
 "These settings apply when downloading videos individually, for example with "
 "a custom download"
 msgstr "这些设置适用于单独下载视频时，例如自定义下载"
 
-#: .././config.py:25252
+#: .././config.py:25267
 msgid "Download using:"
 msgstr "下载使用："
 
-#: .././config.py:25267
+#: .././config.py:25282
 msgid ".m3u manifest"
 msgstr ".m3u清单"
 
-#: .././config.py:25314
+#: .././config.py:25329
 msgid "Replace a partially-downloaded livestream"
 msgstr "替换部分下载的直播文件"
 
-#: .././config.py:25321
+#: .././config.py:25336
 msgid "Resume a partially-downloaded livestream"
 msgstr "恢复部分下载的直播"
 
-#: .././config.py:25340
+#: .././config.py:25355
 msgid ""
 "Bypass usual limits on simultaneous downloads, so that all livestreams can "
 "be downloaded"
 msgstr "绕过常规并发下载限制，以便下载所有直播流"
 
-#: .././config.py:25353
+#: .././config.py:25368
 msgid "Timeout after this many minutes of inactivity"
 msgstr "不活动超时等待时间"
 
-#: .././config.py:25369
+#: .././config.py:25384
 msgid ""
 "When the livestream download is stopped manually, mark the video as "
 "downloaded"
 msgstr "手动停止直播下载时，将视频标记为已下载"
 
-#: .././config.py:25383
+#: .././config.py:25398
 msgid ""
 "Check a video before the livestream download (ensures metadata is downloaded)"
 msgstr "直播下载前检查视频（确保下载元数据）"
 
-#: .././config.py:25397
+#: .././config.py:25412
 msgid "N.B. This setting is ignored in the Classic Mode tab"
 msgstr "注：此设置在“经典模式”选项卡中将被忽略"
 
-#: .././config.py:25414
+#: .././config.py:25429
 msgid "not recommended"
 msgstr "不推荐"
 
-#: .././config.py:25431
+#: .././config.py:25446
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Actions"
 msgstr ""
 
-#: .././config.py:25435
+#: .././config.py:25450
 msgid "Ac_tions"
 msgstr "动作(_T)"
 
-#: .././config.py:25443
+#: .././config.py:25458
 msgid "Livestream actions (can be toggled for individual videos)"
 msgstr "直播操作（可以针对单个视频切换）"
 
-#: .././config.py:25450
+#: .././config.py:25465
 msgid "(currently disabled on MS Windows)"
 msgstr "（目前在Windows系统上禁用）"
 
-#: .././config.py:25455
+#: .././config.py:25470
 msgid "When a livestream starts, show a desktop notification"
 msgstr "直播开始时，显示桌面通知"
 
-#: .././config.py:25469
+#: .././config.py:25484
 msgid "When a livestream starts, sound an alarm"
 msgstr "直播开始时，播放声音提醒"
 
-#: .././config.py:25496
+#: .././config.py:25511
 msgid "Plays the selected sound effect"
 msgstr "播放选定的声音效果"
 
-#: .././config.py:25505
+#: .././config.py:25520
 msgid "When a livestream starts, open it in the system's web browser"
 msgstr "直播开始时，在浏览器中打开它"
 
-#: .././config.py:25517
+#: .././config.py:25532
 msgid "When a livestream starts, begin downloading it immediately"
 msgstr "直播开始时，立即开始下载"
 
-#: .././config.py:25545
+#: .././config.py:25560
 msgid "Desktop notification preferences"
 msgstr "桌面通知选项"
 
-#: .././config.py:25551
+#: .././config.py:25566
 msgid "Show a dialogue window at the end of an operation"
 msgstr "操作结束时显示对话窗口"
 
-#: .././config.py:25575
+#: .././config.py:25590
 msgid "Don't notify the user at the end of an operation"
 msgstr "操作结束时不通知用户"
 
-#: .././config.py:25613
+#: .././config.py:25628
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Clips"
 msgstr ""
 
-#: .././config.py:25617
+#: .././config.py:25632
 msgid "Cli_ps"
 msgstr "视频剪辑(_P)"
 
-#: .././config.py:25630
+#: .././config.py:25645
 msgid ""
 "When a video is checked/downloaded, automatically extract timestamps from "
 "its metadata file"
 msgstr "检查/下载视频时，自动从元数据中提取时间戳"
 
-#: .././config.py:25641
+#: .././config.py:25656
 msgid ""
 "When a video is checked/downloaded, automatically extract timestamps from "
 "its description"
 msgstr "检查/下载视频时，自动从描述中提取时间戳"
 
-#: .././config.py:25653
+#: .././config.py:25668
 msgid "If timestamps have already been extracted, replace them"
 msgstr "如果已提取时间戳，将替换它们"
 
-#: .././config.py:25665
+#: .././config.py:25680
 msgid ""
 "If no timestamps have been extracted, try again before splitting a video"
 msgstr "如果未提取时间戳，将在分割视频前重试"
 
-#: .././config.py:25679
+#: .././config.py:25694
 msgid "Video clips (requires FFmpeg or yt-dlp)"
 msgstr ""
 
-#: .././config.py:25689
+#: .././config.py:25704
 msgid "Download video clips using FFmpeg"
 msgstr ""
 
-#: .././config.py:25696
+#: .././config.py:25711
 msgid "Download video clips using yt-dlp"
 msgstr ""
 
-#: .././config.py:25709
+#: .././config.py:25724
 msgid "Format of video clip filenames"
 msgstr "视频剪辑的文件名格式"
 
-#: .././config.py:25714
+#: .././config.py:25729
 msgid "Number"
 msgstr "编号"
 
-#: .././config.py:25715
+#: .././config.py:25730
 msgid "Clip Title"
 msgstr "剪辑标题"
 
-#: .././config.py:25716
+#: .././config.py:25731
 msgid "Number + Clip Title"
 msgstr "编号+剪辑标题"
 
-#: .././config.py:25717
+#: .././config.py:25732
 msgid "Clip Title + Number"
 msgstr "剪辑标题+编号"
 
-#: .././config.py:25718
+#: .././config.py:25733
 msgid "Original Title"
 msgstr "原始标题"
 
-#: .././config.py:25719
+#: .././config.py:25734
 msgid "Original Title + Number"
 msgstr "原始标题 + 编号"
 
-#: .././config.py:25720
+#: .././config.py:25735
 msgid "Original Title + Clip Title"
 msgstr "原始标题+剪辑标题"
 
-#: .././config.py:25721
+#: .././config.py:25736
 msgid "Original Title + Number + Clip Title"
 msgstr "原始标题+编号+剪辑标题"
 
-#: .././config.py:25722
+#: .././config.py:25737
 msgid "Original Title + Clip Title + Number"
 msgstr "原始标题+剪辑标题+编号"
 
-#: .././config.py:25749
+#: .././config.py:25764
 msgid "Generic title for video clips"
 msgstr "视频剪辑的通用标题"
 
-#: .././config.py:25766
+#: .././config.py:25781
 msgid "Move clips to the Video Clips folder"
 msgstr "将剪辑移动到“视频剪辑”文件夹"
 
-#: .././config.py:25773
+#: .././config.py:25788
 msgid "Keep clips with their original video"
 msgstr "为剪辑保留原始视频"
 
-#: .././config.py:25786
+#: .././config.py:25801
 msgid "...but place new files inside a sub-directory"
 msgstr "...但是将新文件放在子目录中"
 
-#: .././config.py:25797
+#: .././config.py:25812
 msgid "Add new files to Tartube's database"
 msgstr "也将新文件添加到 Tartube的数据库中"
 
-#: .././config.py:25808
+#: .././config.py:25823
 msgid "Use the original video's thumbnail"
 msgstr "使用原始视频的缩略图"
 
-#: .././config.py:25819 .././config.py:25940
+#: .././config.py:25834 .././config.py:25955
 msgid ""
 "Force keyframes at cuts (slower, but fewer video artefacts before and after "
 "each cut)"
 msgstr ""
 
-#: .././config.py:25832
+#: .././config.py:25847
 msgid "After splitting a video, open the destination folder"
 msgstr "分割视频后，打开目标文件夹"
 
-#: .././config.py:25834
+#: .././config.py:25849
 msgid "After splitting a video, open the destination directory"
 msgstr "After splitting a video, open the destination folder"
 
-#: .././config.py:25846
+#: .././config.py:25861
 msgid ""
 "After splitting a video, delete the original (ignored for videos in channels/"
 "playlists)"
 msgstr "分割视频后，删除原始视频（频道/播放列表中的视频忽略）"
 
-#: .././config.py:25869
+#: .././config.py:25884
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Slices"
 msgstr ""
 
-#: .././config.py:25873
+#: .././config.py:25888
 msgid "Slic_es"
 msgstr "切片(_E)"
 
-#: .././config.py:25880
+#: .././config.py:25895
 msgid "Video slices (requires FFmpeg)"
 msgstr "视频切片（需要 FFmpeg）"
 
-#: .././config.py:25886
+#: .././config.py:25901
 msgid ""
 "While checking/downloading videos, check each video against the SponsorBlock "
 "server"
 msgstr "当检查/下载视频时，根据SponsorBlock检查每个视频"
 
-#: .././config.py:25897
+#: .././config.py:25912
 msgid "When contacting the server, obfuscate each video's ID (recommended)"
 msgstr "联系服务器时，将对每个视频的 ID 进行模糊处理（推荐）"
 
-#: .././config.py:25913
+#: .././config.py:25928
 msgid "If slices have already been extracted, replace the old list"
 msgstr "如果已提取切片，将替换旧列表"
 
-#: .././config.py:25926
+#: .././config.py:25941
 msgid ""
 "If slices have been extracted, contact the server again before removing more "
 "slices from the video"
 msgstr "如果已提取切片，将再次联系服务器，然后再从视频中删除更多切片"
 
-#: .././config.py:25954
+#: .././config.py:25969
 msgid ""
 "After removing slices from a video, reset all timestamp and slice data "
 "(recommended)"
 msgstr "从视频中删除切片后，重置所有时间戳和切片数据（推荐）"
 
-#: .././config.py:25980
+#: .././config.py:25995
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Comments"
 msgstr ""
 
-#: .././config.py:25984
+#: .././config.py:25999
 msgid "C_omments"
 msgstr "评论(_O)"
 
-#: .././config.py:25996
+#: .././config.py:26011
 msgid "When checking videos, store comments in the metadata file"
 msgstr "检查视频时，将评论存储在元数据文件中"
 
-#: .././config.py:26004
+#: .././config.py:26019
 msgid "When downloading videos, store comments in the metadata file"
 msgstr "下载视频时，将评论存储在元数据文件中"
 
-#: .././config.py:26012
+#: .././config.py:26027
 msgid ""
 "Warning: fetching comments will increase the download time, perhaps by a lot!"
 msgstr "警告：获取评论会增加下载时间，可能会增加很多！"
 
-#: .././config.py:26018
+#: .././config.py:26033
 msgid "Also store comments in the Tartube database"
 msgstr "同时将评论存储到 Tartube 数据库"
 
-#: .././config.py:26043
+#: .././config.py:26058
 msgid ""
 "Warning: storing comments will increase the size of Tartube's datbase, "
 "perhaps by a lot!"
 msgstr "警告：存储评论会增加 Tartube 数据库的大小，可能会增加很多！"
 
-#: .././config.py:26063
+#: .././config.py:26078
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Mirrors"
 msgstr ""
 
-#: .././config.py:26074
+#: .././config.py:26089
 msgid "Invidious mirror"
 msgstr "Invidious镜像"
 
-#: .././config.py:26080
+#: .././config.py:26095
 msgid "To find an updated list of Invidious mirrors, use any search engine!"
 msgstr "允许使用任何搜索引擎，查找Invidious镜像更新列表！"
 
-#: .././config.py:26095
+#: .././config.py:26110
 msgid "Use the default Invidious mirror"
 msgstr "使用默认的Invidious镜像"
 
-#: .././config.py:26110
+#: .././config.py:26125
 msgid "SponsorBlock API mirror"
 msgstr "SponsorBlock API镜像"
 
-#: .././config.py:26123
+#: .././config.py:26138
 msgid "Use the default SponsorBlock URL"
 msgstr "使用默认的SponsorBlock网址"
 
-#: .././config.py:26140
+#: .././config.py:26155
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Proxies"
 msgstr ""
 
-#: .././config.py:26144
+#: .././config.py:26159
 msgid "P_roxies"
 msgstr "代理服务器(_R)"
 
-#: .././config.py:26150
+#: .././config.py:26165
 msgid "Proxies"
 msgstr "代理服务器"
 
-#: .././config.py:26157
+#: .././config.py:26172
 msgid ""
 "During a download operation, Tartube will cycle betwween the proxies in this "
 "list"
 msgstr "在下载时，Tartube将在循环使用此列表中的代理服务器"
 
-#: .././config.py:26183
+#: .././config.py:26198
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Preferences"
 msgstr ""
 
-#: .././config.py:26187
+#: .././config.py:26202
 msgid "Pre_ferences"
 msgstr "选项(_F)"
 
-#: .././config.py:26194
+#: .././config.py:26209
 msgid "URL flexibility preferences"
 msgstr "网址灵活性选项"
 
-#: .././config.py:26201
+#: .././config.py:26216
 msgid ""
 "If a video's URL represents a channel/playlist, not a video, don't download "
 "it"
 msgstr "如果视频网址代表的是频道/播放列表，而不是单个视频，请不要下载"
 
-#: .././config.py:26210
+#: .././config.py:26225
 msgid "...or, download multiple videos into the containing folder"
 msgstr "...或者，将多个视频下载到同一文件夹中"
 
-#: .././config.py:26220
+#: .././config.py:26235
 msgid "...or, create a new channel, and download the videos into that"
 msgstr "...或者，创建一个新频道，然后将视频下载到该频道中"
 
-#: .././config.py:26231
+#: .././config.py:26246
 msgid "...or, create a new playlist, and download the videos into that"
 msgstr "...或者，创建一个新的播放列表，然后将视频下载到该播放列表中"
 
-#: .././config.py:26263 .././config.py:26345
+#: .././config.py:26278 .././config.py:26360
 msgid "Missing video preferences"
 msgstr "丢失视频选项"
 
-#: .././config.py:26269 .././config.py:26351
+#: .././config.py:26284 .././config.py:26366
 msgid ""
 "Add videos which have been removed from a channel/playlist to the Missing "
 "Videos folder"
 msgstr "将从频道/播放列表中删除的视频添加到“丢失视频”文件夹"
 
-#: .././config.py:26280 .././config.py:26362
+#: .././config.py:26295 .././config.py:26377
 msgid "Only add videos that were uploaded within this many days"
 msgstr "仅添加在此天数内上传的视频"
 
-#: .././config.py:26334
+#: .././config.py:26349
 msgid "TRANSLATOR'S NOTE: System preferences > Operations > Missing"
 msgstr ""
 
-#: .././config.py:26338
+#: .././config.py:26353
 msgid "Missi_ng"
 msgstr ""
 
-#: .././config.py:26411
+#: .././config.py:26426
 msgid "TRANSLATOR'S NOTE: System preferences > Downloaders"
 msgstr ""
 
-#: .././config.py:26443 .././config.py:35764
+#: .././config.py:26458 .././config.py:35806
 msgid "TRANSLATOR'S NOTE: System preferences > Downloaders > Forks"
 msgstr ""
 
-#: .././config.py:26447
+#: .././config.py:26462
 msgid "_Forks"
 msgstr "分支(_F)"
 
-#: .././config.py:26453
+#: .././config.py:26468
 msgid "Forks of youtube-dl"
 msgstr "youtube-dl分支"
 
-#: .././config.py:26482
+#: .././config.py:26497
 msgid "Use yt-dlp"
 msgstr "使用yt-dlp"
 
-#: .././config.py:26488
+#: .././config.py:26503
 msgid "Install without dependencies"
 msgstr "忽略依赖项安装"
 
-#: .././config.py:26489
+#: .././config.py:26504
 msgid "(recommended on MS Windows)"
 msgstr "（推荐在Windows系统上使用）"
 
-#: .././config.py:26520
+#: .././config.py:26535
 msgid "Use youtube-dl"
 msgstr "使用youtube-dl"
 
-#: .././config.py:26541
+#: .././config.py:26556
 msgid "Other forks"
 msgstr "其他分支"
 
-#: .././config.py:26549
+#: .././config.py:26564
 msgid "Use this fork (e.g. youtube-dlc):"
 msgstr "使用此分支（例如 youtube-dlc）："
 
-#: .././config.py:26627
+#: .././config.py:26642
 msgid "When using other downloaders, filter out yt-dlp download options"
 msgstr "使用其他下载器时，请过滤掉 yt-dlp 下载选项"
 
-#: .././config.py:26649
+#: .././config.py:26664
 msgid "TRANSLATOR'S NOTE: System preferences > Downloaders > File paths"
 msgstr ""
 
-#: .././config.py:26653
+#: .././config.py:26668
 msgid "File _paths"
 msgstr "文件路径(_P)"
 
-#: .././config.py:26660
+#: .././config.py:26675
 msgid "Downloader file paths"
 msgstr "下载器文件路径"
 
-#: .././config.py:26666
+#: .././config.py:26681
 msgid "Path to the executable"
 msgstr "可执行文件路径"
 
 #. (Signal connect appears below)
-#: .././config.py:26672 .././config.py:26851 .././config.py:26892
-#: .././config.py:35781
+#: .././config.py:26687 .././config.py:26870 .././config.py:26908
+#: .././config.py:35823
 msgid "Use default path"
 msgstr "使用默认路径"
 
-#: .././config.py:26682 .././config.py:35795
+#: .././config.py:26697 .././config.py:35837
 msgid "Use local path"
 msgstr "使用本地路径"
 
-#: .././config.py:26688
+#: .././config.py:26703
 msgid "Use custom path (not recommended on MS Windows)"
 msgstr "使用自定义路径（在Windows系统上不推荐）"
 
-#: .././config.py:26690
+#: .././config.py:26705
 msgid "Use custom path"
 msgstr "使用自定义路径"
 
-#: .././config.py:26702 .././config.py:35807
+#: .././config.py:26717 .././config.py:35849
 msgid "Use PyPI path"
 msgstr "使用 PyPI 路径"
 
-#: .././config.py:26762
+#: .././config.py:26779
 msgid "Command for update operations"
 msgstr "更新操作命令"
 
-#: .././config.py:26815
+#: .././config.py:26834
 msgid "TRANSLATOR'S NOTE: System preferences > Downloaders > FFmpeg / AVConv"
 msgstr ""
 
-#: .././config.py:26820
+#: .././config.py:26839
 msgid "FF_mpeg / AVConv"
 msgstr "FF_mpeg / AVConv"
 
-#: .././config.py:26827
+#: .././config.py:26846
 msgid "Post-processor file paths"
 msgstr "后期处理工具路径"
 
-#: .././config.py:26832
+#: .././config.py:26851
 msgid ""
 "You only need to set these paths if Tartube cannot find FFmpeg / AVConv "
 "automatically"
 msgstr "只有当Tartube无法自动找到FFmpeg / AVConv时才需要设置这些路径"
 
-#: .././config.py:26839
+#: .././config.py:26858
 msgid "Path to the FFmpeg executable"
 msgstr "FFmpeg可执行文件路径"
 
-#: .././config.py:26866 .././config.py:26978
-msgid "Install from main menu"
-msgstr "从主菜单安装"
-
-#: .././config.py:26880
+#: .././config.py:26896
 msgid "Path to the AVConv executable"
 msgstr "AVConv可扫许文件路径"
 
-#: .././config.py:26907
+#: .././config.py:26923
 msgid "Not supported on MS Windows"
 msgstr "不支持Windows系统"
 
-#: .././config.py:26935
+#: .././config.py:26951
 msgid "TRANSLATOR'S NOTE: System preferences > Downloaders > streamlink"
 msgstr ""
 
-#: .././config.py:26938
+#: .././config.py:26954
 msgid "TRANSLATOR'S NOTE: 'streamlink' is the name of a Python module"
 msgstr ""
 
-#: .././config.py:26943
+#: .././config.py:26959
 msgid "_streamlink"
 msgstr "streamlink(_S)"
 
-#: .././config.py:26950
+#: .././config.py:26966
 msgid "streamlink file path"
 msgstr "streamlink文件路径"
 
-#: .././config.py:26955
+#: .././config.py:26971
 msgid "Path to the streamlink executable"
 msgstr "streamlink可执行文件路径"
 
-#: .././config.py:27003
+#: .././config.py:26994
+msgid "Install from main menu"
+msgstr "从主菜单安装"
+
+#: .././config.py:27019
 msgid "TRANSLATOR'S NOTE: System preferences > Options"
 msgstr ""
 
-#: .././config.py:27032
+#: .././config.py:27048
 msgid "TRANSLATOR'S NOTE: System preferences > Options > Download options"
 msgstr ""
 
-#: .././config.py:27037
+#: .././config.py:27053
 msgid "_Download options"
 msgstr "下载选项(_D)"
 
-#: .././config.py:27044
+#: .././config.py:27060
 msgid "List of download options"
 msgstr "下载选项列表"
 
-#: .././config.py:27064
+#: .././config.py:27080
 msgid "Videos tab"
 msgstr "视频选项卡"
 
-#: .././config.py:27065
+#: .././config.py:27081
 msgid "Dropzone"
 msgstr "拖放区"
 
-#: .././config.py:27065
+#: .././config.py:27081
 msgid "Applied to media"
 msgstr "应用到媒体"
 
-#: .././config.py:27266
+#: .././config.py:27282
 msgid "TRANSLATOR'S NOTE: System preferences > Options > Preferences"
 msgstr ""
 
-#: .././config.py:27270
+#: .././config.py:27286
 msgid "_Preferences"
 msgstr "选项(_P)"
 
-#: .././config.py:27277
+#: .././config.py:27293
 msgid "Download options preferences"
 msgstr "下载选项首选项"
 
-#: .././config.py:27283
+#: .././config.py:27299
 msgid ""
 "When applying download options to something, clone the general download "
 "options"
 msgstr "将下载选项应用于某些内容时，请克隆全局下载选项"
 
-#: .././config.py:27294
+#: .././config.py:27310
 msgid "After downloading a video, destroy its download options"
 msgstr "下载视频后，销毁其下载选项"
 
-#: .././config.py:27316
+#: .././config.py:27332
 msgid "TRANSLATOR'S NOTE: System preferences > Options > FFmpeg options"
 msgstr ""
 
-#: .././config.py:27320
+#: .././config.py:27336
 msgid "_FFmpeg options"
 msgstr "FFmpeg选项(_F)"
 
-#: .././config.py:27327
+#: .././config.py:27343
 msgid "List of FFmpeg options managers"
 msgstr "FFmpeg 选项管理器列表"
 
-#: .././config.py:27347
+#: .././config.py:27363
 msgid "Current"
 msgstr "当前"
 
-#: .././config.py:27437
+#: .././config.py:27453
 msgid "Use these options"
 msgstr "使用这些选项"
 
-#: .././config.py:27527
+#: .././config.py:27543
 msgid "TRANSLATOR'S NOTE: System preferences > Output"
 msgstr ""
 
 #. Add this tab...
-#: .././config.py:27531
+#: .././config.py:27547
 msgid "O_utput"
 msgstr "输出(_U)"
 
-#: .././config.py:27557
+#: .././config.py:27573
 msgid "TRANSLATOR'S NOTE: System preferences > Output > General"
 msgstr ""
 
-#: .././config.py:27571
+#: .././config.py:27587
 msgid "Applies to Output tab, terminal window and downloader log"
 msgstr ""
 
-#: .././config.py:27577
+#: .././config.py:27593
 msgid "Downloader writes verbose output (youtube-dl debugging mode)"
 msgstr "下载器写入详细输出信息（youtube-dl调试模式）"
 
-#: .././config.py:27599
+#: .././config.py:27615
 msgid "TRANSLATOR'S NOTE: System preferences > Output > Output tab"
 msgstr ""
 
-#: .././config.py:27603
+#: .././config.py:27619
 msgid "_Output tab"
 msgstr "输出选项卡(_O)"
 
-#: .././config.py:27610
+#: .././config.py:27626
 msgid "Output tab preferences"
 msgstr "输出选项卡选项"
 
-#: .././config.py:27615
+#: .././config.py:27631
 msgid "Display downloader system commands in the Output tab"
 msgstr "在“输出”选项卡中显示下载器命令"
 
-#: .././config.py:27625
+#: .././config.py:27641
 msgid "Display general output (from downloader's STDOUT) in the Output tab"
 msgstr ""
 
-#: .././config.py:27636 .././config.py:27824 .././config.py:27926
+#: .././config.py:27652 .././config.py:27840 .././config.py:27942
 msgid "...but don't write each video's JSON data"
 msgstr "...但不要输出每个视频的 JSON 数据"
 
-#: .././config.py:27647 .././config.py:27835 .././config.py:27937
+#: .././config.py:27663 .././config.py:27851 .././config.py:27953
 msgid "...but don't write each video's download progress"
 msgstr "...但不要输出每个视频的下载进度"
 
-#: .././config.py:27667
+#: .././config.py:27683
 msgid "Display errors/warnings (from downloader's STDERR) in the Output tab"
 msgstr ""
 
-#: .././config.py:27678
+#: .././config.py:27694
 msgid "Limit the size of Output tab pages to"
 msgstr "将“输出”选项卡页的行数限制为"
 
-#: .././config.py:27702
+#: .././config.py:27718
 msgid "Empty pages in the Output tab at the start of every operation"
 msgstr "每个操作开始时清空“输出”选项卡内容"
 
-#: .././config.py:27717
+#: .././config.py:27733
 msgid ""
 "Show a summary of active threads (changes are applied when Tartube restarts)"
 msgstr "显示活动线程的摘要（Tartube 重新启动时将应用更改）"
 
-#: .././config.py:27732
+#: .././config.py:27748
 msgid "During update/info operations, automatically switch to the Output tab"
 msgstr "更新/信息抓取操作时，自动切换到“输出”选项卡"
 
-#: .././config.py:27743
+#: .././config.py:27759
 msgid "During a refresh operation, show all matching videos in the Output tab"
 msgstr "刷新操作时，在“输出”选项卡中显示所有匹配的视频"
 
-#: .././config.py:27754
+#: .././config.py:27770
 msgid "...also show all non-matching videos"
 msgstr "...同时显示所有不匹配的视频"
 
-#: .././config.py:27788
+#: .././config.py:27804
 msgid "TRANSLATOR'S NOTE: System preferences > Output > Terminal window"
 msgstr ""
 
-#: .././config.py:27792
+#: .././config.py:27808
 msgid "_Terminal window"
 msgstr "终端窗口(_T)"
 
-#: .././config.py:27798
+#: .././config.py:27814
 msgid "Terminal window preferences"
 msgstr "终端窗口选项"
 
-#: .././config.py:27803
+#: .././config.py:27819
 msgid "Write downloader system commands to the terminal window"
 msgstr "将下载命令输出到终端窗口"
 
-#: .././config.py:27813
+#: .././config.py:27829
 msgid "Write general output (from downloader's STDOUT) to the terminal window"
 msgstr ""
 
-#: .././config.py:27858
+#: .././config.py:27874
 msgid "Write errors/warnings (from downloader's STDERR) to the terminal window"
 msgstr ""
 
-#: .././config.py:27885
+#: .././config.py:27901
 msgid "TRANSLATOR'S NOTE: System preferences > Output > Log"
 msgstr ""
 
-#: .././config.py:27889
+#: .././config.py:27905
 msgid "_Downloader log"
 msgstr ""
 
-#: .././config.py:27895
+#: .././config.py:27911
 msgid "Downloader log preferences"
 msgstr ""
 
-#: .././config.py:27901
+#: .././config.py:27917
 #, python-brace-format
 msgid "If enabled, the file '{0}' is written to Tartube's data folder"
 msgstr ""
 
-#: .././config.py:27908
+#: .././config.py:27924
 msgid "Write downloader system commands to the log"
 msgstr ""
 
-#: .././config.py:27917
+#: .././config.py:27933
 msgid "Write general output (from downloader's STDOUT) to the log"
 msgstr ""
 
-#: .././config.py:27959
+#: .././config.py:27975
 msgid "Write errors/warnings (from downloader's STDERR) to the log"
 msgstr ""
 
-#: .././config.py:28920 .././config.py:31123 .././config.py:31182
-#: .././config.py:32042 .././config.py:33450 .././config.py:33542
+#: .././config.py:28962 .././config.py:31165 .././config.py:31224
+#: .././config.py:32084 .././config.py:33492 .././config.py:33584
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > Files "
 "> Update"
 msgstr ""
 
 #. Confirm the result
-#: .././config.py:28940 .././config.py:31156 .././config.py:31218
-#: .././config.py:32066 .././config.py:33476 .././config.py:33568
+#: .././config.py:28982 .././config.py:31198 .././config.py:31260
+#: .././config.py:32108 .././config.py:33518 .././config.py:33610
 #: .././refresh.py:496 .././refresh.py:604
 msgid "Total videos:"
 msgstr "视频总数："
 
-#: .././config.py:28941 .././config.py:31158 .././config.py:31220
-#: .././config.py:32067 .././config.py:33477 .././config.py:33569
+#: .././config.py:28983 .././config.py:31200 .././config.py:31262
+#: .././config.py:32109 .././config.py:33519 .././config.py:33611
 msgid "Videos updated:"
 msgstr "视频更新："
 
-#: .././config.py:29125 .././config.py:29234
+#: .././config.py:29167 .././config.py:29276
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > Files "
 "> URLs"
 msgstr ""
 
-#: .././config.py:29169
+#: .././config.py:29211
 #, python-brace-format
 msgid "There is already a channel, playlist or folder called '{0}'"
 msgstr "已经有一个名为“{0}”的频道、播放列表或文件夹"
 
-#: .././config.py:29192
+#: .././config.py:29234
 msgid "Are you sure you want to rename this channel?"
 msgstr "确认要重命名此频道？"
 
-#: .././config.py:29194
+#: .././config.py:29236
 msgid "Are you sure you want to rename this playlist?"
 msgstr "确认要重命名此播放列表？"
 
-#: .././config.py:29196
+#: .././config.py:29238
 msgid "Are you sure you want to rename this folder?"
 msgstr "确认要重命名此文件夹？"
 
-#: .././config.py:29241
+#: .././config.py:29283
 msgid "That is not a valid URL"
 msgstr "无效链接"
 
-#: .././config.py:29264
+#: .././config.py:29306
 msgid "Are you sure you want to update the URL?"
 msgstr "确认要更新这个链接？"
 
-#: .././config.py:29295
+#: .././config.py:29337
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by:System preferences > Files "
 "> URLs"
 msgstr ""
 
-#: .././config.py:29316
+#: .././config.py:29358
 msgid "The regex is invalid"
 msgstr "正则表达式无效"
 
-#: .././config.py:29366
+#: .././config.py:29408
 msgid "Are you sure you want to update these URLs?"
 msgstr "确认要更新这些链接？"
 
-#: .././config.py:29566
+#: .././config.py:29608
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Operations > Custom"
 msgstr ""
 
-#: .././config.py:29591
+#: .././config.py:29633
 msgid "The default custom download manager cannot be deleted"
 msgstr "无法删除默认自定义下载管理器"
 
-#: .././config.py:29601
+#: .././config.py:29643
 msgid "Are you sure you want to delete this custom download manager?"
 msgstr "您确定要删除此自定义下载管理器吗？"
 
-#: .././config.py:29845 .././config.py:29966 .././config.py:30016
-#: .././config.py:30208 .././config.py:30868 .././config.py:35666
+#: .././config.py:29887 .././config.py:30008 .././config.py:30058
+#: .././config.py:30250 .././config.py:30910 .././config.py:35708
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > Files "
 "> Database"
 msgstr ""
 
-#: .././config.py:29877
+#: .././config.py:29919
 msgid "Are you sure you want to create a new database at this location?"
 msgstr "是否确实要在此位置创建新数据库？"
 
-#: .././config.py:29989
+#: .././config.py:30031
 msgid "Are you sure you want to forget this database?"
 msgstr "您确定要忘记此数据库吗？"
 
-#: .././config.py:30029
+#: .././config.py:30071
 msgid "Are you sure you want to forget all databases except the current one?"
 msgstr "您确定要忘记除当前数据库之外的所有数据库吗？"
 
-#: .././config.py:30237
+#: .././config.py:30279
 msgid "No database exists at this location:"
 msgstr "此位置不存在数据库："
 
-#: .././config.py:30239
+#: .././config.py:30281
 msgid "Do you want to create a new one?"
 msgstr "是否要创建一个新帐户？"
 
-#: .././config.py:30874
+#: .././config.py:30916
 msgid "Select a Tartube database file"
 msgstr "选择Tartube数据库文件"
 
-#: .././config.py:30896
+#: .././config.py:30938
 msgid "This file is not loadable (might be corrupted)"
 msgstr "此文件不可加载（可能已损坏）"
 
-#: .././config.py:30907
+#: .././config.py:30949
 msgid "This file does is not compatible with Tartube"
 msgstr "此文件与 Tartube 不兼容"
 
-#: .././config.py:30917
+#: .././config.py:30959
 msgid "This file was loaded, but is empty"
 msgstr "此文件已加载，但为空"
 
-#: .././config.py:31375
+#: .././config.py:31417
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Options > FFmpeg options"
 msgstr ""
 
-#: .././config.py:31400
+#: .././config.py:31442
 msgid "The current options manager cannot be deleted"
 msgstr "无法删除当前选项管理器"
 
-#: .././config.py:31410 .././config.py:32827
+#: .././config.py:31452 .././config.py:32869
 msgid "Are you sure you want to delete this options manager?"
 msgstr "确认要删除此选项管理器？"
 
-#: .././config.py:31596 .././config.py:34392
+#: .././config.py:31638 .././config.py:34434
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Windows > Main Window"
 msgstr ""
 
-#: .././config.py:31615 .././config.py:32125 .././config.py:34404
+#: .././config.py:31657 .././config.py:32167 .././config.py:34446
 msgid "The new setting will be applied when Tartube restarts"
 msgstr "新设置将在 Tartube 重新启动时应用"
 
-#: .././config.py:32093
+#: .././config.py:32135
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "General > Application"
 msgstr ""
 
-#: .././config.py:32792
+#: .././config.py:32834
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Options > Download options"
 msgstr ""
 
-#: .././config.py:32817
+#: .././config.py:32859
 msgid "The default options manager cannot be deleted"
 msgstr "无法删除默认选项管理器"
 
-#: .././config.py:33949 .././config.py:33997
+#: .././config.py:33991 .././config.py:34039
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Scheduling > Start"
 msgstr ""
 
-#: .././config.py:33962
+#: .././config.py:34004
 msgid "There is already a scheduled download with that name"
 msgstr "已有同名计划下载"
 
-#: .././config.py:34014
+#: .././config.py:34056
 msgid "Are you sure you want to delete this scheduled download?"
 msgstr "确认要删除此计划下载？"
 
-#: .././config.py:34199
+#: .././config.py:34241
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Operations > Archive"
 msgstr ""
 
-#: .././config.py:34204
+#: .././config.py:34246
 msgid "Select the location of the archive file"
 msgstr "选择存档文件的位置"
 
-#: .././config.py:34237 .././config.py:34275
+#: .././config.py:34279 .././config.py:34317
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Downloaders > FFmpeg / AVConv"
 msgstr ""
 
-#: .././config.py:34242
+#: .././config.py:34284
 msgid "Please select the AVConv executable"
 msgstr "请选择AVConv可执行文件"
 
-#: .././config.py:34280
+#: .././config.py:34322
 msgid "Please select the FFmpeg executable"
 msgstr "请选择FFmpeg可执行文件"
 
-#: .././config.py:34313
+#: .././config.py:34355
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Downloaders > streamlink"
 msgstr ""
 
-#: .././config.py:34318
+#: .././config.py:34360
 msgid "Please select the streamlink executable"
 msgstr "请选择streamlink可执行文件"
 
-#: .././config.py:35516
+#: .././config.py:35558
 msgid ""
 "TRANSLATOR'S NOTE: Dialogue window, generated by: System preferences > "
 "Downloaders > File paths"
 msgstr ""
 
-#: .././config.py:35522
+#: .././config.py:35564
 msgid "Select the youtube-dl-compatible executable"
 msgstr "选择与 youtube-dl 兼容的可执行文件"
 
-#: .././config.py:35699
+#: .././config.py:35741
 msgid "Database file not loaded"
 msgstr "未加载数据库文件"
 
-#: .././config.py:35719
+#: .././config.py:35761
 msgid "Did not try to load the database file"
 msgstr "未尝试加载数据库文件"
 
-#: .././config.py:35744
+#: .././config.py:35786
 msgid "Database file loaded"
 msgstr "已加载数据库文件"
 
@@ -10732,297 +10743,297 @@ msgstr "已下载.m3u清单，现在正在下载直播..."
 #. English is top of the list, because it's the default setting in
 #. options.OptionsManager
 #. NB These values must not contain square brackets [...]
-#: .././formats.py:86
+#: .././formats.py:87
 msgid "English"
 msgstr "英语"
 
-#: .././formats.py:128
+#: .././formats.py:129
 msgid "Dutch"
 msgstr "荷兰语"
 
-#: .././formats.py:136
+#: .././formats.py:137
 msgid "French"
 msgstr "法语"
 
-#: .././formats.py:178
+#: .././formats.py:179
 msgid "Korean"
 msgstr "韩语"
 
-#: .././formats.py:223
+#: .././formats.py:224
 msgid "Russian"
 msgstr "俄语"
 
-#: .././formats.py:241
+#: .././formats.py:242
 msgid "Spanish"
 msgstr "西班牙语"
 
-#: .././formats.py:256
+#: .././formats.py:257
 msgid "Turkish"
 msgstr "土耳其语"
 
-#: .././formats.py:264
+#: .././formats.py:265
 msgid "Vietnamese"
 msgstr "越南语"
 
-#: .././formats.py:448
+#: .././formats.py:449
 msgid "seconds"
 msgstr "秒"
 
-#: .././formats.py:449
+#: .././formats.py:450
 msgid "minutes"
 msgstr "分钟"
 
-#: .././formats.py:450
+#: .././formats.py:451
 msgid "hours"
 msgstr "小时"
 
-#: .././formats.py:452
+#: .././formats.py:453
 msgid "weeks"
 msgstr "周"
 
-#: .././formats.py:453
+#: .././formats.py:454
 msgid "years"
 msgstr "年"
 
-#: .././formats.py:470
+#: .././formats.py:471
 msgid "Every day"
 msgstr "每一天"
 
-#: .././formats.py:471
+#: .././formats.py:472
 msgid "Weekdays"
 msgstr "工作日"
 
-#: .././formats.py:472
+#: .././formats.py:473
 msgid "Weekends"
 msgstr "周末"
 
-#: .././formats.py:473
+#: .././formats.py:474
 msgid "Monday"
 msgstr "周一"
 
-#: .././formats.py:474
+#: .././formats.py:475
 msgid "Tuesday"
 msgstr "周二"
 
-#: .././formats.py:475
+#: .././formats.py:476
 msgid "Wednesday"
 msgstr "周三"
 
-#: .././formats.py:476
+#: .././formats.py:477
 msgid "Thursday"
 msgstr "周四"
 
-#: .././formats.py:477
+#: .././formats.py:478
 msgid "Friday"
 msgstr "周五"
 
-#: .././formats.py:478
+#: .././formats.py:479
 msgid "Saturday"
 msgstr "周六"
 
-#: .././formats.py:479
+#: .././formats.py:480
 msgid "Sunday"
 msgstr "周日"
 
 #. System folder names
-#: .././formats.py:1142
+#: .././formats.py:1143
 msgid "All Videos"
 msgstr "所有视频"
 
-#: .././formats.py:1143
+#: .././formats.py:1144
 msgid "Bookmarks"
 msgstr "书签"
 
-#: .././formats.py:1144
+#: .././formats.py:1145
 msgid "Favourite Videos"
 msgstr "收藏的视频"
 
-#: .././formats.py:1145
+#: .././formats.py:1146
 msgid "Livestreams"
 msgstr "直播"
 
-#: .././formats.py:1146
+#: .././formats.py:1147
 msgid "Missing Videos"
 msgstr "丢失的视频"
 
-#: .././formats.py:1147
+#: .././formats.py:1148
 msgid "New Videos"
 msgstr "新视频"
 
-#: .././formats.py:1148
+#: .././formats.py:1149
 msgid "Recent Videos"
 msgstr "最近的视频"
 
-#: .././formats.py:1149
+#: .././formats.py:1150
 msgid "Waiting Videos"
 msgstr "等待中视频"
 
-#: .././formats.py:1150
+#: .././formats.py:1151
 msgid "Temporary Videos"
 msgstr "缓存视频"
 
-#: .././formats.py:1151
+#: .././formats.py:1152
 msgid "Unsorted Videos"
 msgstr "未排序视频"
 
-#: .././formats.py:1152
+#: .././formats.py:1153
 msgid "Video Clips"
 msgstr "视频剪辑"
 
-#: .././formats.py:1157
+#: .././formats.py:1158
 msgid "Update using default youtube-dl path"
 msgstr "使用默认 youtube-dl 路径进行更新"
 
-#: .././formats.py:1159
+#: .././formats.py:1160
 msgid "Update using local youtube-dl path"
 msgstr "使用本地 youtube-dl 路径进行更新"
 
-#: .././formats.py:1161
+#: .././formats.py:1162
 msgid "Update using custom youtube-dl path"
 msgstr "使用自定义 youtube-dl 路径进行更新"
 
-#: .././formats.py:1163
+#: .././formats.py:1164
 msgid "Update using pip"
 msgstr "使用 pip更新"
 
-#: .././formats.py:1165
+#: .././formats.py:1166
 msgid "Update using pip (use --no-dependencies option)"
 msgstr "使用 pip 更新（使用--no-dependencies选项）"
 
-#: .././formats.py:1167
+#: .././formats.py:1168
 msgid "Update using pip (omit --user option)"
 msgstr "使用 pip 更新（省略--user选项）"
 
-#: .././formats.py:1169
+#: .././formats.py:1170
 msgid "Update using pip3"
 msgstr "使用 pip3 更新"
 
-#: .././formats.py:1171
+#: .././formats.py:1172
 msgid "Update using pip3 (use --no-dependencies option)"
 msgstr "使用 pip3 更新（使用--no-dependencies选项）"
 
-#: .././formats.py:1173
+#: .././formats.py:1174
 msgid "Update using pip3 (omit --user option)"
 msgstr "使用 pip3 更新（省略--user选项）"
 
-#: .././formats.py:1175
+#: .././formats.py:1176
 msgid "Update using pip3 (recommended)"
 msgstr "使用 pip3 更新（推荐）"
 
-#: .././formats.py:1177
+#: .././formats.py:1178
 msgid "Update using PyPI youtube-dl path"
 msgstr "使用 PyPI youtube-dl 路径进行更新"
 
-#: .././formats.py:1179
+#: .././formats.py:1180
 msgid "Windows 32-bit update (recommended)"
 msgstr "Windows  32 位更新（推荐）"
 
-#: .././formats.py:1181
+#: .././formats.py:1182
 msgid "Windows 32-bit update (use --no-dependencies option)"
 msgstr "Windows  32 位更新（使用--no-dependencies选项）"
 
-#: .././formats.py:1183
+#: .././formats.py:1184
 msgid "Windows 64-bit update (recommended)"
 msgstr "Windows  64 位更新（推荐）"
 
-#: .././formats.py:1185
+#: .././formats.py:1186
 msgid "Windows 64-bit update (use --no-dependencies option)"
 msgstr "Windows  64 位更新（使用--no-dependencies选项）"
 
-#: .././formats.py:1187
+#: .././formats.py:1188
 msgid "youtube-dl updates are disabled"
 msgstr "youtube-dl 更新已禁用"
 
 #. Download operation stages
-#: .././formats.py:1191
+#: .././formats.py:1192
 msgid "Queued"
 msgstr "队列中"
 
-#: .././formats.py:1192
+#: .././formats.py:1193
 msgid "Not started"
 msgstr "未开始"
 
-#: .././formats.py:1193
+#: .././formats.py:1194
 msgid "Active"
 msgstr "活跃"
 
-#: .././formats.py:1194
+#: .././formats.py:1195
 msgid "Paused"
 msgstr "暂停"
 
 #. (not actually used)
-#: .././formats.py:1195
+#: .././formats.py:1196
 msgid "Completed"
 msgstr "完成"
 
 #. (not actually used)
 #. Sub-stages of the 'Error' stage
-#: .././formats.py:1196 .././formats.py:1209
+#: .././formats.py:1197 .././formats.py:1210
 msgid "Error"
 msgstr "错误"
 
-#: .././formats.py:1197
+#: .././formats.py:1198
 msgid "Stalled"
 msgstr "停滞"
 
 #. Sub-stages of the 'Active' stage
-#: .././formats.py:1199
+#: .././formats.py:1200
 msgid "Pre-processing"
 msgstr "预处理"
 
-#: .././formats.py:1201
+#: .././formats.py:1202
 msgid "Concatenating"
 msgstr "Concatenating"
 
-#: .././formats.py:1202
+#: .././formats.py:1203
 msgid "Post-processing"
 msgstr "后期处理"
 
 #. Sub-stages of the 'Completed' stage
-#: .././formats.py:1205
+#: .././formats.py:1206
 msgid "Finished"
 msgstr "已完成"
 
-#: .././formats.py:1206
+#: .././formats.py:1207
 msgid "Warning"
 msgstr "警告"
 
-#: .././formats.py:1207
+#: .././formats.py:1208
 msgid "Already downloaded"
 msgstr "已下载"
 
 #. (not actually used)
-#: .././formats.py:1210
+#: .././formats.py:1211
 msgid "Stopped"
 msgstr "停止"
 
-#: .././formats.py:1211
+#: .././formats.py:1212
 msgid "Filesize abort"
 msgstr "中止的文件大小"
 
-#: .././formats.py:1221
+#: .././formats.py:1222
 msgid ""
 "TRANSLATOR'S NOTE: ID refers to a video's unique ID on the website, e.g. on "
 "YouTube \"CS9OO0S5w2k\""
 msgstr ""
 
-#: .././formats.py:1230
+#: .././formats.py:1231
 msgid "ID"
 msgstr "ID"
 
-#: .././formats.py:1231
+#: .././formats.py:1232
 msgid "Title"
 msgstr "标题"
 
-#: .././formats.py:1232
+#: .././formats.py:1233
 msgid "Quality"
 msgstr "质量"
 
-#: .././formats.py:1233
+#: .././formats.py:1234
 msgid "Autonumber"
 msgstr "自动编号"
 
-#: .././formats.py:1245
+#: .././formats.py:1246
 msgid "Any format"
 msgstr "任何格式"
 
@@ -11444,6 +11455,11 @@ msgstr "启动更新操作，安装/更新 "
 #: .././updates.py:658
 msgid "Update did not start"
 msgstr "更新未开始"
+
+#~ msgid ""
+#~ "When videos are checked/downloaded, older videos are removed from this "
+#~ "folder"
+#~ msgstr "当视频被检查/下载时，旧视频将会从此文件夹中删除"
 
 #~ msgid ""
 #~ "Failed to load the Tartube config file (file cannot be read by this "

@@ -37,45 +37,23 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 - **Tartube** can alert you when livestreams and debut videos are starting (works on **YouTube**, **Twitch** and **Odysee** by default)
 - If creators upload their videos to more than one website (**YouTube** and **BitChute**, for example), **Tartube** can interact with both sites without creating duplicates
 - Certain sites operate an "only one opinion allowed" policy. If you think that the censors will remove a video, against the wishes of its creators and before you've had a chance to watch it, **Tartube** can make an archive copy
-- Certain sites frequently place restrictions on a video, not because it is unsuitable for some audiences, but for purely political reasons. Tartube can, in some circumstances, see videos that are region-blocked and/or age-restricted
 - Certain sites manipulate search results, repeatedly unsubscribe people from their favourite channels and/or deliberately conceal videos that they don't like. **Tartube** won't do any of those things
 - If you want to listen to your favourite discussion videos, for example while driving a car, **Tartube** can make an archive copy of just the audio, rather than the full video
 - **Tartube** is free and open-source software
 
-2.1 What's new in version 2.4.0
--------------------------------
-
-- Videos can be downloaded as a set of video clips, and you can split an existing video into clips (requires **FFmpeg**, see `6.27 Video clips`_). **Tartube** will read timestamps from a video's description, or you can specify your own timestamps
-- Added support for `SponsorBlock <https://streamlink.github.io/>`__. Videos can be downloaded with slices removed, or you can remove slices from an existing video (requires **FFmpeg**, see `6.28 Video slices`_)
-- **Tartube** can extract video comments, and optionally store them in its database (requires **yt-dlp**, see `6.30 Video comments`_)
-- **Tartube** now supports livestream downloads using `streamlink <https://streamlink.github.io/>`__ or with the video's .m3u manifest (see `6.24.4 Downloading livestreams`_). Support for the deprecated `Youtube Stream Capture <https://github.com/mrwnwttk/youtube_stream_capture>`__ has been removed
-- Livestream detection now works on **Twitch** and **Odysee**, as well as on **YouTube**. Detection may work on other sites, after you have set the RSS feed (see `6.24.5 Compatible websites`_)
-- The new **Recent videos** folder shows videos added to the database during the last check or download. Its modified can be customised, if you want, to show videos from today or the last few days
-- Channels, playlists and folders can now be selected. The buttons in the bottom-left corner of the **Videos** tab will check or download just the selected items
-- During a download, the **Videos** tab is now updated in real time, resolving an ancient problem with the Gtk library
-- The toolbar at the bottom of the **Videos** tab has been overhauled. You can now search comments and video descriptions, as well as hide (un)downloaded videos
-- The layout of the **Classic Mode** tab has been overhauled. You can now specify a resolution, as well as a video format
-- The new **Drag and Drop** tab is a quick way to download videos in **.mp3** format. Every zone corresponds to a set of download options (see `6.12 Download options`_), so you can customise the tab in any way you like. Drag and Drop does not work well on MS Windows (this is not a **Tartube** issue)
-- The **Errors/Warnings** tab is now fully searchable. Settings for that tab are now applied immediately, and are reversible
-- Custom downloads have been overhauled. You can now create as many custom downloads as you like, using as many of the new settings as you like (see `6.14 Custom downloads`_)
-- Channels and playlists in your database can now download videos to any location on your filesystem (see `6.18.5 Download all videos to an external folder`_)
-- **Tartube** can now display statistics about the channels and playlists in your database, and the database as a whole (requires **matplotlib**; MS Windows users can install it from the main menu)
-
-For a full list of new features and fixes, see `recent changes <CHANGES>`__.
-
 3 Downloads
 ===========
 
-Stable release: **v2.4.412 (31 Jul 2023)**
+Stable release: **v2.4.429 (21 Nov 2023)**
 
-Development release: **v2.4.416 (20 Sep 2023)**
+Development release: **v2.4.429 (21 Nov 2023)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.412/install-tartube-2.4.412-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.412/tartube-2.4.412-64bit-portable.zip/download>`__ from Sourceforge
-- Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.412/python3-tartube_2.4.412.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.412/tartube-2.4.412.rpm/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.429/install-tartube-2.4.429-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.4.429/install-tartube-with-ffmpeg-2.4.429-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.429/tartube-2.4.429-64bit-portable.zip/download>`__ from Sourceforge
+- Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.429/python3-tartube_2.4.429.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.429/tartube-2.4.429.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -92,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.412/tartube_v2.4.412.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.429/tartube_v2.4.429.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -136,7 +114,7 @@ There is also a portable edition; use this if you want to install **Tartube** on
 
 Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
-Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows`_.
+Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_.
 
 5.1.1 Manual installation - MS Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,7 +323,7 @@ If neither **youtube-dl** nor **pip** are installed on your system, then the rec
 On Fedora, the procedure is:
 
 1. Open a terminal window
-2. Type: ``dnf -y install python3-pip``
+2. Type: ``sudo dnf -y install python3-pip``
 3. Type: ``pip3 install youtube-dl`` or ``pip3 install yt-dlp``
 4. You can now run **Tartube**.
 
@@ -393,21 +371,23 @@ Here is the procedure for Debian-based distributions, like Ubuntu and Linux Mint
 
 1. Make sure **youtube-dl** has been completely removed from your system
 2. Type: ``sudo apt install python3-pip``
-3. Type: ``sudo pip3 install youtube-dl tartube``, or type ``sudo pip3 install yt-dlp tartube``
-4. Type: ``tartube``
+3. ...but on Fedora, type: ``sudo dnf -y install python3-pip``
+4. Type: ``sudo pip3 install youtube-dl tartube``, or type ``sudo pip3 install yt-dlp tartube``
+5. Type: ``tartube``
 
 5.3.7 Install using PyPI (without root privileges)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Type: ``sudo apt install python3-pip``
-2. Type: ``pip3 install tartube``
-3. The **Tartube** executable is stored in ``~/.local/bin`` by default. If that is already in your path, you can start **Tartube** by typing ``tartube``. Otherwise, type ``~/.local/bin/tartube``
-4. **Tartube** asks you to choose a data directory, so do that
-5. In the **Tartube** main window, click **Edit > System preferences... > youtube-dl**
-6. In the box marked **Path to youtube-dl executable**, select **Use PyPI path (\~/.local/bin/youtube-dl)**
-7. Click **OK** to close the dialogue window
-8. Click **Operations > Update youtube-dl**
-9. Once the update has finished, **Tartube** is ready for use
+2. ...but on Fedora, type: ``sudo dnf -y install python3-pip``
+3. Type: ``pip3 install tartube``
+4. The **Tartube** executable is stored in ``~/.local/bin`` by default. If that is already in your path, you can start **Tartube** by typing ``tartube``. Otherwise, type ``~/.local/bin/tartube``
+5. **Tartube** asks you to choose a data directory, so do that
+6. In the **Tartube** main window, click **Edit > System preferences... > youtube-dl**
+7. In the box marked **Path to youtube-dl executable**, select **Use PyPI path (\~/.local/bin/youtube-dl)**
+8. Click **OK** to close the dialogue window
+9. Click **Operations > Update youtube-dl**
+10. Once the update has finished, **Tartube** is ready for use
 
 5.3.8 Manual installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2072,7 +2052,7 @@ You can now set the theme from Tartube's menu.
 * `7.21 Video website blocks me`_
 * `7.22 Too many blocked videos`_
 * `7.23 MS Windows installer is too big`_
-* `7.24 Doesn't work on 32-bit Windows`_
+* `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
 * `7.25 Tartube can't detect livestreams`_
 * `7.26 Livestream is already finished`_
 * `7.27 Can't hear livestream alarms`_
@@ -2094,11 +2074,11 @@ You can now set the theme from Tartube's menu.
 
 *Q: I can't install Tartube / I can't run Tartube / Tartube doesn't work properly!*
 
-A: Tartube is known to fail on Windows 7 systems that have not been updated for some time. A possible solution is to install `this patch from Microsoft <https://www.microsoft.com/en-us/download/details.aspx?id=26767>`__. The simplest way to install the patch is to let Windows update itself, as normal.
+A: See `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
 
 A: See also `7.2 Update Tartube on MS Windows`_
 
-A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI.
+A: On Linux, if the DEB or RPM package doesn't work, try installing via PyPI: `5.3.5 Install using PyPI`_
 
 A: Please report any problems to the authors at our `Github page <https://github.com/axcore/tartube/issues>`__.
 
@@ -2438,20 +2418,18 @@ The NSIS scripts used to create the installers can be found here:
 
 The scripts contain full instructions, so you should be able to create your own installer and then compare it to the official one.
 
-7.24 Doesn't work on 32-bit Windows
------------------------------------
+7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8
+-----------------------------------------------------------
 
-*Q: Tartube does not install/work on 32-bit Windows*
+*Q: Tartube does not install/work on my ancient computer!*
 
-A: Cygwin and MSYS2 have `dropped support for 32-bit Windows <https://www.msys2.org/news/#2020-05-17-32-bit-msys2-no-longer-actively-supported>`__.
+A: MSYS2 has dropped support for older Windows systems. As of November 2023, the minimum requirement is `64bit Windows 8.1 / Windows Server 2012 R2 <https://www.msys2.org/docs/windows_support/>`__.
 
-Therefore there will be no further releases of Tartube for 32-bit Windows. Old installers will still work, and for a time it will still be possible to use them to install Tartube and youtube-dl. However, as of March 2022 it is already not possible to install FFmpeg.
+Tartube cannot be run on any 32-bit Windows system.
 
-The final 32-bit releases (v2.3.367) can be downloaded from here:
+Tartube can be run on Windows 7 and Windows 8, but you will need to use an `older installer <https://sourceforge.net/projects/tartube/files/v2.4.386/install-tartube-with-ffmpeg-2.4.386-64bit.exe/download>`__.
 
-`MS Windows (32-bit) installer <https://sourceforge.net/projects/tartube/files/v2.3.367/install-tartube-2.3.367-32bit.exe/download>`__
-
-`Portable edition (32-bit) <https://sourceforge.net/projects/tartube/files/v2.3.367/tartube-2.3.367-32bit-portable.zip/download>`__
+After running the installer, you can manually update Tartube to the most recent version, as described here: `7.2 Update Tartube on MS Windows`_.
 
 7.25 Tartube can't detect livestreams
 -------------------------------------

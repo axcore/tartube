@@ -1963,6 +1963,10 @@ class TartubeApp(Gtk.Application):
         #   file is stored (if no path set, we behave as if
         #   self.allow_ytdl_archive_mode was 'default')
         self.allow_ytdl_archive_path = None
+        # Flag set to True if the archive file for a media.Folder should be
+        #   updated, when videos are moved into it
+        # N.B. Only works with YouTube videos
+        self.update_ytdl_archive_on_move_flag = False
         # Flag set to True if an archive file should be created when
         #   downloading from the Classic Mode tab (this is marked 'not
         #   recommended' in the edit window)
@@ -5075,6 +5079,10 @@ class TartubeApp(Gtk.Application):
             = json_dict['allow_ytdl_archive_mode']
             self.allow_ytdl_archive_path \
             = json_dict['allow_ytdl_archive_path']
+        if version >= 2004422 \
+        and 'update_ytdl_archive_on_move_flag' in json_dict:
+            self.update_ytdl_archive_on_move_flag \
+            = json_dict['update_ytdl_archive_on_move_flag']
         if version >= 2001022 and 'classic_ytdl_archive_flag' in json_dict:
             self.classic_ytdl_archive_flag \
             = json_dict['classic_ytdl_archive_flag']
@@ -5519,7 +5527,7 @@ class TartubeApp(Gtk.Application):
 
             elif os.name == 'nt' and not 'PROGRAMFILES(X86)' in os.environ:
 
-                self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
+                self.ytdl_update_dict['ytdl_update_win_32_no_dependencies'] = [
                     '..\\..\\..\\mingw32\\bin\python3.exe',
                     '..\\..\\..\\mingw32\\bin\pip3-script.py',
                     'install',
@@ -5543,6 +5551,30 @@ class TartubeApp(Gtk.Application):
                     )
 
             self.ytdl_update_list = ytdl_update_list
+
+        # (In version v2.4.427, self.ytdl_update_dict is updated to replace the
+        #   defunct MSYS2 file 'pip3-script.py')
+        if version < 2004427:
+
+            if os.name == 'nt' and 'PROGRAMFILES(X86)' in os.environ:
+
+                self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
+                    '..\\..\\..\\mingw64\\bin\pip3.exe',
+                    'install',
+                    '--upgrade',
+                    '--no-dependencies',
+                    'youtube-dl',
+                ]
+
+            elif os.name == 'nt' and not 'PROGRAMFILES(X86)' in os.environ:
+
+                self.ytdl_update_dict['ytdl_update_win_32_no_dependencies'] = [
+                    '..\\..\\..\\mingw32\\bin\pip3.exe',
+                    'install',
+                    '-upgrade',
+                    '--no-dependencies',
+                    'youtube-dl',
+                ]
 
 
     def load_config_import_scheduled(self, version, json_dict):
@@ -6051,6 +6083,8 @@ class TartubeApp(Gtk.Application):
             'allow_ytdl_archive_flag': self.allow_ytdl_archive_flag,
             'allow_ytdl_archive_mode': self.allow_ytdl_archive_mode,
             'allow_ytdl_archive_path': self.allow_ytdl_archive_path,
+            'update_ytdl_archive_on_move_flag': \
+            self.update_ytdl_archive_on_move_flag,
             'classic_ytdl_archive_flag': \
             self.classic_ytdl_archive_flag,
 
@@ -9615,28 +9649,24 @@ class TartubeApp(Gtk.Application):
                 # 64-bit MS Windows
                 recommended = 'ytdl_update_win_64'
                 alt_recommended = 'ytdl_update_win_64_no_dependencies'
-                python_path = '..\\..\\..\\mingw64\\bin\python3.exe'
-                pip_path = '..\\..\\..\\mingw64\\bin\pip3-script.py'
+                pip_path = '..\\..\\..\\mingw64\\bin\pip3.exe'
             else:
                 # 32-bit MS Windows
                 recommended = 'ytdl_update_win_32'
                 alt_recommended = 'ytdl_update_win_32_no_dependencies'
-                python_path = '..\\..\\..\\mingw32\\bin\python3.exe'
-                pip_path = '..\\..\\..\\mingw32\\bin\pip3-script.py'
+                pip_path = '..\\..\\..\\mingw32\\bin\pip3.exe'
 
             self.ytdl_bin = 'youtube-dl'
             self.ytdl_path_default = 'youtube-dl'
             self.ytdl_path = 'youtube-dl'
             self.ytdl_update_dict = {
                 recommended: [
-                    python_path,
                     pip_path,
                     'install',
                     '--upgrade',
                     'youtube-dl',
                 ],
                 alt_recommended: [
-                    python_path,
                     pip_path,
                     'install',
                     '--upgrade',
@@ -11473,6 +11503,7 @@ class TartubeApp(Gtk.Application):
             for child_obj in child_list:
 
                 if not self.fixed_recent_folder_days \
+                or child_obj.receive_time is None \
                 or child_obj.receive_time < remove_time:
                     self.fixed_recent_folder.del_child(child_obj)
 
@@ -15155,6 +15186,32 @@ class TartubeApp(Gtk.Application):
         else:
             dest_dir = dest_obj.get_default_dir(self)
 
+        # Get the path to the archive file for this destination directory, if
+        #   it exists (but leave it as None, if not)
+        archive_path = None
+        if self.update_ytdl_archive_on_move_flag:
+
+            if self.allow_ytdl_archive_mode == 'top':
+                archive_dir = self.data_dir
+            elif self.allow_ytdl_archive_mode == 'custom':
+                if self.allow_ytdl_archive_path is not None \
+                and self.allow_ytdl_archive_path != '':
+                    archive_dir = self.allow_ytdl_archive_path
+                else:
+                    # Failsafe
+                    archive_dir = dest_dir
+            else:
+                # self.allow_ytdl_archive_mode == 'default'
+                archive_dir = dest_dir
+
+            archive_path = os.path.abspath(
+                os.path.join(archive_dir, self.ytdl_archive_name),
+            )
+
+        # Store IDs of moved video files (if known) in a list, so the archive
+        #   file can be updated all in one go
+        id_list = []
+
         # Move videos and their associated files, one at a time
         success_count = 0
         fail_count = 0
@@ -15230,6 +15287,13 @@ class TartubeApp(Gtk.Application):
             video_obj.set_parent_obj(dest_obj)
 
             success_count += 1
+            # !!! DEBUG This is an ugly hack, to compensate for the fact that
+            # !!!   lines in the archive file are in the form 'youtube ID', but
+            # !!!   the database only stores the video ID
+            if video_obj.vid is not None \
+            and video_obj.source is not None \
+            and re.search(r'^https?\:\/\/www.youtube.com', video_obj.source):
+                id_list.append(video_obj.vid)
 
         # All done. Tell the destination to sort its children
         dest_obj.sort_children(self)
@@ -15241,6 +15305,20 @@ class TartubeApp(Gtk.Application):
             self.main_win_obj.video_index_populate()
             # Open the destination, which redraws the Video Catalogue
             self.main_win_obj.video_index_select_row(dest_obj)
+
+        # Append video IDs to the archive file
+        if archive_path is not None and id_list:
+
+            try:
+                fh = open(archive_path, 'a')
+
+                for id in id_list:
+                    fh.write('youtube ' + id)
+
+                fh.close()
+
+            except:
+                pass
 
         # Show confirmation dialogue
         msg = _('Videos moved') + ': ' + str(success_count) \
@@ -27904,6 +27982,14 @@ class TartubeApp(Gtk.Application):
             self.track_missing_videos_flag = False
         else:
             self.track_missing_videos_flag = True
+
+
+    def set_update_ytdl_archive_on_move_flag(self, flag):
+
+        if not flag:
+            self.update_ytdl_archive_on_move_flag = False
+        else:
+            self.update_ytdl_archive_on_move_flag = True
 
 
     def set_url_change_confirm_flag(self, flag):

@@ -18440,8 +18440,8 @@ class FolderEditWin(GenericEditWin):
 
         self.add_label(grid,
             '<i>' \
-            + _('When videos are checked/downloaded, older videos are' \
-            + ' removed from this folder',
+            + _('When videos are checked/downloaded, older downloaded videos' \
+            ' are removed from this folder',
             ) + '</i>',
             0, 1, grid_width, 1,
         )
@@ -18457,7 +18457,7 @@ class FolderEditWin(GenericEditWin):
 
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
-            _('Remove videos after days'),
+            _('Remove downloaded videos after days'),
             None,
             None,
             0, 3, 1, 1,
@@ -18570,7 +18570,10 @@ class FolderEditWin(GenericEditWin):
         else:
 
             spinbutton.set_sensitive(True)
-            spinbutton.set_value(self.app_obj.fixed_recent_folder_days)
+#            spinbutton.set_value(self.app_obj.fixed_recent_folder_days)
+            self.app_obj.set_fixed_recent_folder_days(
+                int(spinbutton.get_value())
+            )
 
 
     def on_spinbutton_changed(self, spinbutton):
@@ -25033,10 +25036,22 @@ class SystemPrefWin(GenericPrefWin):
         grid.attach(button2, 3, 6, 1, 1)
         # (Signal connect appears below)
 
+        checkbutton2 = self.add_checkbutton(grid,
+            _(
+            'Update the archive file when videos are moved into a database' \
+            + ' folder (YouTube only)',
+            ),
+            self.app_obj.update_ytdl_archive_on_move_flag,
+            True,                   # Can be toggled by user
+            0, 7, grid_width, 1,
+        )
+        checkbutton2.connect('toggled', self.on_archive_update_toggled)
+
         # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_archive_button_toggled,
+            checkbutton2,
             radiobutton,
             radiobutton2,
             radiobutton3,
@@ -25088,7 +25103,7 @@ class SystemPrefWin(GenericPrefWin):
         # Classic Mode tab preferences
         self.add_label(grid,
             '<u>' + _('Classic Mode tab preferences') + '</u>',
-            0, 7, grid_width, 1,
+            0, 8, grid_width, 1,
         )
 
         checkbutton2 = self.add_checkbutton(grid,
@@ -25098,7 +25113,7 @@ class SystemPrefWin(GenericPrefWin):
             ),
             self.app_obj.classic_ytdl_archive_flag,
             True,                   # Can be toggled by user
-            0, 8, grid_width, 1,
+            0, 9, grid_width, 1,
         )
         checkbutton2.connect('toggled', self.on_archive_classic_button_toggled)
 
@@ -25107,7 +25122,7 @@ class SystemPrefWin(GenericPrefWin):
                 'This setting should only be enabled when downloading' \
                 + ' channels and playlists',
             ) + '</i>',
-            0, 9, grid_width, 1,
+            0, 10, grid_width, 1,
         )
 
 
@@ -26758,45 +26773,49 @@ class SystemPrefWin(GenericPrefWin):
             button.set_sensitive(False)
 
         # Now set up the next combo
-        self.add_label(grid,
-            _('Command for update operations'),
-            0, 3, 1, 1,
-        )
+        if not __main__.__pkg_strict_install_flag__:
 
-        self.cmd_liststore = Gtk.ListStore(str, str)
-        for item in self.app_obj.ytdl_update_list:
-            self.cmd_liststore.append( [item, formats.YTDL_UPDATE_DICT[item]] )
+            self.add_label(grid,
+                _('Command for update operations'),
+                0, 3, 1, 1,
+            )
 
-        combo2 = Gtk.ComboBox.new_with_model(self.cmd_liststore)
-        grid.attach(combo2, 1, 3, (grid_width - 1), 1)
+            self.cmd_liststore = Gtk.ListStore(str, str)
+            for item in self.app_obj.ytdl_update_list:
+                self.cmd_liststore.append(
+                    [item, formats.YTDL_UPDATE_DICT[item]]
+                )
 
-        renderer_text = Gtk.CellRendererText()
-        combo2.pack_start(renderer_text, True)
-        combo2.add_attribute(renderer_text, 'text', 1)
-        combo2.set_entry_text_column(1)
+            combo2 = Gtk.ComboBox.new_with_model(self.cmd_liststore)
+            grid.attach(combo2, 1, 3, (grid_width - 1), 1)
 
-        combo2.set_active(
-            self.app_obj.ytdl_update_list.index(
-                self.app_obj.ytdl_update_current,
-            ),
-        )
-        if __main__.__pkg_strict_install_flag__:
-            combo2.set_sensitive(False)
-        # (Signal connect appears below)
+            renderer_text = Gtk.CellRendererText()
+            combo2.pack_start(renderer_text, True)
+            combo2.add_attribute(renderer_text, 'text', 1)
+            combo2.set_entry_text_column(1)
 
-        # Update the combos, so that the youtube-dl fork, rather than
-        #   youtube-dl itself, is visible (if applicable)
-        self.update_ytdl_combos()
+            combo2.set_active(
+                self.app_obj.ytdl_update_list.index(
+                    self.app_obj.ytdl_update_current,
+                ),
+            )
+            if __main__.__pkg_strict_install_flag__:
+                combo2.set_sensitive(False)
+            # (Signal connect appears below)
 
-        # (Signal connects from above)
-        self.filepaths_combo.connect(
-            'changed',
-            self.on_ytdl_path_combo_changed,
-            entry,
-            button,
-        )
-        button.connect('clicked', self.on_ytdl_path_button_clicked, entry)
-        combo2.connect('changed', self.on_update_combo_changed)
+            # Update the combos, so that the youtube-dl fork, rather than
+            #   youtube-dl itself, is visible (if applicable)
+            self.update_ytdl_combos()
+
+            # (Signal connects from above)
+            self.filepaths_combo.connect(
+                'changed',
+                self.on_ytdl_path_combo_changed,
+                entry,
+                button,
+            )
+            button.connect('clicked', self.on_ytdl_path_button_clicked, entry)
+            combo2.connect('changed', self.on_update_combo_changed)
 
 
     def setup_downloader_ffmpeg_tab(self, inner_notebook):
@@ -28107,7 +28126,7 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_alt_day_string(model[tree_iter][1])
 
 
-    def on_archive_button_toggled(self, checkbutton, radiobutton,
+    def on_archive_button_toggled(self, checkbutton, checkbutton2, radiobutton,
     radiobutton2, radiobutton3, button, button2):
 
         """Called from callback in self.setup_operations_archive_tab().
@@ -28118,6 +28137,8 @@ class SystemPrefWin(GenericPrefWin):
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Other widgets to modify
 
             radiobutton, radiobutton2, radiobutton3 (Gtk.RadioButton): Other
                 widgets to modify
@@ -28138,6 +28159,7 @@ class SystemPrefWin(GenericPrefWin):
             else:
                 button.set_sensitive(False)
                 button2.set_sensitive(False)
+            checkbutton2.set_sensitive(True)
 
         elif not checkbutton.get_active() \
         and self.app_obj.allow_ytdl_archive_flag:
@@ -28147,6 +28169,8 @@ class SystemPrefWin(GenericPrefWin):
             radiobutton3.set_sensitive(False)
             button.set_sensitive(False)
             button2.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
+            checkbutton2.set_active(False)
 
 
     def on_archive_classic_button_toggled(self, checkbutton):
@@ -28212,6 +28236,27 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_allow_ytdl_archive_mode('custom')
             button.set_sensitive(True)
             button2.set_sensitive(True)
+
+
+    def on_archive_update_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_archive_tab().
+
+        Enables/disables updating the youtube-dl archive file, when a video is
+        moved into a media.Folder.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.update_ytdl_archive_on_move_flag:
+            self.app_obj.set_update_ytdl_archive_on_move_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.update_ytdl_archive_on_move_flag:
+            self.app_obj.set_update_ytdl_archive_on_move_flag(False)
 
 
     def on_auto_assign_button_toggled(self, checkbutton):
@@ -35804,17 +35849,21 @@ class SystemPrefWin(GenericPrefWin):
                 _('Use PyPI path') + ' (' + ytdl_path_pypi + ')',
             )
 
-        # Second combo: Command for update operations
-        count = -1
-        for item in self.app_obj.ytdl_update_list:
+        # Second combo: Command for update operations (not always visible)
+        if not __main__.__pkg_strict_install_flag__:
 
-            count += 1
-            descrip = re.sub(standard, fork, formats.YTDL_UPDATE_DICT[item])
-            self.cmd_liststore.set(
-                self.cmd_liststore.get_iter(Gtk.TreePath(count)),
-                1,
-                descrip,
-            )
+            count = -1
+            for item in self.app_obj.ytdl_update_list:
+
+                count += 1
+                descrip = re.sub(
+                    standard, fork, formats.YTDL_UPDATE_DICT[item]
+                )
+                self.cmd_liststore.set(
+                    self.cmd_liststore.get_iter(Gtk.TreePath(count)),
+                    1,
+                    descrip,
+                )
 
         # Update labels in the Operations > Livestreams tab
         self.setup_operations_livestreams_tab_update()

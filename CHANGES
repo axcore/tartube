@@ -1,3 +1,34 @@
+v2.4.429 (21 Nov 2023)
+-------------------------------------------------------------------------------
+
+MINOR NEW FEATURES
+- Add new German translation; thanks to sal0max!
+- In the Videos tab, when moving a video to a different folder, the youtube-dl
+    archive file was not updated, creating some inconvenience for users. This
+    behaviour can now be enabled in 'Edit > System preferences... >
+    Operations > Archive > Update the archive file when videos are moved...'.
+    Note that there is a risk the archive file will be corrupted, so most users
+    should not enabled this feature. Note also, that this feature only works
+    with YouTube videos (Git #580)
+- In the preferences window, MS Windows users can now set the FFmpeg path, when
+    necessary (Git #589)
+
+MAJOR FIXES
+- Fixed inability to open the preferences window, when using the STRICT
+    versions of Tartube (Git #594)
+- Fixed inability to download new videos, when the deletion time for the
+    'Recent Videos' folder was set to a non-zero value. Also fixed the edit
+    window for that folder, which made it impossible to set the deletion time
+    to a non-zero value (Git #598)
+    
+MINOR FIXES
+- The playsound and matplotlib modules are no longer compulsory dependencies,
+    when installing using setup.py (for example, when using the DEB and RPM
+    installers). This is because playsound is not currently installable with
+    Python 3.12
+- When parsing youtube-dl download options, Tartube now correctly escapes the
+    '&' and '%is_live' components, partially resolving Git #586
+
 v2.4.412 (31 Jul 2023)
 -------------------------------------------------------------------------------
 
