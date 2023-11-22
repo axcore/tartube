@@ -10944,9 +10944,19 @@ class FFmpegOptionsEditWin(GenericEditWin):
         entry2.set_text('#' + str(self.edit_obj.uid))
         entry2.set_hexpand(False)
 
-        self.add_label(grid,
+        # (To avoid messing up the neat format of the rows above and below, add
+        #   a secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, 0, 1, grid_width, 1)
+
+        self.add_label(grid2,
             _('Extra command line options (e.g. --help)'),
-            0, 1, grid_width, 1,
+            0, 0, 1, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid2,
+            _('Use these options exclusively'),
+            'extra_override_flag',
+            1, 0, 2, 1,
         )
 
         self.extra_cmd_string_textview, \

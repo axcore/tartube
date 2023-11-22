@@ -553,6 +553,9 @@ class FFmpegOptionsManager(object):
         extra_cmd_string (str): A string of extra FFmpeg options, to be applied
             to the system command (if an empty string, nothing is added)
 
+        extra_override_flag (bool): If True, those extra options are the only
+            options used, overriding all of the options below
+
     OPTIONS (FILE TAB)
 
         add_end_filename (str): A string to be added to the end of the
@@ -743,6 +746,7 @@ class FFmpegOptionsManager(object):
         self.options_dict = {
             # NAME TAB
             'extra_cmd_string': '',
+            'extra_override_flag': False,
             # FILE TAB
             'add_end_filename': '',
             'regex_match_filename': '',
@@ -991,6 +995,31 @@ class FFmpegOptionsManager(object):
             output_path = os.path.abspath(
                 os.path.join(output_dir, output_file),
             )
+
+        # Special case: use only the options specified by 'extra_cmd_string'
+        if options_dict['extra_override_flag'] is True:
+
+            return_list.append(binary)
+            return_list.append('-y')
+            return_list.append('-i')
+
+            if input_mode == 'video':
+                return_list.append(source_video_path)
+            else:
+                return_list.append(source_thumb_path)
+
+            if extra_cmd_list:
+                return_list.extend(extra_cmd_list)
+
+            return_list.extend(
+                [
+                    app_obj.ffmpeg_manager_obj._ffmpeg_filename_argument(
+                        output_path,
+                    ),
+                ],
+            )
+
+            return source_video_path, output_path, return_list
 
         # Special case: when called from config.FFmpegOptionsEditWin, then show
         #   a specimen system command resembling the one that will eventually

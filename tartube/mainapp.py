@@ -8185,6 +8185,13 @@ class TartubeApp(Gtk.Application):
                 scheduled_obj.autostop_size_value = 1
                 scheduled_obj.autostop_size_unit = 'GiB'
 
+        if version < 2004432:       # v2.4.432
+
+            # This version adds a new option to
+            #   ffmpeg_tartube.FFmpegOptionsManager
+            for options_obj in self.ffmpeg_reg_dict.values():
+                options_obj.options_dict['extra_override_flag'] = False
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 

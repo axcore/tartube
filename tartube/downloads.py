@@ -294,7 +294,13 @@ class DownloadManager(threading.Thread):
         if self.alt_limits_check_time > 55:
             self.alt_limits_check_time = 0
         # (Also update the icon in the Progress tab)
-        self.app_obj.main_win_obj.toggle_alt_limits_image(self.alt_limits_flag)
+        # !!! DEBUG GIT #577
+#       self.app_obj.main_win_obj.toggle_alt_limits_image(self.alt_limits_flag)
+        GObject.timeout_add(
+            0,
+            self.app_obj.main_win_obj.toggle_alt_limits_image,
+            self.alt_limits_flag,
+        )
 
         # Let's get this party started!
         self.start()
@@ -421,7 +427,13 @@ class DownloadManager(threading.Thread):
                             )
 
                     # (Also update the icon in the Progress tab)
-                    self.app_obj.main_win_obj.toggle_alt_limits_image(
+                    # !!! DEBUG GIT #577
+#                   self.app_obj.main_win_obj.toggle_alt_limits_image(
+#                       self.alt_limits_flag,
+#                   )
+                    GObject.timeout_add(
+                        0,
+                        self.app_obj.main_win_obj.toggle_alt_limits_image,
                         self.alt_limits_flag,
                     )
 
@@ -561,7 +573,13 @@ class DownloadManager(threading.Thread):
             )
 
         # (Also update the icon in the Progress tab)
-        self.app_obj.main_win_obj.toggle_alt_limits_image(False)
+        # !!! DEBUG GIT #577
+#       self.app_obj.main_win_obj.toggle_alt_limits_image(False)
+        GObject.timeout_add(
+            0,
+            self.app_obj.main_win_obj.toggle_alt_limits_image,
+            False,
+        )
 
         # When youtube-dl reports it is finished, there is a short delay before
         #   the final downloaded video(s) actually exist in the filesystem
