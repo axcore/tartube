@@ -15319,8 +15319,11 @@ class TartubeApp(Gtk.Application):
             try:
                 fh = open(archive_path, 'a')
 
+                if os.path.getsize(archive_path) == 0 and id_list:
+                    fh.write('youtube ' + id_list.pop(0))
+
                 for id in id_list:
-                    fh.write('youtube ' + id)
+                    fh.write('\nyoutube ' + id)
 
                 fh.close()
 
