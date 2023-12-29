@@ -1485,6 +1485,34 @@ def convert_youtube_to_other(app_obj, url, custom_dl_obj=None):
     return url
 
 
+def debug_time(msg):
+
+    """Called by all functions in downloads.py, info.py, mainapp.py,
+    mainwin.py, refresh.py, tidy.py and updates.py.
+
+    Writes the current time, and the name of the calling function to STDOUT,
+    e.g. '2020-01-16 08:55:06 ap 91 __init__'.
+
+    Args:
+
+        msg (str): The message to write
+
+    """
+
+    # Uncomment this code to display the time with microseconds
+#    print(str(datetime.datetime.now().time()) + ' ' + msg)
+
+    # Uncomment this code to display the time without microseconds
+    dt = datetime.datetime.now()
+    print(str(dt.replace(microsecond=0)) + ' ' + msg)
+
+    # Uncomment this code to display the message, without a timestamp
+#    print(msg)
+
+    # This line makes my IDE collapse functions nicely
+    return
+
+
 def disk_get_free_space(path, bytes_flag=False):
 
     """Can be called by anything.
