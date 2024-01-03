@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -602,38 +602,144 @@ class UpdateManager(threading.Thread):
             elif ytdl_update_current == 'ytdl_update_win_32':
                 ytdl_update_current = 'ytdl_update_win_32_no_dependencies'
 
+        # For Tartube's MS Windows portable version, when the whole
+        #   installation folder is moved to a new location in the filesystem,
+        #   youtube-dl must be uninstalled, then reinstalled
+        # Rather than trying to distinguish the portable and non-portable
+        #   versions, just do this for all MS Windows users with default
+        #   settings
+        uninstall_fail_flag = False
+        if os.name == 'nt' and self.wiz_win_obj is None and (
+            ytdl_update_current == 'ytdl_update_win_64' \
+            or ytdl_update_current == 'ytdl_update_win_64_no_dependencies' \
+            or ytdl_update_current == 'ytdl_update_win_32' \
+            or ytdl_update_current == 'ytdl_update_win_32_no_dependencies'
+        ):
+            if not self.uninstall_ytdl(downloader, ytdl_update_current):
+                uninstall_fail_flag = True
+
+        if not uninstall_fail_flag:
+
+            # Prepare a system command...
+            if os.name == 'nt' \
+            and ytdl_update_current == 'ytdl_update_custom_path' \
+            and re.search(r'\.exe$', self.app_obj.ytdl_path):
+                # Special case: on MS Windows, a custom path may point at an
+                #   .exe, therefore 'python3' must be removed from the system
+                #   command (we can't run 'python3.exe youtube-dl.exe' or
+                #   anything like that)
+                cmd_list = [self.app_obj.ytdl_path, '-U']
+
+            else:
+                cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
+
+            mod_list = []
+            for arg in cmd_list:
+
+                # Substitute in the fork, if one is specified
+                arg = self.app_obj.check_downloader(arg, self.wiz_win_obj)
+                # Convert a path beginning with ~ (not on MS Windows)
+                if os.name != 'nt':
+                    arg = re.sub(r'^\~', os.path.expanduser('~'), arg)
+
+                mod_list.append(arg)
+
+            # ...and display it in the Output tab (if required)
+            self.install_ytdl_write_output(
+                ' '.join(mod_list),
+                True,                   # A system command, not a message
+            )
+
+            # Create a new child process using that command...
+            self.create_child_process(mod_list)
+            # ...and set up the PipeReader objects to read from the child
+            #   process STDOUT and STDERR
+            if self.child_process is not None:
+                self.stdout_reader.attach_fh(self.child_process.stdout)
+                self.stderr_reader.attach_fh(self.child_process.stderr)
+
+            while self.is_child_process_alive():
+
+                # Pause a moment between each iteration of the loop (we don't
+                #   want to hog system resources)
+                time.sleep(self.sleep_time)
+
+                # Read from the child process STDOUT and STDERR, in the correct
+                #   order, until there is nothing left to read
+                while self.read_ytdl_child_process(downloader):
+                    pass
+
+            # (Generate our own error messages for debugging purposes, in
+            #   certain situations)
+            if self.child_process is None:
+
+                msg = _('Update did not start')
+
+                self.stderr_list.append(msg)
+                self.install_ytdl_write_output(msg)
+
+            elif self.child_process.returncode > 0:
+
+                msg = _('Child process exited with non-zero code: {}').format(
+                    self.child_process.returncode,
+                )
+
+                self.stderr_list.append(msg)
+                self.install_ytdl_write_output(msg)
+
+        # Operation complete. self.success_flag is checked by
+        #   mainapp.TartubeApp.update_manager_finished
+        if not self.stderr_list:
+            self.success_flag = True
+
+        # Show a confirmation in the the Output tab (or wizard window textview)
+        self.install_ytdl_write_output(_('Update operation finished'))
+
+        # Let the timer run for a few more seconds to prevent Gtk errors (for
+        #   systems with Gtk < 3.24)
+        GObject.timeout_add(
+            0,
+            self.app_obj.update_manager_halt_timer,
+        )
+
+
+    def uninstall_ytdl(self, downloader, ytdl_update_current):
+
+        """Called by self.install_ytdl().
+
+        Uninstall youtube-dl, before reinstalling/updating it.
+
+        Args:
+
+            downloader (str): The value returned by the call to
+                mainapp.TartubeApp.self.app_obj.get_downloader(), e.g.
+                'youtube-dl'
+
+            ytdl_update_current (str): Either the current value of
+                mainapp.TartubeApp.ytdl_update_current, or an overriding
+                value chosen by the calling function
+
+        Return values:
+
+            True on success, False on failure
+
+        """
+
         # Prepare a system command...
-        if os.name == 'nt' \
-        and ytdl_update_current == 'ytdl_update_custom_path' \
-        and re.search(r'\.exe$', self.app_obj.ytdl_path):
-            # Special case: on MS Windows, a custom path may point at an .exe,
-            #   therefore 'python3' must be removed from the system command
-            #   (we can't run 'python3.exe youtube-dl.exe' or anything like
-            #   that)
-            cmd_list = [self.app_obj.ytdl_path, '-U']
+        cmd_list = \
+        ['..\\..\\..\\mingw64\\bin\pip3.exe', 'uninstall', '--yes', downloader]
 
-        else:
-            cmd_list = self.app_obj.ytdl_update_dict[ytdl_update_current]
-
-        mod_list = []
-        for arg in cmd_list:
-
-            # Substitute in the fork, if one is specified
-            arg = self.app_obj.check_downloader(arg, self.wiz_win_obj)
-            # Convert a path beginning with ~ (not on MS Windows)
-            if os.name != 'nt':
-                arg = re.sub(r'^\~', os.path.expanduser('~'), arg)
-
-            mod_list.append(arg)
+        if not 'PROGRAMFILES(X86)' in os.environ:
+            cmd_list[0] = '..\\..\\..\\mingw32\\bin\pip3.exe'
 
         # ...and display it in the Output tab (if required)
         self.install_ytdl_write_output(
-            ' '.join(mod_list),
+            ' '.join(cmd_list),
             True,                   # A system command, not a message
         )
 
         # Create a new child process using that command...
-        self.create_child_process(mod_list)
+        self.create_child_process(cmd_list)
         # ...and set up the PipeReader objects to read from the child process
         #   STDOUT and STDERR
         if self.child_process is not None:
@@ -669,20 +775,11 @@ class UpdateManager(threading.Thread):
             self.stderr_list.append(msg)
             self.install_ytdl_write_output(msg)
 
-        # Operation complete. self.success_flag is checked by
-        #   mainapp.TartubeApp.update_manager_finished
-        if not self.stderr_list:
-            self.success_flag = True
-
-        # Show a confirmation in the the Output tab (or wizard window textview)
-        self.install_ytdl_write_output(_('Update operation finished'))
-
-        # Let the timer run for a few more seconds to prevent Gtk errors (for
-        #   systems with Gtk < 3.24)
-        GObject.timeout_add(
-            0,
-            self.app_obj.update_manager_halt_timer,
-        )
+        # Uninstall complete
+        if self.stderr_list:
+            return False
+        else:
+            return True
 
 
     def install_ytdl_write_output(self, msg, system_cmd_flag=False):
@@ -1041,7 +1138,8 @@ class UpdateManager(threading.Thread):
             #   received
             if not re.search('DEPRECATION', data) \
             and not re.search('You are using pip version', data) \
-            and not re.search('You should consider upgrading', data):
+            and not re.search('You should consider upgrading', data) \
+            and not re.search('Skipping .* as it is not installed', data):
                 self.stderr_list.append(data)
 
             # Show command line output in the Output tab (or wizard window

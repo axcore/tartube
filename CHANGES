@@ -1,3 +1,58 @@
+v2.5.0 (3 Jan 2024)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- Fixed mishandling of non-European alphabets on MS Windows. Videos with
+    Japanese and Korean titles, whose download Tartube was unable to detect
+    (and which were therefore not added to the Tartube database), should now be
+    added correctly (Git #153, #251, #290, #304, #318, #320 and numerous
+    others)
+- Fixed some incorrect video counts in Tartube's database. This problem is not
+    related to the Japanese/Korean problem, but it occured most often when
+    Tartube failed to detect a Japanese/Korean video download
+- Fixed periodic crashes due to Cairo threading issues (Git #577)
+- Fixed the broken 'portable' installation for MS Windows. If you move the
+    installation folder from one location to another, Tartube will now
+    intercept the 'Fatal error in Launcher: U' message, and tell you how to
+    resolve it: namely, to reinstall youtube-dl/yt-dlp. Reinstallation using
+    Tartube's main menu should now work (Git #484, #494)
+- When additional new databases were created (for example, with 'File >
+    Database preferences... > Add new database'), Tartube did not correctly
+    initiate the new sets of download options called 'general' and 'classic'.
+    In addition, the set of download options called 'mp3' was not created at
+    all. One effect was that the Drag and Drop tab did not have the right
+    appearance. The issue now fixed, but Tartube will not try to 'auto-correct'
+    your sets of download options. You can do this yourself, if appropriate,
+    by clicking 'Edit > System preferences... > Options > Download options',
+    opening each set of options with the 'Edit' button, and then clicking the
+    'Completely reset all download options...' button
+- Fixed inability to sort videos in Tartube folders, for example by clicking
+    the 'Reverse sort' button in the toolbar at the bottom of the Videos tab.
+    Reverse sort worked correctly for Tartube channels and playlists
+    (Git #611)
+
+MINOR FIXES
+- When videos are moved to a different folder, the youtube-dl archive file
+    was updated without adding necessary newline characters. Fixed (Git #580
+    again)
+- Fixed minor issues with the .deb installer (Lintian complained about various
+    small problems; all of them except the expected ITP bug should now be
+    resolved)
+- Fixed ugly Gtk/Pango warning messages, visible only to MS Windows users who
+    were running Tartube from a MinGW terminal window
+- Tweaked the downloader auto-detection system, to make yt-dlp rather than
+    youtube-dl the default, in the event that neither can be found, and to
+    eliminate checking for improbable file paths
+
+MINOR NEW FEATURES
+- The FFmpeg options window (in the Videos tab, right-click a video and
+    select 'Special > Process with FFmpeg...') now has, in its Name tab, a new
+    'Use these options exclusively' button, allowing users to specify an
+    FFmpeg command from scratch (Git #600)
+- MS Windows users, whose installer includes a copy of FFmpeg, don't need to
+    install FFmpeg again when prompted by Tartube's setup window. The text of
+    the setup window has been tweaked to make this clearer (Git #609)
+
 v2.4.429 (21 Nov 2023)
 -------------------------------------------------------------------------------
 
@@ -20,7 +75,7 @@ MAJOR FIXES
     'Recent Videos' folder was set to a non-zero value. Also fixed the edit
     window for that folder, which made it impossible to set the deletion time
     to a non-zero value (Git #598)
-    
+
 MINOR FIXES
 - The playsound and matplotlib modules are no longer compulsory dependencies,
     when installing using setup.py (for example, when using the DEB and RPM

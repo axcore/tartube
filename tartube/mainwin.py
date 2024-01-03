@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -62,7 +62,7 @@ if mainapp.HAVE_NOTIFY_FLAG:
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = True
+DEBUG_FUNC_FLAG = False
 
 
 # Classes
@@ -9929,18 +9929,20 @@ class MainWin(Gtk.ApplicationWindow):
 
             elif item == 'text':
                 renderer_text = Gtk.CellRendererText()
+                # v2.4.457: 'style_set' etc commented out, as they seem to be
+                #   unnecessary (and produce Gtk/Pango warnings on MS Windows)
                 column_text = Gtk.TreeViewColumn(
                     None,
                     renderer_text,
                     text=count,
                     style=6,                # Bind italics to column #6
-                    style_set=True,
+#                   style_set=True,
                     weight=7,               # Bind bold text to column #7
-                    weight_set=True,
+#                   weight_set=True,
                     underline=8,
-                    underline_set=True,     # Bind underline to column #8
+#                   underline_set=True,     # Bind underline to column #8
                     strikethrough=9,
-                    strikethrough_set=True, # Bind strikethrough to column #9
+#                   strikethrough_set=True, # Bind strikethrough to column #9
                 )
                 self.video_index_treeview.append_column(column_text)
 
@@ -15034,6 +15036,10 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Add a textview to the tab, using a css style sheet to provide
         #   monospaced white text on a black background
+        # N.B. On MS Windows, the monospace font can't display Japanese/
+        #   Korean characters; solve the problem by not specifying a font at
+        #   all. (A non-monospace font is visible, but that's better than
+        #   gibberish)
         scrolled = Gtk.ScrolledWindow()
         tab.pack_start(scrolled, True, True, 0)
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
@@ -15041,18 +15047,21 @@ class MainWin(Gtk.ApplicationWindow):
         frame = Gtk.Frame()
         scrolled.add_with_viewport(frame)
 
-        style_provider = self.output_tab_set_textview_css(
-            '#css_text_id_' + str(self.output_page_count) \
+        style_text = '#css_text_id_' + str(self.output_page_count) \
             + ', textview text {\n' \
             + '   background-color: ' + self.output_tab_bg_colour + ';\n' \
             + '   color: ' + self.output_tab_text_colour + ';\n' \
             + '}\n' \
             + '#css_label_id_' + str(self.output_page_count) \
-            + ', textview {\n' \
-            + '   font-family: monospace, monospace;\n' \
-            + '   font-size: 10pt;\n' \
+            + ', textview {\n'
+
+        if os.name != 'nt':
+            style_text = style_text + '   font-family: monospace, monospace;\n'
+
+        style_text = style_text + '   font-size: 10pt;\n' \
             + '}'
-        )
+
+        style_provider = self.output_tab_set_textview_css(style_text)
 
         textview = Gtk.TextView()
         frame.add(textview)

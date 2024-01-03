@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -113,10 +113,10 @@ import wizwin
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = True
+DEBUG_FUNC_FLAG = False
 # ...(but don't call utils.debug_time from the timer functions such as
 #   self.script_slow_timer_callback() )
-DEBUG_NO_TIMER_FUNC_FLAG = True
+DEBUG_NO_TIMER_FUNC_FLAG = False
 
 
 # Classes
@@ -5625,6 +5625,17 @@ class TartubeApp(Gtk.Application):
                     'youtube-dl',
                 ]
 
+        # (In version v2.4.448, on MS Windows we download using
+        #   'python3 -X utf8 youtube-dl.exe ...' instead of just
+        #   'youtube-dl ...'
+        if version < 2004448 and os.name == 'nt':
+
+            new_path = '..\\..\\..\\mingw64\\bin\youtube-dl.exe'
+            if self.ytdl_path_default == 'youtube-dl':
+                self.ytdl_path_default = new_path
+            if self.ytdl_path == 'youtube-dl':
+                self.ytdl_path = new_path
+
 
     def load_config_import_scheduled(self, version, json_dict):
 
@@ -8993,10 +9004,15 @@ class TartubeApp(Gtk.Application):
         self.options_reg_count = 0
         self.options_reg_dict = {}
         self.general_options_obj = self.create_download_options('general')
+        self.general_options_obj.set_general_options()
         self.classic_options_obj = self.create_download_options('classic')
+        self.classic_options_obj.set_classic_mode_options()
+        mp3_options_obj = self.create_download_options('mp3')
+        mp3_options_obj.set_mp3_options()
         self.classic_dropzone_list = [
-            self.general_custom_dl_obj.uid,
-            self.classic_custom_dl_obj.uid,
+            self.general_options_obj.uid,
+            self.classic_options_obj.uid,
+            mp3_options_obj.uid,
         ]
         self.ffmpeg_reg_count = 0
         self.ffmpeg_reg_dict = {}
@@ -9771,16 +9787,18 @@ class TartubeApp(Gtk.Application):
                 # 64-bit MS Windows
                 recommended = 'ytdl_update_win_64'
                 alt_recommended = 'ytdl_update_win_64_no_dependencies'
+                ytdl_path = '..\\..\\..\\mingw64\\bin\youtube-dl.exe'
                 pip_path = '..\\..\\..\\mingw64\\bin\pip3.exe'
             else:
                 # 32-bit MS Windows
                 recommended = 'ytdl_update_win_32'
                 alt_recommended = 'ytdl_update_win_32_no_dependencies'
+                ytdl_path = '..\\..\\..\\mingw32\\bin\youtube-dl.exe'
                 pip_path = '..\\..\\..\\mingw32\\bin\pip3.exe'
 
             self.ytdl_bin = 'youtube-dl'
-            self.ytdl_path_default = 'youtube-dl'
-            self.ytdl_path = 'youtube-dl'
+            self.ytdl_path_default = ytdl_path
+            self.ytdl_path = ytdl_path
             self.ytdl_update_dict = {
                 recommended: [
                     pip_path,
@@ -9908,8 +9926,11 @@ class TartubeApp(Gtk.Application):
 
         """Can be called by anything (initially called by self.setup_paths() ).
 
-        Tries to auto-detect the location of yt-dlp or youtube-dl, and updates
-        IVs accordingly.
+        Tries to auto-detect the location of yt-dlp, and updates IVs
+        accordingly.
+
+        As of v2.4.459, this function no longer tries to auto-detect youtube-dl
+        (which has been moribund since 2022).
         """
 
         if DEBUG_FUNC_FLAG:
@@ -9920,7 +9941,7 @@ class TartubeApp(Gtk.Application):
         if os.name == 'nt':
             return
 
-        # Check for yt-dlp first (as of 2022, it is virtually abandoned)
+        # Check for yt-dlp
         pypi_path = re.sub(
             r'^\~', os.path.expanduser('~'),
             re.sub('youtube-dl', 'yt-dlp', self.ytdl_path_pypi),
@@ -9930,40 +9951,11 @@ class TartubeApp(Gtk.Application):
 
         path = None
         if os.path.isfile(pypi_path):
-            path = pypi_path
+            self.ytdl_path = pypi_path
         elif os.path.isfile(default_path):
-            path = default_path
-        elif os.path.isfile(bin_path):
-            path = bin_path
-
-        if path is not None:
-
-            self.ytdl_path = path
-
-            if not __main__.__pkg_strict_install_flag__:
-
-                if self.ytdl_path == self.ytdl_path_pypi:
-                    self.ytdl_update_current = 'ytdl_update_pip3_recommend'
-                elif self.ytdl_path == self.ytdl_path_default:
-                    self.ytdl_update_current = 'ytdl_update_default_path'
-                else:
-                    self.ytdl_update_current = 'ytdl_update_local_path'
-
-            return
-
-        # Otherwise, assume youtube-dl
-        pypi_path = re.sub(
-            r'^\~', os.path.expanduser('~'),
-            self.ytdl_path_pypi,
-        )
-
-        if os.path.isfile(pypi_path) \
-        or __main__.__pkg_install_flag__:
-            self.ytdl_path = self.ytdl_path_pypi
-        elif os.path.isfile(self.ytdl_path_default):
-            self.ytdl_path = self.ytdl_path_default
+            self.ytdl_path = default_path
         else:
-            self.ytdl_path = self.ytdl_bin
+            self.ytdl_path = bin_path
 
         if not __main__.__pkg_strict_install_flag__:
 
@@ -19143,21 +19135,27 @@ class TartubeApp(Gtk.Application):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 19145 folder_child_compare')
 
-        if self.catalogue_reverse_sort_flag:
-            obj1, obj2 = obj2, obj1
-
         if str(obj1.__class__) == str(obj2.__class__) \
         or (
             isinstance(obj1, media.GenericRemoteContainer) \
             and isinstance(obj2, media.GenericRemoteContainer)
         ):
+            # If both objects are media.Video objects, use the standard video
+            #    sorting function
+            # Note that .video_compare() also swaps the positions of
+            #   obj1 & obj2...
             if isinstance(obj1, media.Video):
 
-                # If both objects are media.Video objects, use the standard
-                #   video sorting function
                 return self.video_compare(obj1, obj2)
 
+            # ...so we don't do that until this line
+            elif self.catalogue_reverse_sort_flag:
+                obj1, obj2 = obj2, obj1
+
         else:
+
+            if self.catalogue_reverse_sort_flag:
+                obj1, obj2 = obj2, obj1
 
             # If the objects are of different class, then we can sort by class
             if isinstance(obj1, media.Folder):

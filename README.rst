@@ -44,16 +44,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.4.429 (21 Nov 2023)**
+Stable release: **v2.5.0 (3 Jan 2024)**
 
-Development release: **v2.4.438 (29 Dec 2023)**
+Development release: **v2.5.0 (3 Jan 2024)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.4.429/install-tartube-2.4.429-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.4.429/install-tartube-with-ffmpeg-2.4.429-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.4.429/tartube-2.4.429-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.0/install-tartube-2.5.0-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.0/install-tartube-with-ffmpeg-2.5.0-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.0/tartube-2.5.0-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.4.429/python3-tartube_2.4.429.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.4.429/tartube-2.4.429.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.0/python3-tartube_2.5.0.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.0/tartube-2.5.0.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -70,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.4.429/tartube_v2.4.429.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.0/tartube_v2.5.0.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -108,13 +108,13 @@ If you just want to download videos with a minimum of fuss, do this:
 5.1 Installation - MS Windows
 -----------------------------
 
-MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. You must be using Windows Vista or above; the installer will not work on Windows XP.
+MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. 
 
 There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat**.
 
 Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
 
-Tartube is no longer supported on MS Windows (32-bit) - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_.
+Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_.
 
 5.1.1 Manual installation - MS Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,6 +156,10 @@ If you want to perform a manual installation, you can follow this procedure, whi
 - Now, to run **Tartube**, type these commands in the MINGW64 terminal (don't forget to use *forward* slashes):
 
         **cd /home/YOURNAME/tartube**
+
+        **python3 -X utf8 tartube/tartube**
+
+- The **-X utf8** part enables **Tartube** to handle non-European alphabets (such as Japanese and Korean) correctly. If this is not a concern, then **Tartube** can be started like this:
 
         **python3 tartube/tartube**
 
@@ -873,12 +877,12 @@ The new options are applied to *everything* in the **History folder**. A pen ico
 .. image:: screenshots/example15.png
   :alt: Download options applied to the History folder
 
-Now, suppose you want to add a *different* set of download options, but only for the channel **TimeGhost History**.
+Now, suppose you want to add a *different* set of download options, but only for the channel **OverSimplified**.
 
 -  Right-click the channel, and select **Downloads > Apply download options...**
 -  In the new windows, click the **OK** button
 
-The previous set of download options still applies to everything in the **History** folder, *except* the channel **TimeGhost History**.
+The previous set of download options still applies to everything in the **History** folder, *except* the channel **OverSimplified**.
 
 .. image:: screenshots/example16.png
   :alt: Download options applied to The Armchair Historian channel
@@ -2066,8 +2070,7 @@ You can now set the theme from Tartube's menu.
 * `7.35 Cannot embed thumbnails in videos`_
 * `7.36 Cannot install FFmpeg`_
 * `7.37 Annoying messages after downloads`_
-* `7.38 Japanese/Korean videos won't download`_
-* `7.39 No puedo hablar inglés`_
+* `7.38 No puedo hablar inglés`_
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2094,7 +2097,7 @@ On MS Windows, this is how to run **Tartube** from inside a terminal window:
 
         **cd /home/user/tartube**
 
-        **python3 tartube/tartube**
+        **python3 -X utf8 tartube/tartube**
 
 7.2 Update Tartube on MS Windows
 --------------------------------
@@ -2573,16 +2576,7 @@ This issue only affects users on MS Windows.
 
 A: The dialogues can be disabled in **Edit > System preferences > Operations > Actions > Don't notify the user at the end of an operation**.
 
-7.38 Japanese/Korean videos won't download
-------------------------------------------
-
-*Q: On MS Windows, I can't download my favourite anime/K-pop video!*
-
-A: This is an `unresolved bug <https://github.com/axcore/tartube/issues/320>`__ that affects some users on MS Windows. Videos whose names contain Japanese, Korean or other non-ASCII characters can be downloaded, but Tartube cannot find the resulting videos (and their thumbnails and metadata) and does not add them to the database.
-
-As a workaround, click **Edit > General download options... > Files > Filesystem**, and then select **Restrict filenames to ASCII characters**. The videos should be downloaded and added to Tartube's database, but with garbled names (which is better than nothing.)
-
-7.39 No puedo hablar inglés
+7.38 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar Tartube porque no hablo inglés!*

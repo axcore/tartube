@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -57,7 +57,7 @@ if mainapp.HAVE_FEEDPARSER_FLAG:
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = True
+DEBUG_FUNC_FLAG = False
 
 
 # Decorator to add thread synchronisation to some functions in the
@@ -4225,8 +4225,15 @@ class VideoDownloader(object):
         # All other cases
         elif video_obj:
 
-            if not media_data_obj.dl_flag:
-
+            # v2.4.456: added an additional check; if youtube-dl downloaded the
+            #   video but Tartube's database didn't detect it in the filesystem
+            #   (for example because of encoding problems in Git #320), then
+            #   this call to mark_video_downloaded() messes up the database
+            if not video_obj.dl_flag \
+            and video_obj.name == filename \
+            and os.path.isfile(
+                os.path.abspath(os.path.join(dir_path, filename + extension)),
+            ):
                 GObject.timeout_add(
                     0,
                     app_obj.mark_video_downloaded,
@@ -5469,7 +5476,8 @@ class VideoDownloader(object):
                     dl_stat_dict['percent'] = '100%'
 
                 # Get file already downloaded status
-                if stdout_list[-1] == 'downloaded':
+#               if stdout_list[-1] == 'downloaded':
+                if re.search(r' has already been downloaded$', stdout):
 
                     path, filename, extension = self.extract_filename(
                         ' '.join(stdout_with_spaces_list[1:-4]),
@@ -6398,6 +6406,18 @@ class VideoDownloader(object):
             # Write output to the downloader log (if required)
             if app_obj.ytdl_log_stderr_flag:
                 app_obj.write_downloader_log(data)
+
+            # For Tartube's MS Windows portable version, when the whole
+            #   installation folder is moved to a new location in the
+            #   filesystem, youtube-dl must be uninstalled, then reinstalled
+            if re.search('Fatal error in launcher\: U', data) \
+            and app_obj.ytdl_output_stderr_flag:
+
+                app_obj.main_win_obj.output_tab_write_stderr(
+                    self.download_worker_obj.worker_id,
+                    self.app_obj.get_downloader() + ': ' \
+                    + _('Please reinstall/update your downloader'),
+                )
 
         # Either (or both) of STDOUT and STDERR were non-empty
         self.queue.task_done()

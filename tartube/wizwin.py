@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -728,6 +728,7 @@ class SetupWizWin(GenericWizWin):
             self.page_list.append('setup_finish_page_strict')
 
         else:
+            self.page_list.append('setup_fetch_ffmpeg_page') # !!! test remove
             self.page_list.append('setup_fetch_downloader_page')
             self.page_list.append('setup_classic_mode_page')
             self.page_list.append('setup_finish_page_default')
@@ -1429,7 +1430,13 @@ class SetupWizWin(GenericWizWin):
         self.add_label(
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
-                _('Click the button to install FFmpeg.'),
+                _(
+                    'If the Tartube installer did not include a copy of' \
+                    + ' FFmpeg, then click the button below to install it.' \
+                    + ' Without FFmpeg, Tartube cannot download high-' \
+                    + 'resolution videos, and cannot display YouTube' \
+                    + ' thumbnails.',
+                ),
                 self.text_len,
             ) + '</span>',
             0, 0, grid_width, 1,
@@ -1442,9 +1449,8 @@ class SetupWizWin(GenericWizWin):
             '<span font_size="large" style="italic">' \
             + utils.tidy_up_long_string(
                 _(
-                    'Without FFmpeg, Tartube cannot download high-resolution' \
-                    + ' videos, and cannot display video thumbnails from' \
-                    + ' YouTube.',
+                    'The operation might take several minutes. If it fails,' \
+                    + ' try clicking the <b>Install FFmpeg</b> button again.',
                 ),
                 self.text_len,
             ) + '</span>',
@@ -1453,21 +1459,6 @@ class SetupWizWin(GenericWizWin):
 
         # (Empty label for spacing)
         self.add_empty_label(0, 3, grid_width, 1)
-
-        self.add_label(
-            '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
-                _(
-                    'The operation might take several minutes. If it fails,' \
-                    + ' try clicking the <b>Install FFmpeg</b> button again.',
-                ),
-                self.text_len,
-            ) + '</span>',
-            0, 4, grid_width, 1,
-        )
-
-        # (Empty label for spacing)
-        self.add_empty_label(0, 5, grid_width, 1)
 
         if os.name != 'nt':
             extra_rows = 0
@@ -1479,7 +1470,7 @@ class SetupWizWin(GenericWizWin):
                 '<span font_size="large" style="italic">' \
                 + _('Download size') + ': <b>0.3 GB</b> - ' \
                 + _('Install size') + ': <b>1.5 GB</b></span>',
-                0, (5 + extra_rows), grid_width, 1,
+                0, (3 + extra_rows), grid_width, 1,
             )
 
         if not self.try_install_ffmpeg_flag:
@@ -1488,13 +1479,13 @@ class SetupWizWin(GenericWizWin):
             msg = _('Reinstall FFmpeg')
         self.ffmpeg_button = Gtk.Button(msg)
 
-        self.inner_grid.attach(self.ffmpeg_button, 1, (6 + extra_rows), 1, 1)
+        self.inner_grid.attach(self.ffmpeg_button, 1, (4 + extra_rows), 1, 1)
         self.ffmpeg_button.set_hexpand(False)
         # (Signal connect appears below)
 
         self.ffmpeg_scrolled, self.ffmpeg_textview, self.ffmpeg_textbuffer \
         = self.add_textview(
-            0, (7 + extra_rows), grid_width, 1,
+            0, (5 + extra_rows), grid_width, 1,
         )
 
         # (Signal connects from above)

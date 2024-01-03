@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -2799,14 +2799,19 @@ custom_dl_obj=None, divert_mode=None):
     if os.name != 'nt':
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + options_list + [source]
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + options_list + [source]
+
     else:
-        cmd_list = [ytdl_path] + options_list + [source]
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + options_list + [source]
+        else:
+            cmd_list = [ytdl_path] + options_list + [source]
 
     return cmd_list
 
@@ -2848,14 +2853,19 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     #   (converting a string into a list of elements separated by whitespace)
     options_list = parse_options(options_obj.options_dict['extra_cmd_string'])
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + options_list
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + options_list
+
     else:
-        cmd_list = [ytdl_path] + options_list
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + options_list
+        else:
+            cmd_list = [ytdl_path] + options_list
 
     # Add the source URL, if allowed
     if not options_obj.options_dict['direct_url_flag'] \
@@ -3025,14 +3035,19 @@ classic_flag):
     if os.name != 'nt':
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + mod_options_list + [source]
+
     else:
-        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+        else:
+            cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
 
@@ -3149,14 +3164,19 @@ dest_dir, temp_dir, output_template, custom_dl_obj, divert_mode, classic_flag):
     if os.name != 'nt':
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + mod_options_list + [source]
+
     else:
-        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+        else:
+            cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
 
@@ -3292,14 +3312,19 @@ dest_dir, temp_dir, stamp_list, custom_dl_obj, divert_mode, classic_flag):
     if os.name != 'nt':
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + mod_options_list + [source]
+
     else:
-        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+        else:
+            cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
 
@@ -3461,14 +3486,19 @@ classic_flag):
     if os.name != 'nt':
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + mod_options_list + [source]
+
     else:
-        cmd_list = [ytdl_path] + mod_options_list + [source]
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + mod_options_list + [source]
+        else:
+            cmd_list = [ytdl_path] + mod_options_list + [source]
 
     return cmd_list
 
@@ -3498,14 +3528,20 @@ def generate_m3u_system_cmd(app_obj, media_data_obj):
     if os.name != 'nt':
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
-    # Set the list. At the moment, a custom path must be preceded by 'python3'
-    #   (Git #243), except on MS Windows when the custom path points at an .exe
-    #   (Git #299)
-    if app_obj.ytdl_path_custom_flag \
-    and (os.name != 'nt' or not re.search(r'\.exe$', ytdl_path)):
-        cmd_list = ['python3'] + [ytdl_path] + ['-g'] + [media_data_obj.source]
+    # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
+    #   with (for example) Japanese and Korean characters are undetectable,
+    #   once downloaded (Git #320)
+    if os.name == 'nt':
+        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
+        + ['-g'] + [media_data_obj.source]
+
     else:
-        cmd_list = [ytdl_path] + ['-g'] + [media_data_obj.source]
+
+        if app_obj.ytdl_path_custom_flag:
+            cmd_list = ['python3'] + [ytdl_path] + ['-g'] \
+            + [media_data_obj.source]
+        else:
+            cmd_list = [ytdl_path] + ['-g'] + [media_data_obj.source]
 
     return cmd_list
 

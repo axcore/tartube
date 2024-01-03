@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2023 A S Lewis
+# Copyright (C) 2019-2024 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -27,41 +27,24 @@ import setuptools
 import sys
 
 # Set a standard long_description, modified only for Debian/RPM packages
-long_description="""
-Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video
+long_description = \
+"""Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video
 downloaders.
-
-It is written in Python 3 / Gtk 3 and runs on MS Windows, Linux, BSD and MacOS.
-
-- You can fetch a list of videos from your favourite channels and playlists on
-YouTube, BitChute, and hundreds of other websites
-- In buffering is an issue, you can download a temporary copy of a video before
-automatically opening it in your favourite media player
-- Tartube will organise your videos into convenient folders (if that's what you
-want)
-- Tartube can alert you when livestreams and debut videos are starting (YouTube
-only)
-- If creators upload their videos to more than one website (YouTube and
-BitChute, for example), Tartube can interact with both sites without creating
-duplicates
-- Certain websites operate an "only one opinion allowed" policy. If you think
-that the censors will remove a video, against the wishes of its creators and
-before you've had a chance to watch it, Tartube can make an archive copy
-- Certain websites manipulate search results, repeatedly unsubscribe people
-from their favourite channels and/or deliberately conceal videos that they
-don't like. Tartube won't do any of those things
-- If you want to listen to your favourite discussion videos, for example while
-driving a car, Tartube can make an archive copy of just the audio, rather than
-the full video
-- Tartube is free and open-source software
-
-Note for PyPI users: Tartube should be installed with: pip3 install tartube
-"""
-
-alt_description = """
-Tartube is a GUI front-end for youtube-dl, yt-dlp and other compatible video
-downloaders.
-"""
+.
+ - You can fetch a list of videos from your favourite channels and playlists on
+ YouTube, BitChute, and hundreds of other websites
+ - In buffering is an issue, you can download a temporary copy of a video
+ before automatically opening it in your favourite media player
+ - Tartube will organise your videos into convenient folders (if that's what
+ you want)
+ - Tartube can alert you when livestreams and debut videos are starting
+ (YouTube only)
+ - If you think the censors will remove a video, against the wishes of its
+ creators and before you've had a chance to watch it, Tartube can make an
+ archive copy
+ - Tartube won't manipulate search results, unsubscribe you from your favourite
+ channels or deliberately conceal videos
+ - Tartube is free and open-source software"""
 
 # data_files for setuptools.setup are added here
 param_list = []
@@ -147,8 +130,6 @@ if pkg_flag:
     # Icons/sounds must be copied into the right place
     icon_path = '/usr/share/tartube/icons/'
     sound_path = '/usr/share/tartube/sounds/'
-    # Use a shorter long description, as the standard one tends to cause errors
-    long_description = alt_description
     # Add a desktop file
     param_list.append(('share/applications', ['pack/tartube.desktop']))
     param_list.append(('share/pixmaps', ['pack/tartube.png']))
@@ -183,15 +164,13 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name = 'tartube',
-    version = '2.4.438',
-    description = 'GUI front-end for youtube-dl, yt-dlp and other compatible' \
-    + ' video downloaders',
+    version = '2.5.0',
+    description = 'GUI front-end for youtube-dl and yt-dlp',
     long_description = long_description,
     long_description_content_type = 'text/plain',
     url = 'https://tartube.sourceforge.io',
     author = 'A S Lewis',
     author_email = 'aslewis@cpan.org',
-#    license = license,
     license = """LGPLv2.1+""",
     classifiers = [
         'Development Status :: 5 - Production/Stable',
