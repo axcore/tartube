@@ -62,7 +62,7 @@ if mainapp.HAVE_NOTIFY_FLAG:
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
+DEBUG_FUNC_FLAG = True
 
 
 # Classes

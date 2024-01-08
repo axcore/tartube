@@ -57,7 +57,7 @@ if mainapp.HAVE_FEEDPARSER_FLAG:
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
+DEBUG_FUNC_FLAG = True
 
 
 # Decorator to add thread synchronisation to some functions in the

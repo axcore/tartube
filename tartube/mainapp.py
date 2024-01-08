@@ -114,10 +114,10 @@ import wizwin
 
 
 # Debugging flag (calls utils.debug_time at the start of every function)
-DEBUG_FUNC_FLAG = False
+DEBUG_FUNC_FLAG = True
 # ...(but don't call utils.debug_time from the timer functions such as
 #   self.script_slow_timer_callback() )
-DEBUG_NO_TIMER_FUNC_FLAG = False
+DEBUG_NO_TIMER_FUNC_FLAG = True
 
 
 # Classes
