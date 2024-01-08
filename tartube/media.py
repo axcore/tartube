@@ -29,6 +29,7 @@ import datetime
 import functools
 import os
 import re
+import string
 import time
 
 
@@ -55,8 +56,9 @@ class GenericMedia(object):
     def get_natural_name(self, name):
 
         """Converts the specified name so it is suitable for so-called
-        'natural' sorting, adding leading zeroes and reducing to all-lower
-        case.
+        'natural' sorting, removing leading/trailing whitespace, remove
+        punctuation, adding leading zeroes to numbers, and reducing to
+        all-lower case.
 
         Based on the algorithm by Stephen Quan:
             https://stackoverflow.com/questions/4836710/
@@ -66,6 +68,10 @@ class GenericMedia(object):
             name (str): The name to process
 
         """
+
+        name = name.translate(str.maketrans('', '', string.punctuation))
+        name = name.strip()
+        name = re.sub(r'^[\s]+', ' ', name)
 
         return re.sub(
             r'\d+',
@@ -1892,7 +1898,8 @@ class Video(GenericMedia):
         # If the video's JSON data has not been fetched, self.name and
         #   self.nickname are the same
         self.nickname = name
-        # Modified version of self.nickname, padded with leading zeroes and
+        # Modified version of self.nickname, with leading/trailing whitespace
+        #   removed, punctuation removed, padded with leading zeroes and
         #   reduced to lower case; used in so-called 'natural' sorting of names
         self.natname = name
         # Download source (a URL)
@@ -3457,7 +3464,8 @@ class Channel(GenericRemoteContainer):
         # Channel nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it)
         self.nickname = name
-        # Modified version of self.nickname, padded with leading zeroes and
+        # Modified version of self.nickname, with leading/trailing whitespace
+        #   removed, punctuation removed, padded with leading zeroes and
         #   reduced to lower case; used in so-called 'natural' sorting of names
         self.natname = name
         # Download source (a URL)
@@ -3802,7 +3810,8 @@ class Playlist(GenericRemoteContainer):
         # Playlist nickname (displayed in the Video Index; the same as .name,
         #   unless the user changes it)
         self.nickname = name
-        # Modified version of self.nickname, padded with leading zeroes and
+        # Modified version of self.nickname, with leading/trailing whitespace
+        #   removed, punctuation removed, padded with leading zeroes and
         #   reduced to lower case; used in so-called 'natural' sorting of names
         self.natname = name
         # Download source (a URL)
@@ -4167,7 +4176,8 @@ class Folder(GenericContainer):
         #   unless the user changes it). Note that the nickname of a fixed
         #   folder can't be changed
         self.nickname = name
-        # Modified version of self.nickname, padded with leading zeroes and
+        # Modified version of self.nickname, with leading/trailing whitespace
+        #   removed, punctuation removed, padded with leading zeroes and
         #   reduced to lower case; used in so-called 'natural' sorting of names
         self.natname = name
 

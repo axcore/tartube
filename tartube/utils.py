@@ -34,6 +34,7 @@ import os
 import re
 import requests
 import shutil
+import string
 import subprocess
 import sys
 import time
@@ -2008,9 +2009,11 @@ def extract_timestamps_from_descrip(app_obj, descrip):
             # Remove punctuation in the title, such as the hyphen in a line
             #   like 'Intro - 15.52', and strip leading/trailing whitespace
             if title != '':
-                # !!! DEBUG This is not yet tested on other alphabets
-                title = re.sub(r'\s\W+\s', ' ', title)
-                title = strip_whitespace(title)
+                title = title.translate(
+                    str.maketrans('', '', string.punctuation),
+                )
+                title = title.strip()
+                title = re.sub(r'^[\s]+', ' ', title)
 
             # Use None as the title, rather than an empty string
             if title == '':

@@ -37,6 +37,7 @@ import pickle
 import platform
 import re
 import shutil
+import string
 import sys
 import threading
 import time
@@ -8267,6 +8268,22 @@ class TartubeApp(Gtk.Application):
             for options_obj in self.ffmpeg_reg_dict.values():
                 options_obj.options_dict['extra_override_flag'] = False
 
+        if version < 2005002:       # v2.5.002
+
+            # This version updates each media.Video's .natname, to remove
+            #   punctuation and leading/trailing zeroes
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+
+                    natname = media_data_obj.natname
+                    natname = natname.translate(
+                        str.maketrans('', '', string.punctuation)
+                    )
+                    natname = natname.strip()
+                    natname = re.sub(r'^[\s]+', ' ', natname)
+
+                    media_data_obj.natname = natname
+                    
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
