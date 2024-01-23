@@ -1982,6 +1982,11 @@ class TartubeApp(Gtk.Application):
         #   downloading from the Classic Mode tab (this is marked 'not
         #   recommended' in the edit window)
         self.classic_ytdl_archive_flag = False
+        # Flag set to True when re-downloading video(s), so that the archive
+        #   file is not used at all (otherwise, the re-download will fail)
+        # Applies only to the Videos tab; the Classic Mode tab has a button
+        #   near the bottom, which the user can use to ignore the archive file
+        self.block_ytdl_archive_flag = False
 
         # Flag set to True if, when checking videos/channels/playlists, we
         #   should apply a timeout (in case youtube-dl gets stuck downloading
@@ -8283,7 +8288,7 @@ class TartubeApp(Gtk.Application):
                     natname = re.sub(r'^[\s]+', ' ', natname)
 
                     media_data_obj.natname = natname
-                    
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -11960,6 +11965,10 @@ class TartubeApp(Gtk.Application):
         #   been closed to the system tray)
         if self.main_win_obj.is_visible():
             self.main_win_obj.show_all()
+
+        # If the youtube-dl archive file(s) were temporarily blocked for a
+        #   video re-download, re-enable them
+        self.block_ytdl_archive_flag = True
 
         # If Tartube is due to shut down, then shut it down
         show_newbie_dialogue_flag = False
@@ -27191,6 +27200,14 @@ class TartubeApp(Gtk.Application):
             self.block_livestreams_flag = True
 
 
+    def set_block_ytdl_archive_flag(self, flag):
+
+        if not flag:
+            self.block_ytdl_archive_flag = False
+        else:
+            self.block_ytdl_archive_flag = True
+
+
     def set_catalogue_draw_blocked_flag(self, flag):
 
         if not flag:
@@ -29248,3 +29265,11 @@ class TartubeApp(Gtk.Application):
             self.ytdl_write_verbose_flag = False
         else:
             self.ytdl_write_verbose_flag = True
+
+
+    def set_ytdlp_filter_options_flag(self, flag):
+
+        if not flag:
+            self.ytdlp_filter_options_flag = False
+        else:
+            self.ytdlp_filter_options_flag = True

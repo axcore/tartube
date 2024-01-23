@@ -20114,6 +20114,13 @@ class MainWin(Gtk.ApplicationWindow):
         #   as downloaded
         self.app_obj.mark_video_downloaded(media_data_obj, False)
 
+        # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl will
+        #   have created a ytdl_archive.txt, recording every video ever
+        #   downloaded in the parent directory. This will prevent a successful
+        #   re-downloading of the video
+        # Temporarily block usage of the archive file
+        self.app_obj.set_block_ytdl_archive_flag(True)
+
         # Now we're ready to start the download operation
         self.app_obj.download_manager_start('real', False, [media_data_obj] )
 

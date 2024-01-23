@@ -26656,6 +26656,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
+        checkbutton2.connect('toggled', self.on_filter_options_button_toggled)
 
 
     def setup_downloader_paths_tab(self, inner_notebook):
@@ -31605,6 +31606,26 @@ class SystemPrefWin(GenericPrefWin):
 
         # Update the treeview
         self.setup_options_ffmpeg_list_tab_update_treeview()
+
+
+    def on_filter_options_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_downloader_forks_tab().
+
+        Sets the flag to filter out yt-dlp options, when using a fork.
+
+        Args:
+
+            checkbutton (Gtk.Checkbutton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdlp_filter_options_flag:
+            self.app_obj.set_ytdlp_filter_options_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdlp_filter_options_flag:
+            self.app_obj.set_ytdlp_filter_options_flag(False)
 
 
     def on_hide_button_toggled(self, checkbutton):
