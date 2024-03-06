@@ -33792,6 +33792,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         # ---------------------
         self.button = None                      # Gtk.RadioButton
         self.button2 = None                     # Gtk.RadioButton
+        self.button3 = None                     # Gtk.CheckButton
 
 
         # IV list - other
@@ -36042,6 +36043,303 @@ class MountDriveDialogue(Gtk.Dialog):
             self.combo.set_sensitive(True)
         else:
             self.combo.set_sensitive(False)
+
+
+class MoveContainerDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.move_container_to_top() and
+    move_container().
+
+    Python class handling a dialogue window that prompts the user for
+    confirmation, before a media.Channel, media.Playlist or media.Folder object
+    in the Video Index.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        source_obj (media.Channel, media.Playlist or media.Folder): The media
+            data object to be moved
+
+    Optional args:
+
+        dest_obj (media.Folder or None): The destination container ('None' if
+            moving to the top level)
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, source_obj, dest_obj):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 34168 __init__')
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Move container\' dialogue starts here.' \
+            + ' In the Videos tab, drag a channel, playlist or folder onto' \
+            + ' another folder',
+        )
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.button = None                      # Gtk.CheckButton
+        self.button2 = None                     # Gtk.CheckButton
+
+
+        # IV list - other
+        # ---------------
+
+
+        # Code
+        # ----
+
+        # Create the dialogue window
+        Gtk.Dialog.__init__(
+            self,
+            _('Move container'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_NO, Gtk.ResponseType.NO,
+                Gtk.STOCK_YES, Gtk.ResponseType.YES,
+            )
+        )
+
+        self.set_modal(True)
+        self.set_resizable(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        source_type = source_obj.get_type()
+        if source_type == 'channel':
+            msg = _('Are you sure you want to move this channel:')
+        elif source_type == 'playlist':
+            msg = _('Are you sure you want to move this playlist:')
+        else:
+            msg = _('Are you sure you want to move this folder:')
+
+        msg += '\n\n   ' + source_obj.name
+
+        if dest_obj is not None:
+
+            msg += '\n\n' + _('into this folder:') + '\n\n   ' \
+            + dest_obj.name + '\n\n' + _(
+                'This procedure will move all downloaded files to the new' \
+                + ' location',
+            )
+
+        else:
+            msg += '\n\n' + _(
+                'This procedure will move all downloaded files to the top' \
+                + ' level of Tartube\'s data folder',
+            )
+
+        label = Gtk.Label(msg)
+        grid.attach(label, 0, 0, 2, 1)
+
+        if dest_obj is not None \
+        and isinstance(dest_obj, media.Folder) \
+        and dest_obj.temp_flag:
+
+            # Separator
+            grid.attach(Gtk.HSeparator(), 0, 1, 2, 1)
+
+            image = Gtk.Image.new_from_pixbuf(
+                main_win_obj.pixbuf_dict['warning_large'],
+            )
+            grid.attach(image, 0, 2, 1, 1)
+
+            label2 = Gtk.Label(
+                utils.tidy_up_long_string(
+                    _(
+                    'WARNING: The destination folder is marked as temporary,' \
+                    + ' so everything inside it will be DELETED when Tartube' \
+                    + ' restarts!',
+                    ),
+                    main_win_obj.long_string_max_len,
+                ),
+            )
+
+            grid.attach(label2, 1, 2, 1, 1)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 3, 2, 1)
+
+        self.button = Gtk.CheckButton.new_with_label(
+            _('After moving, switch to the destination'),
+        )
+        self.button.set_alignment(0, 0.5)
+        grid.attach(self.button, 0, 4, 2, 1)
+        if main_win_obj.app_obj.dialogue_move_select_flag:
+            self.button.set_active(True)
+
+        self.button2 = Gtk.CheckButton.new_with_label(
+            _('Always show this window before moving containers'),
+        )
+        self.button2.set_alignment(0, 0.5)
+        grid.attach(self.button2, 0, 5, 2, 1)
+        if main_win_obj.app_obj.dialogue_move_container_flag:
+            self.button2.set_active(True)
+
+        # Display the dialogue window
+        self.show_all()
+
+
+class MoveVideoDialogue(Gtk.Dialog):
+
+    """Called by mainapp.TartubeApp.move_videos().
+
+    Python class handling a dialogue window that prompts the user for
+    confirmation, before moving one or more media.Video objects in the Video
+    Index.
+
+    Args:
+
+        main_win_obj (mainwin.MainWin): The parent main window
+
+        dest_obj (media.Channel, media.Playlist or media.Folder): The
+            destination container
+
+        media_list (list): List of media.Video objects to be deleted
+
+    """
+
+
+    # Standard class methods
+
+
+    def __init__(self, main_win_obj, dest_obj, media_list):
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 34169 __init__')
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: \'Move videos\' dialogue starts here.' \
+            + ' In the Videos tab, drag a video onto a channel, playlist or' \
+            + ' folder',
+        )
+
+        # IV list - class objects
+        # -----------------------
+        # Tartube's main window
+        self.main_win_obj = main_win_obj
+
+
+        # IV list - Gtk widgets
+        # ---------------------
+        self.button = None                      # Gtk.CheckButton
+        self.button2 = None                     # Gtk.CheckButton
+
+
+        # IV list - other
+        # ---------------
+
+
+        # Code
+        # ----
+
+        # Create the dialogue window
+        Gtk.Dialog.__init__(
+            self,
+            _('Move videos'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (
+                Gtk.STOCK_NO, Gtk.ResponseType.NO,
+                Gtk.STOCK_YES, Gtk.ResponseType.YES,
+            )
+        )
+
+        self.set_modal(True)
+        self.set_resizable(False)
+
+        # Set up the dialogue window
+        box = self.get_content_area()
+
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+
+        if len(media_list) == 1:
+            msg = _(
+                'Are you sure you want to move the video to \'{0}\'?',
+            ).format(dest_obj.name)
+
+        else:
+
+            msg = _(
+                'Are you sure you want to move {0} videos to \'{1}\'?',
+            ).format(len(media_list), dest_obj.name)
+
+        label = Gtk.Label(
+            utils.tidy_up_long_string(
+                msg,
+                main_win_obj.very_long_string_max_len,
+            ),
+        )
+        grid.attach(label, 0, 0, 2, 1)
+
+        if isinstance(dest_obj, media.Folder) \
+        and dest_obj.temp_flag:
+
+            # Separator
+            grid.attach(Gtk.HSeparator(), 0, 1, 2, 1)
+
+            image = Gtk.Image.new_from_pixbuf(
+                main_win_obj.pixbuf_dict['warning_large'],
+            )
+            grid.attach(image, 0, 2, 1, 1)
+
+            label2 = Gtk.Label(
+                utils.tidy_up_long_string(
+                    _(
+                    'WARNING: The destination folder is marked as temporary,' \
+                    + ' so everything inside it will be DELETED when Tartube' \
+                    + ' restarts!',
+                    ),
+                    main_win_obj.long_string_max_len,
+                ),
+            )
+
+            grid.attach(label2, 1, 2, 1, 1)
+
+        # Separator
+        grid.attach(Gtk.HSeparator(), 0, 3, 2, 1)
+
+        self.button = Gtk.CheckButton.new_with_label(
+            _('After moving, switch to the destination'),
+        )
+        self.button.set_alignment(0, 0.5)
+        grid.attach(self.button, 0, 4, 2, 1)
+        if main_win_obj.app_obj.dialogue_move_select_flag:
+            self.button.set_active(True)
+
+        self.button2 = Gtk.CheckButton.new_with_label(
+            _('Always show this window before moving videos'),
+        )
+        self.button2.set_alignment(0, 0.5)
+        grid.attach(self.button2, 0, 5, 2, 1)
+        if main_win_obj.app_obj.dialogue_move_video_flag:
+            self.button2.set_active(True)
+
+        # Display the dialogue window
+        self.show_all()
 
 
 class MSYS2Dialogue(Gtk.Dialog):

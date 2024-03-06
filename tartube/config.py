@@ -23123,9 +23123,9 @@ class SystemPrefWin(GenericPrefWin):
             inner_notebook,
         )
 
-        # Dialogue window preferences
+        # Add media preferences
         self.add_label(grid,
-            '<u>' + _('Dialogue window preferences') + '</u>',
+            '<u>' + _('Add media preferences') + '</u>',
             0, 0, 1, 1,
         )
 
@@ -23171,30 +23171,69 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton3.set_hexpand(False)
         checkbutton3.connect('toggled', self.on_yt_remind_button_toggled)
 
-        # Debugging preferences
+        # Move media preferences
         self.add_label(grid,
-            '<u>' + _('Debugging preferences') + '</u>',
+            '<u>' + _('Move media preferences') + '</u>',
             0, 4, 1, 1,
         )
 
         checkbutton4 = self.add_checkbutton(grid,
+            _(
+            'Prompt the user before moving channels/playlists/folders in' \
+            + ' the Video Index',
+            ),
+            self.app_obj.dialogue_move_container_flag,
+            True,               # Can be toggled by user
+            0, 5, 1, 1,
+        )
+        checkbutton4.set_hexpand(False)
+        checkbutton4.connect('toggled', self.on_move_container_button_toggled)
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Prompt the user before moving videos in the Video Index'),
+            self.app_obj.dialogue_move_video_flag,
+            True,               # Can be toggled by user
+            0, 6, 1, 1,
+        )
+        checkbutton5.set_hexpand(False)
+        checkbutton5.connect('toggled', self.on_move_video_button_toggled)
+
+        checkbutton6 = self.add_checkbutton(grid,
+            _(
+                'After moving, switch to the destination in the Video' \
+                + ' Catalogue',
+            ),
+            self.app_obj.dialogue_move_select_flag,
+            True,               # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton6.set_hexpand(False)
+        checkbutton6.connect('toggled', self.on_move_select_button_toggled)
+
+        # Debugging preferences
+        self.add_label(grid,
+            '<u>' + _('Debugging preferences') + '</u>',
+            0, 8, 1, 1,
+        )
+
+        checkbutton7 = self.add_checkbutton(grid,
             _(
             'Temporarily disable message dialogue windows (display messages' \
             + ' in terminal instead)',
             ),
             self.app_obj.dialogue_disable_msg_flag,
             True,               # Can be toggled by user
-            0, 5, 1, 1,
+            0, 9, 1, 1,
         )
-        checkbutton4.set_hexpand(False)
-        checkbutton4.connect('toggled', self.on_dialogue_disable_toggled)
+        checkbutton7.set_hexpand(False)
+        checkbutton7.connect('toggled', self.on_dialogue_disable_toggled)
 
         self.add_label(grid,
             '<i>' + _(
             'N.B. Tartube shows a dialogue window after checking or' \
             + ' downloading videos',
             ) + '</i>',
-            0, 7, 1, 1,
+            0, 10, 1, 1,
         )
 
         self.add_label(grid,
@@ -23202,7 +23241,7 @@ class SystemPrefWin(GenericPrefWin):
             'That dialogue window can be disabled in the Operations >' \
             + ' Actions tab',
             ) + '</i>',
-            0, 8, 1, 1,
+            0, 11, 1, 1,
         )
 
 
@@ -32514,6 +32553,69 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_track_missing_videos_flag(False)
             checkbutton2.set_sensitive(False)
             spinbutton.set_sensitive(False)
+
+
+    def on_move_container_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_windows_dialogues_tab().
+
+        Enables/disables prompting the user before moving channels/playlists/
+        folders in the Video Index.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_move_container_flag:
+            self.app_obj.set_dialogue_move_container_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_move_container_flag:
+            self.app_obj.set_dialogue_move_container_flag(False)
+
+
+    def on_move_select_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_windows_dialogues_tab().
+
+        Enables/disables selecting a channel/playlist/folder, after media has
+        been moved into it.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_move_select_flag:
+            self.app_obj.set_dialogue_move_select_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_move_select_flag:
+            self.app_obj.set_dialogue_move_select_flag(False)
+
+
+    def on_move_video_button_toggled(self, checkbutton):
+
+        """Called from a callback in self.setup_windows_dialogues_tab().
+
+        Enables/disables prompting the user before moving videos in the Video
+        Index.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.dialogue_move_video_flag:
+            self.app_obj.set_dialogue_move_video_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.dialogue_move_video_flag:
+            self.app_obj.set_dialogue_move_video_flag(False)
 
 
     def on_moviepy_button_toggled(self, checkbutton):

@@ -5346,15 +5346,23 @@ class VideoDownloader(object):
         #   message does not cause a call to self.confirm_new_video(), etc,
         #   so we must handle it here
         # (Note that the first word might be '[download]', or '[Youtube]', etc)
-        if self.missing_video_check_flag:
+        match = re.search(
+            r'^\[\w+\]\s(.*)\shas already been recorded in (the )?' \
+            + 'archive$',
+            stdout,
+        )
 
-            match = re.search(
-                r'^\[\w+\]\s(.*)\shas already been recorded in (the )?' \
-                + 'archive$',
-                stdout,
-            )
+        if match:
 
-            if match:
+            # In the Classic Mode tab, marking a (dummy) video as downloaded
+            #   allows the 'Clear downloaded videos' button to work with it
+            if self.dl_classic_flag:
+                self.download_item_obj.media_data_obj.set_dl_flag(True)
+                self.download_manager_obj.register_video('other')
+                return dl_stat_dict
+
+            # If checking missing videos, update our list of missing videos
+            if self.missing_video_check_flag:
                 self.confirm_archived_video(match.group(1))
                 self.download_manager_obj.register_video('other')
                 return dl_stat_dict

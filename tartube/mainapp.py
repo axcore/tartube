@@ -1946,10 +1946,19 @@ class TartubeApp(Gtk.Application):
         #   playlists should continually re-open, whenever the use clicks the
         #   OK button (so multiple channels etc can be added quickly)
         self.dialogue_keep_open_flag = False
-        # Flag set to True is, when adding a YouTube channel and the URL
+        # Flag set to True if, when adding a YouTube channel and the URL
         #   doesn't end with .../videos, the user should be prompted to add it
         self.dialogue_yt_remind_flag = True
-
+        # Flag set to True if, when moving channels/playlists/folders in the
+        #   Video Index, the user should be prompted for confirmation first
+        self.dialogue_move_container_flag = True
+        # Flag set to True if, when moving videos in the Video Index, the user
+        #   should be prompted for confirmation first
+        self.dialogue_move_video_flag = True
+        # Flag set to True if, after moving videos/channels/playlists/folders
+        #   in the Video Index, the destination should be selected (making its
+        #   contents visible in the Video Catalogue)
+        self.dialogue_move_select_flag = True
         # On Virtualbox MSWin installations, dialogue windows can freeze
         #   Tartube, forcing a restart. Flag set to True if message dialogue
         #   windows (only) should be disabled, their messages being displayed
@@ -5118,7 +5127,13 @@ class TartubeApp(Gtk.Application):
 #           = json_dict['dialogue_keep_container_flag']
         if version >= 2003130 and 'dialogue_yt_remind_flag' in json_dict:
             self.dialogue_yt_remind_flag = json_dict['dialogue_yt_remind_flag']
-
+        if version >= 2005009 and 'dialogue_move_container_flag' in json_dict:
+            self.dialogue_move_container_flag \
+            = json_dict['dialogue_move_container_flag']
+            self.dialogue_move_video_flag \
+            = json_dict['dialogue_move_video_flag']
+            self.dialogue_move_select_flag \
+            = json_dict['dialogue_move_select_flag']
         if version >= 2003371 and 'dialogue_disable_msg_flag' in json_dict:
             self.dialogue_disable_msg_flag \
             = json_dict['dialogue_disable_msg_flag']
@@ -6149,7 +6164,9 @@ class TartubeApp(Gtk.Application):
             'dialogue_copy_clipboard_flag': self.dialogue_copy_clipboard_flag,
             'dialogue_keep_open_flag': self.dialogue_keep_open_flag,
             'dialogue_yt_remind_flag': self.dialogue_yt_remind_flag,
-
+            'dialogue_move_container_flag': self.dialogue_move_container_flag,
+            'dialogue_move_video_flag': self.dialogue_move_video_flag,
+            'dialogue_move_select_flag': self.dialogue_move_select_flag,
             'dialogue_disable_msg_flag': self.dialogue_disable_msg_flag,
 
             'allow_ytdl_archive_flag': self.allow_ytdl_archive_flag,
@@ -11968,7 +11985,7 @@ class TartubeApp(Gtk.Application):
 
         # If the youtube-dl archive file(s) were temporarily blocked for a
         #   video re-download, re-enable them
-        self.block_ytdl_archive_flag = True
+        self.block_ytdl_archive_flag = False
 
         # If Tartube is due to shut down, then shut it down
         show_newbie_dialogue_flag = False
@@ -15130,34 +15147,46 @@ class TartubeApp(Gtk.Application):
 
             return
 
-        # Prompt the user for confirmation. If the user clicks 'yes', call
-        #   self.move_container_to_top_continue() to complete the move
-        media_type = media_data_obj.get_type()
-        if media_type == 'channel':
-            msg = _('Are you sure you want to move this channel:')
-        elif media_type == 'playlist':
-            msg = _('Are you sure you want to move this playlist:')
+        # Prompt the user for confirmation
+        if self.dialogue_move_container_flag:
+
+            # Prompt the user for confirmation
+            dialogue_win = mainwin.MoveContainerDialogue(
+                self.main_win_obj,
+                media_data_obj,
+            )
+
+            response = dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window...
+            if dialogue_win.button.get_active():
+                dialogue_move_select_flag = True
+            else:
+                dialogue_move_select_flag = False
+
+            if dialogue_win.button2.get_active():
+                dialogue_move_container_flag = True
+            else:
+                dialogue_move_container_flag = False
+
+            # ...before destroying it
+            dialogue_win.destroy()
+
+            # Don't update the IV if the window was closed without clicking
+            #   'yes' or 'no'
+            if response == Gtk.ResponseType.YES \
+            or response == Gtk.ResponseType.NO:
+
+                self.dialogue_move_select_flag = dialogue_move_select_flag
+                self.dialogue_move_container_flag \
+                = dialogue_move_container_flag
+
+                if response == Gtk.ResponseType.YES:
+                    self.move_container_to_top_continue(media_data_obj)
+
+        # Don't prompt, just move
         else:
-            msg = _('Are you sure you want to move this folder:')
-
-        msg += '\n\n   ' + media_data_obj.name + '\n\n'
-
-        msg += _(
-            'This procedure will move all downloaded files to the top' \
-            + ' level of Tartube\'s data folder',
-        )
-
-        self.dialogue_manager_obj.show_simple_msg_dialogue(
-            msg,
-            'question',
-            'yes-no',
-            None,                   # Parent window is main window
-            # Arguments passed directly to .move_container_to_top_continue()
-            {
-                'yes': 'move_container_to_top_continue',
-                'data': media_data_obj,
-            },
-        )
+            self.move_container_to_top_continue(media_data_obj)
 
 
     def move_container_to_top_continue(self, media_data_obj):
@@ -15209,7 +15238,8 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_populate()
 
         # Select the moving object, which redraws the Video Catalogue
-        self.main_win_obj.video_index_select_row(media_data_obj)
+        if self.dialogue_move_select_flag:
+            self.main_win_obj.video_index_select_row(media_data_obj)
 
 
     def move_container(self, source_obj, dest_obj):
@@ -15217,7 +15247,7 @@ class TartubeApp(Gtk.Application):
         """Called by mainwin.MainWin.on_video_index_drag_data_received().
 
         Before moving a channel, playlist or folder, get confirmation from the
-        user.
+        user (if required).
 
         After getting confirmation, call self.move_container_continue() to move
         the channel, playlist or folder into another folder.
@@ -15346,45 +15376,49 @@ class TartubeApp(Gtk.Application):
             return
 
         # Prompt the user for confirmation
-        source_type = source_obj.get_type()
-        if source_type == 'channel':
-            msg = _('Are you sure you want to move this channel:')
-        elif source_type == 'playlist':
-            msg = _('Are you sure you want to move this playlist:')
-        else:
-            msg = _('Are you sure you want to move this folder:')
+        if self.dialogue_move_container_flag:
 
-        msg += '\n\n   ' + source_obj.name + '\n\n' + _('into this folder:') \
-            + '\n\n   ' + dest_obj.name + '\n\n'
-
-        msg += _(
-            'This procedure will move all downloaded files to the new' \
-            + ' location',
-        )
-
-        if dest_obj.temp_flag:
-            msg += '\n\n' + _(
-                'WARNING: The destination folder is marked as temporary, so' \
-                + ' everything inside it will be DELETED when Tartube' \
-                + ' restarts!',
+            # Prompt the user for confirmation
+            dialogue_win = mainwin.MoveContainerDialogue(
+                self.main_win_obj,
+                source_obj,
+                dest_obj,
             )
 
-        # If the user clicks 'yes', call self.move_container_continue() to
-        #   complete the move
-        self.dialogue_manager_obj.show_simple_msg_dialogue(
-            msg,
-            'question',
-            'yes-no',
-            None,                   # Parent window is main window
-            # Arguments passed directly to .move_container_continue()
-            {
-                'yes': 'move_container_continue',
-                'data': [source_obj, dest_obj],
-            },
-        )
+            response = dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window...
+            if dialogue_win.button.get_active():
+                dialogue_move_select_flag = True
+            else:
+                dialogue_move_select_flag = False
+
+            if dialogue_win.button2.get_active():
+                dialogue_move_container_flag = True
+            else:
+                dialogue_move_container_flag = False
+
+            # ...before destroying it
+            dialogue_win.destroy()
+
+            # Don't update the IV if the window was closed without clicking
+            #   'yes' or 'no'
+            if response == Gtk.ResponseType.YES \
+            or response == Gtk.ResponseType.NO:
+
+                self.dialogue_move_select_flag = dialogue_move_select_flag
+                self.dialogue_move_container_flag \
+                = dialogue_move_container_flag
+
+                if response == Gtk.ResponseType.YES:
+                    self.move_container_continue(source_obj, dest_obj)
+
+        # Don't prompt, just move
+        else:
+            self.move_container_continue(source_obj, dest_obj)
 
 
-    def move_container_continue(self, media_list):
+    def move_container_continue(self, source_obj, dest_obj):
 
         """Called by self.move_container().
 
@@ -15392,16 +15426,15 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            media_list (list): List in the form (destination, source), where
-                both are media.Folder objects
+            source_obj (media.Channel, media.Playlist, media.Folder): The
+                moving media data object
+
+            dest_obj (media.Folder): The destination folder
 
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 15384 move_container_continue')
-
-        source_obj = media_list[0]
-        dest_obj = media_list[1]
 
         # Move the sub-directories to their new location
         if not self.move_file_or_directory(
@@ -15441,7 +15474,8 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.video_index_populate()
 
         # Select the moving object, which redraws the Video Catalogue
-        self.main_win_obj.video_index_select_row(source_obj)
+        if self.dialogue_move_select_flag:
+            self.main_win_obj.video_index_select_row(source_obj)
 
 
     def move_videos(self, dest_obj, video_list):
@@ -15489,41 +15523,48 @@ class TartubeApp(Gtk.Application):
             return
 
         # Prompt the user for confirmation
-        if len(video_list) == 1:
-            msg = _(
-                'Are you sure you want to move the video to \'{0}\'?',
-            ).format(dest_obj.name)
+        if self.dialogue_move_video_flag:
 
-        else:
-
-            msg = _(
-                'Are you sure you want to move {0} videos to \'{1}\'?',
-            ).format(len(video_list), dest_obj.name)
-
-        if isinstance(dest_obj, media.Folder) \
-        and dest_obj.temp_flag:
-            msg += '\n\n' + _(
-                'WARNING: The destination folder is marked as temporary, so' \
-                + ' everything inside it will be DELETED when Tartube' \
-                + ' restarts!',
+            # Prompt the user for confirmation
+            dialogue_win = mainwin.MoveVideoDialogue(
+                self.main_win_obj,
+                dest_obj,
+                video_list,
             )
 
-        # If the user clicks 'yes', call self.move_videos_continue() to
-        #   complete the move
-        self.dialogue_manager_obj.show_simple_msg_dialogue(
-            msg,
-            'question',
-            'yes-no',
-            None,                   # Parent window is main window
-            # Arguments passed directly to .move_videos_continue()
-            {
-                'yes': 'move_videos_continue',
-                'data': [dest_obj, video_list],
-            },
-        )
+            response = dialogue_win.run()
+
+            # Retrieve user choices from the dialogue window...
+            if dialogue_win.button.get_active():
+                dialogue_move_select_flag = True
+            else:
+                dialogue_move_select_flag = False
+
+            if dialogue_win.button2.get_active():
+                dialogue_move_video_flag = True
+            else:
+                dialogue_move_video_flag = False
+
+            # ...before destroying it
+            dialogue_win.destroy()
+
+            # Don't update the IV if the window was closed without clicking
+            #   'yes' or 'no'
+            if response == Gtk.ResponseType.YES \
+            or response == Gtk.ResponseType.NO:
+
+                self.dialogue_move_select_flag = dialogue_move_select_flag
+                self.dialogue_move_video_flag = dialogue_move_video_flag
+
+                if response == Gtk.ResponseType.YES:
+                    self.move_videos_continue(dest_obj, video_list)
+
+        # Don't prompt, just move
+        else:
+            self.move_videos_continue(dest_obj, video_list)
 
 
-    def move_videos_continue(self, media_list):
+    def move_videos_continue(self, dest_obj, video_list):
 
         """Called by self.move_videos().
 
@@ -15531,18 +15572,16 @@ class TartubeApp(Gtk.Application):
 
         Args:
 
-            media_list (list): List in the form (destination, video_list),
-                where the 'destination' is a media.Channel, media.Playlist or
-                media.Folder object, and 'video_list' is a list of media.Video
-                objects
+            dest_obj (media.Channel, media.Playlist, media.Folder): The
+                destination container
+
+            video_list (list): List of media.Video objects to move into the
+                destination container
 
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('app 15525 move_videos_continue')
-
-        dest_obj = media_list[0]
-        video_list = media_list[1]
 
         # Get the destination directory. If the channel/playlist/folder is
         #   set up to use another channel/playlist/folder's directory,
@@ -15668,10 +15707,18 @@ class TartubeApp(Gtk.Application):
         # Redraw the Video Index (the videos may have come from multiple
         #   locations, so it's simpler just to redraw the whole thing)
         if success_count:
-            self.main_win_obj.video_index_reset()
-            self.main_win_obj.video_index_populate()
-            # Open the destination, which redraws the Video Catalogue
-            self.main_win_obj.video_index_select_row(dest_obj)
+
+            if self.dialogue_move_select_flag:
+                self.main_win_obj.video_index_reset()
+                self.main_win_obj.video_index_populate()
+                # Open the destination, which redraws the Video Catalogue
+                self.main_win_obj.video_index_select_row(dest_obj)
+            else:
+                # Just update the Video Catalogue, to guarantee that any videos
+                #   that have been moved somewhere else are no longer visible
+                self.main_win_obj.video_catalogue_redraw_all(
+                    self.main_win_obj.video_index_current_dbid,
+                )
 
         # Append video IDs to the archive file
         if archive_path is not None and id_list:
@@ -15690,16 +15737,19 @@ class TartubeApp(Gtk.Application):
             except:
                 pass
 
-        # Show confirmation dialogue
-        msg = _('Videos moved') + ': ' + str(success_count) \
-        + '\n' + _('Videos not moved') + ': ' \
-        + str(fail_count + already_count)
+        # Show confirmation dialogue, if required (but always show one on
+        #   failure)
+        if self.dialogue_move_video_flag or fail_count:
 
-        self.dialogue_manager_obj.show_simple_msg_dialogue(
-            msg,
-            'info',
-            'ok',
-        )
+            msg = _('Videos moved') + ': ' + str(success_count) \
+            + '\n' + _('Videos not moved') + ': ' \
+            + str(fail_count + already_count)
+
+            self.dialogue_manager_obj.show_simple_msg_dialogue(
+                msg,
+                'info',
+                'ok',
+            )
 
 
     # (Convert channels to playlists, and vice-versa)
@@ -23670,7 +23720,7 @@ class TartubeApp(Gtk.Application):
         # Filter out un-downloaded videos
         dbid_list = []
         for dummy_obj in video_list:
-            if dummy_obj.dummy_path is not None:
+            if dummy_obj.dl_flag or dummy_obj.dummy_path is not None:
                 dbid_list.append(dummy_obj.dbid)
 
         if not dbid_list:
@@ -27662,6 +27712,30 @@ class TartubeApp(Gtk.Application):
         else:
             self.disable_dl_all_flag = True
             self.main_win_obj.disable_dl_all_buttons()
+
+
+    def set_dialogue_move_container_flag(self, flag):
+
+        if not flag:
+            self.dialogue_move_container_flag = False
+        else:
+            self.dialogue_move_container_flag = True
+
+
+    def set_dialogue_move_select_flag(self, flag):
+
+        if not flag:
+            self.dialogue_move_select_flag = False
+        else:
+            self.dialogue_move_select_flag = True
+
+
+    def set_dialogue_move_video_flag(self, flag):
+
+        if not flag:
+            self.dialogue_move_video_flag = False
+        else:
+            self.dialogue_move_video_flag = True
 
 
     def set_disk_space_stop_flag(self, flag):
