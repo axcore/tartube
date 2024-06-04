@@ -46,7 +46,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Stable release: **v2.5.0 (3 Jan 2024)**
 
-Development release: **v2.5.015 (3 Jan 2024)**
+Development release: **v2.5.021 (4 Jun 2024)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -481,6 +481,7 @@ The procedure used to create the MS Windows installer is described in full in th
 * `6.12.2 Other download options`_
 * `6.12.3 Managing download options`_
 * `6.12.4 Setting download options`_
+* `6.12.5 Customising download options`_
 * `6.13 Scheduled downloads`_
 * `6.14 Custom downloads`_
 * `6.14.1 Default custom downloads`_
@@ -842,7 +843,7 @@ Note that the red system folders can't be marked for download.
 .. image:: screenshots/example12.png
   :alt: Opening the download options window
 
--  Click **Edit > General download options...**
+- Click **Edit > General download options...**
 
 A new window opens. Any changes you make in this window aren't actually applied until you click the **'Apply'** or **'OK'** buttons.
 
@@ -950,6 +951,22 @@ If you want to download subtiles only in particular languages:
 - Repeat for as many languages as you want
 
 See also `6.14.7 Ignoring videos without subtitles`_.
+
+6.12.5 Customising download options
+-----------------------------------
+
+If you want to set the download options manually - typing them, rather than clicking some buttons - you can do so.
+
+- Click **Edit > General download options...**
+- In the **Additional download options** box, type any download options
+- For example, to download a video as an .mp3 file, you could type **-x --audio-format mp3**
+
+.. image:: screenshots/example36.png
+  :alt: Customising download options
+
+Download options added here **override everything else in the window**. (However, they don't override the format selector in the **Classic Mode** tab.)  
+
+You can find a complete list of download options for youtude-dl `here <https://github.com/ytdl-org/youtube-dl>`__, and a complete list for yt-dlp `here <https://github.com/yt-dlp/yt-dlp>`__.
 
 6.13 Scheduled downloads
 ------------------------

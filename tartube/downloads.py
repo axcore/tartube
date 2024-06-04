@@ -5366,7 +5366,7 @@ class VideoDownloader(object):
                 self.confirm_archived_video(match.group(1))
                 self.download_manager_obj.register_video('other')
                 return dl_stat_dict
-
+                
         # Likewise for the frame messages from youtube-dl direct downloads
         match = re.search(
             r'^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
