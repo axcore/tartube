@@ -168,7 +168,7 @@ class TartubeApp(Gtk.Application):
         self.debug_ignore_lockfile_flag = False
         # In the main window's menu, show a menu item for adding a set of
         #   media data objects for testing
-        self.debug_test_media_menu_flag = False
+        self.debug_test_media_menu_flag = True
         # In the main window's menu, show a menu item for executing some
         #   arbitrary test code (by calling testing.run_test_code())
         self.debug_test_code_menu_flag = False

@@ -11183,6 +11183,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   currently selected in the Video Index? If not, the video is not
         #   currently displayed in the Video Catalogue
         if self.video_index_current_dbid is None \
+        or video_obj.parent_obj is None \
         or not (
             self.video_index_current_dbid == video_obj.parent_obj.dbid
             or self.video_index_current_dbid == app_obj.fixed_all_folder.dbid

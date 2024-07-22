@@ -5366,7 +5366,7 @@ class VideoDownloader(object):
                 self.confirm_archived_video(match.group(1))
                 self.download_manager_obj.register_video('other')
                 return dl_stat_dict
-                
+
         # Likewise for the frame messages from youtube-dl direct downloads
         match = re.search(
             r'^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
@@ -9985,6 +9985,7 @@ class StreamDownloader(object):
         else:
 
             # Retrieve the user's preferred file extension
+            file_ext = None
             if video_obj.dummy_format is not None:
                 convert_flag, file_ext, resolution \
                 = utils.extract_dummy_format(video_obj.dummy_format)
