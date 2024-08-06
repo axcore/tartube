@@ -20121,7 +20121,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   re-downloading of the video
         # Temporarily block usage of the archive file
         self.app_obj.set_block_ytdl_archive_flag(True)
-
+        
         # Now we're ready to start the download operation
         self.app_obj.download_manager_start('real', False, [media_data_obj] )
 
@@ -33794,7 +33794,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         self.button = None                      # Gtk.RadioButton
         self.button2 = None                     # Gtk.RadioButton
         self.button3 = None                     # Gtk.CheckButton
-
+        
 
         # IV list - other
         # ---------------
@@ -36054,7 +36054,7 @@ class MoveContainerDialogue(Gtk.Dialog):
     Python class handling a dialogue window that prompts the user for
     confirmation, before a media.Channel, media.Playlist or media.Folder object
     in the Video Index.
-
+    
     Args:
 
         main_win_obj (mainwin.MainWin): The parent main window
@@ -36164,7 +36164,7 @@ class MoveContainerDialogue(Gtk.Dialog):
                 main_win_obj.pixbuf_dict['warning_large'],
             )
             grid.attach(image, 0, 2, 1, 1)
-
+        
             label2 = Gtk.Label(
                 utils.tidy_up_long_string(
                     _(
@@ -36215,7 +36215,7 @@ class MoveVideoDialogue(Gtk.Dialog):
 
         dest_obj (media.Channel, media.Playlist or media.Folder): The
             destination container
-
+            
         media_list (list): List of media.Video objects to be deleted
 
     """
@@ -36306,7 +36306,7 @@ class MoveVideoDialogue(Gtk.Dialog):
                 main_win_obj.pixbuf_dict['warning_large'],
             )
             grid.attach(image, 0, 2, 1, 1)
-
+        
             label2 = Gtk.Label(
                 utils.tidy_up_long_string(
                     _(

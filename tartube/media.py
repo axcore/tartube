@@ -683,7 +683,7 @@ class GenericContainer(GenericMedia):
             length = len (error_warning_list)
             if error_warning_list:
 
-                text += '\n\n' + _('Errors\Warnings') + ' (' \
+                text += '\n\n' + _('Errors/Warnings') + ' (' \
                 + str(length) + '):\n' + str(error_warning_list.pop(0))
 
                 if length > 1:
@@ -2287,7 +2287,7 @@ class Video(GenericMedia):
             length = len (error_warning_list)
             if error_warning_list:
 
-                text += '\n\n' + _('Errors\Warnings') + ' (' \
+                text += '\n\n' + _('Errors/Warnings') + ' (' \
                 + str(length) + '):\n' + str(error_warning_list.pop(0))
 
                 if length > 1:

@@ -11720,7 +11720,7 @@ msgid "unavailable"
 msgstr "non disponible"
 
 #: .././media.py:680 .././media.py:2283
-msgid "Errors\\Warnings"
+msgid "Errors/Warnings"
 msgstr "Erreurs / Avertissements"
 
 #: .././media.py:2217

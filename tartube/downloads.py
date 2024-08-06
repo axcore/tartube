@@ -5366,7 +5366,7 @@ class VideoDownloader(object):
                 self.confirm_archived_video(match.group(1))
                 self.download_manager_obj.register_video('other')
                 return dl_stat_dict
-
+                
         # Likewise for the frame messages from youtube-dl direct downloads
         match = re.search(
             r'^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
@@ -6418,7 +6418,7 @@ class VideoDownloader(object):
             # For Tartube's MS Windows portable version, when the whole
             #   installation folder is moved to a new location in the
             #   filesystem, youtube-dl must be uninstalled, then reinstalled
-            if re.search('Fatal error in launcher\: U', data) \
+            if re.search('Fatal error in launcher: U', data) \
             and app_obj.ytdl_output_stderr_flag:
 
                 app_obj.main_win_obj.output_tab_write_stderr(

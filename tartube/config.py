@@ -31654,7 +31654,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_downloader_forks_tab().
 
         Sets the flag to filter out yt-dlp options, when using a fork.
-
+        
         Args:
 
             checkbutton (Gtk.Checkbutton): The widget clicked
@@ -32563,7 +32563,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Enables/disables prompting the user before moving channels/playlists/
         folders in the Video Index.
-
+        
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -32584,7 +32584,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Enables/disables selecting a channel/playlist/folder, after media has
         been moved into it.
-
+        
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -32598,14 +32598,14 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.dialogue_move_select_flag:
             self.app_obj.set_dialogue_move_select_flag(False)
 
-
+            
     def on_move_video_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_windows_dialogues_tab().
 
         Enables/disables prompting the user before moving videos in the Video
         Index.
-
+        
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -32619,7 +32619,7 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.dialogue_move_video_flag:
             self.app_obj.set_dialogue_move_video_flag(False)
 
-
+            
     def on_moviepy_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_general_modules_tab().

@@ -596,6 +596,9 @@ class UpdateManager(threading.Thread):
             or ytdl_update_current == 'ytdl_update_pip3_recommend':
                 ytdl_update_current = 'ytdl_update_pip3_no_dependencies'
 
+            elif ytdl_update_current == 'ytdl_update_pipx':
+                ytdl_update_current = 'ytdl_update_pipx_no_dependencies'
+
             elif ytdl_update_current == 'ytdl_update_win_64':
                 ytdl_update_current = 'ytdl_update_win_64_no_dependencies'
 
@@ -726,11 +729,15 @@ class UpdateManager(threading.Thread):
         """
 
         # Prepare a system command...
-        cmd_list = \
-        ['..\\..\\..\\mingw64\\bin\pip3.exe', 'uninstall', '--yes', downloader]
+        cmd_list = [
+            '..\\..\\..\\mingw64\\bin\\pip3.exe',
+            'uninstall',
+            '--yes',
+            downloader,
+        ]
 
         if not 'PROGRAMFILES(X86)' in os.environ:
-            cmd_list[0] = '..\\..\\..\\mingw32\\bin\pip3.exe'
+            cmd_list[0] = '..\\..\\..\\mingw32\\bin\\pip3.exe'
 
         # ...and display it in the Output tab (if required)
         self.install_ytdl_write_output(

@@ -308,27 +308,27 @@ enhanced_setup_list = [
         'pretty_name': 'YouTube',
         # Regexes to recognise the website (no groups used)
         'detect_list': [
-            '^https?:\/\/(www\.)?youtube\.com\/',
+            r'^https?://(www\.)?youtube\.com/',
         ],
         # Regexes to extract a video ID/name. The second group is used (so that
         #   the optional www can be the first group)
         'extract_vid_list': [
-            '^https?:\/\/(www\.)?youtube\.com\/watch\?v=([^\/]+)',
+            r'^https?://(www\.)?youtube\.com/watch\?v=([^/]+)',
         ],
         'extract_vname_list': [],
         # Regexes to extract a channel/playlist ID/name. The second group is
         #   used
         'extract_cid_list': [
-            '^https?:\/\/(www\.)?youtube\.com\/channel\/([^\/]+)',
+            r'^https?://(www\.)?youtube\.com/channel/([^/]+)',
         ],
         'extract_cname_list': [
-            '^https?:\/\/(www\.)?youtube\.com\/user\/([^\/]+)\/videos\/?',
-            '^https?:\/\/(www\.)?youtube\.com\/c\/([^\/]+)\/videos\/?',
+            r'^https?://(www\.)?youtube\.com/user/([^/]+)/videos/?',
+            r'^https?://(www\.)?youtube\.com/c/([^/]+)/videos/?',
         ],
         # Regexes to extract a playlist ID/name. The second group is used
         'extract_pid_list': [
-            '^https?:\/\/(www\.)?youtube\.com\/channel\?list=([^\/]+)',
-            '^https?:\/\/(www\.)?youtube\.com\/playlist\?list=([^\/]+)',
+            r'^https?://(www\.)?youtube\.com/channel\?list=([^/]+)',
+            r'^https?://(www\.)?youtube\.com/playlist\?list=([^/]+)',
         ],
         'extract_pname_list': [],
         # Templates to convert video ID/name to URL
@@ -359,15 +359,15 @@ enhanced_setup_list = [
         'name': 'odysee',
         'pretty_name': 'Odysee',
         'detect_list': [
-            '^https?:\/\/(www\.)?odysee\.com\/',
+            r'^https?://(www\.)?odysee\.com/',
         ],
         'extract_vid_list': [],
         'extract_vname_list': [
-            '^https?:\/\/(www\.)?odysee\.com\/\@[^\/]+\/([^\:]+)\:',
+            r'^https?://(www\.)?odysee\.com/\@[^/]+/([^\:]+)\:',
         ],
         'extract_cid_list': [],
         'extract_cname_list': [
-            '^https?:\/\/(www\.)?odysee\.com\/\@([^\:]+)\:',
+            r'^https?://(www\.)?odysee\.com/\@([^\:]+)\:',
         ],
         'extract_pid_list': [],
         'extract_pname_list': [],
@@ -383,14 +383,14 @@ enhanced_setup_list = [
         'name': 'bitchute',
         'pretty_name': 'BitChute',
         'detect_list': [
-            '^https?:\/\/(www\.)?bitchute\.com\/',
+            r'^https?://(www\.)?bitchute\.com/',
         ],
         'extract_vid_list': [
-            '^https?:\/\/(www\.)?bitchute\.com\/video\/([^\/]+)',
+            r'^https?://(www\.)?bitchute\.com/video/([^/]+)',
         ],
         'extract_vname_list': [],
         'extract_cid_list': [
-            '^https?:\/\/(www\.)?bitchute\.com\/channel\/([^\/]+)',
+            r'^https?://(www\.)?bitchute\.com/channel/([^/]+)',
         ],
         'extract_cname_list': [],
         'extract_pid_list': [],
@@ -411,15 +411,15 @@ enhanced_setup_list = [
         'name': 'twitch',
         'pretty_name': 'Twitch',
         'detect_list': [
-            '^https?:\/\/(www\.)?twitch\.tv\/',
+            r'^https?://(www\.)?twitch\.tv/',
         ],
         'extract_vid_list': [
-            '^https?:\/\/(www\.)?twitch\.tv\/videos\/([^\/]+)',
+            r'^https?://(www\.)?twitch\.tv/videos/([^/]+)',
         ],
         'extract_vname_list': [],
         'extract_cid_list': [],
         'extract_cname_list': [
-            '^https?:\/\/(www\.)?twitch\.tv\/([^\/]+)',
+            r'^https?://(www\.)?twitch\.tv/([^/]+)',
         ],
         'extract_pid_list': [],
         'extract_pname_list': [],
@@ -1174,6 +1174,12 @@ def do_translate(config_flag=False):
             _('Update using pip3 (omit --user option)'),
         'ytdl_update_pip3_recommend':
             _('Update using pip3 (recommended)'),
+        'ytdl_update_pipx':
+            _('Update using pipx'),
+        'ytdl_update_pipx_no_dependencies':
+            _('Update using pipx (use --no-dependencies option)'),
+        'ytdl_update_pipx_omit_user':
+            _('Update using pipx (omit --user option)'),
         'ytdl_update_pypi_path':
             _('Update using PyPI youtube-dl path'),
         'ytdl_update_win_32':

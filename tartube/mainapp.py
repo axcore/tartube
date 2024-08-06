@@ -168,7 +168,7 @@ class TartubeApp(Gtk.Application):
         self.debug_ignore_lockfile_flag = False
         # In the main window's menu, show a menu item for adding a set of
         #   media data objects for testing
-        self.debug_test_media_menu_flag = True
+        self.debug_test_media_menu_flag = False
         # In the main window's menu, show a menu item for executing some
         #   arbitrary test code (by calling testing.run_test_code())
         self.debug_test_code_menu_flag = False
@@ -922,6 +922,12 @@ class TartubeApp(Gtk.Application):
         #       Update using pip3 (omit --user option)
         # 'ytdl_update_pip3_recommend'
         #       Update using pip3 (recommended)
+        # 'ytdl_update_pipx'
+        #       Update using pipx
+        # 'ytdl_update_pipx_no_dependencies'
+        #       Update using pipx (use --no-dependencies option)
+        # 'ytdl_update_pipx_omit_user'
+        #       Update using pipx (omit --user option
         # 'ytdl_update_pypi_path'
         #       Update using PyPI youtube-dl path
         # 'ytdl_update_win_32',
@@ -1996,7 +2002,7 @@ class TartubeApp(Gtk.Application):
         # Applies only to the Videos tab; the Classic Mode tab has a button
         #   near the bottom, which the user can use to ignore the archive file
         self.block_ytdl_archive_flag = False
-
+        
         # Flag set to True if, when checking videos/channels/playlists, we
         #   should apply a timeout (in case youtube-dl gets stuck downloading
         #   the JSON data)
@@ -5587,8 +5593,8 @@ class TartubeApp(Gtk.Application):
             if os.name == 'nt' and 'PROGRAMFILES(X86)' in os.environ:
 
                 self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
-                    '..\\..\\..\\mingw64\\bin\python3.exe',
-                    '..\\..\\..\\mingw64\\bin\pip3-script.py',
+                    '..\\..\\..\\mingw64\\bin\\python3.exe',
+                    '..\\..\\..\\mingw64\\bin\\pip3-script.py',
                     'install',
                     '--upgrade',
                     '--no-dependencies',
@@ -5598,8 +5604,8 @@ class TartubeApp(Gtk.Application):
             elif os.name == 'nt' and not 'PROGRAMFILES(X86)' in os.environ:
 
                 self.ytdl_update_dict['ytdl_update_win_32_no_dependencies'] = [
-                    '..\\..\\..\\mingw32\\bin\python3.exe',
-                    '..\\..\\..\\mingw32\\bin\pip3-script.py',
+                    '..\\..\\..\\mingw32\\bin\\python3.exe',
+                    '..\\..\\..\\mingw32\\bin\\pip3-script.py',
                     'install',
                     '-upgrade',
                     '--no-dependencies',
@@ -5629,7 +5635,7 @@ class TartubeApp(Gtk.Application):
             if os.name == 'nt' and 'PROGRAMFILES(X86)' in os.environ:
 
                 self.ytdl_update_dict['ytdl_update_win_64_no_dependencies'] = [
-                    '..\\..\\..\\mingw64\\bin\pip3.exe',
+                    '..\\..\\..\\mingw64\\bin\\pip3.exe',
                     'install',
                     '--upgrade',
                     '--no-dependencies',
@@ -5639,7 +5645,7 @@ class TartubeApp(Gtk.Application):
             elif os.name == 'nt' and not 'PROGRAMFILES(X86)' in os.environ:
 
                 self.ytdl_update_dict['ytdl_update_win_32_no_dependencies'] = [
-                    '..\\..\\..\\mingw32\\bin\pip3.exe',
+                    '..\\..\\..\\mingw32\\bin\\pip3.exe',
                     'install',
                     '-upgrade',
                     '--no-dependencies',
@@ -5651,13 +5657,41 @@ class TartubeApp(Gtk.Application):
         #   'youtube-dl ...'
         if version < 2004448 and os.name == 'nt':
 
-            new_path = '..\\..\\..\\mingw64\\bin\youtube-dl.exe'
+            new_path = '..\\..\\..\\mingw64\\bin\\youtube-dl.exe'
             if self.ytdl_path_default == 'youtube-dl':
                 self.ytdl_path_default = new_path
             if self.ytdl_path == 'youtube-dl':
                 self.ytdl_path = new_path
 
+        # (In version v2.5.027, self.ytdl_update_dict was modified yet again)
+        if version < 2005027:
 
+            self.ytdl_update_dict['ytdl_update_pipx'] = [
+                'pipx', 'install', '--upgrade', '--user', 'youtube-dl',
+            ]
+
+            self.ytdl_update_dict['ytdl_update_pipx_omit_user'] = [
+                'pipx', 'install', '--upgrade', 'youtube-dl',
+            ]
+
+            self.ytdl_update_dict['ytdl_update_pipx_no_dependencies'] = [
+                'pipx', 'install', '--upgrade', '--no-dependencies',
+                'youtube-dl',
+            ]
+
+            ytdl_update_list = []
+            for item in self.ytdl_update_list:
+
+                if item == 'ytdl_update_pip':
+                    ytdl_update_list.append('ytdl_update_pipx')
+                    ytdl_update_list.append('ytdl_update_pipx_omit_user')
+                    ytdl_update_list.append('ytdl_update_pipx_no_dependencies')
+
+                ytdl_update_list.append(item)
+
+            self.ytdl_update_list = ytdl_update_list
+
+        
     def load_config_import_scheduled(self, version, json_dict):
 
         """"Called by self.load_config().
@@ -8305,7 +8339,7 @@ class TartubeApp(Gtk.Application):
                     natname = re.sub(r'^[\s]+', ' ', natname)
 
                     media_data_obj.natname = natname
-
+                    
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -9826,14 +9860,14 @@ class TartubeApp(Gtk.Application):
                 # 64-bit MS Windows
                 recommended = 'ytdl_update_win_64'
                 alt_recommended = 'ytdl_update_win_64_no_dependencies'
-                ytdl_path = '..\\..\\..\\mingw64\\bin\youtube-dl.exe'
-                pip_path = '..\\..\\..\\mingw64\\bin\pip3.exe'
+                ytdl_path = '..\\..\\..\\mingw64\\bin\\youtube-dl.exe'
+                pip_path = '..\\..\\..\\mingw64\\bin\\pip3.exe'
             else:
                 # 32-bit MS Windows
                 recommended = 'ytdl_update_win_32'
                 alt_recommended = 'ytdl_update_win_32_no_dependencies'
-                ytdl_path = '..\\..\\..\\mingw32\\bin\youtube-dl.exe'
-                pip_path = '..\\..\\..\\mingw32\\bin\pip3.exe'
+                ytdl_path = '..\\..\\..\\mingw32\\bin\\youtube-dl.exe'
+                pip_path = '..\\..\\..\\mingw32\\bin\\pip3.exe'
 
             self.ytdl_bin = 'youtube-dl'
             self.ytdl_path_default = ytdl_path
@@ -9920,6 +9954,16 @@ class TartubeApp(Gtk.Application):
                         'pip3', 'install', '--upgrade', '--no-dependencies',
                         'youtube-dl',
                     ],
+                    'ytdl_update_pipx': [
+                        'pipx', 'install', '--upgrade', '--user', 'youtube-dl',
+                    ],
+                    'ytdl_update_pipx_omit_user': [
+                        'pipx', 'install', '--upgrade', 'youtube-dl',
+                    ],
+                    'ytdl_update_pipx_no_dependencies': [
+                        'pipx', 'install', '--upgrade', '--no-dependencies',
+                        'youtube-dl',
+                    ],
                     'ytdl_update_pip': [
                         'pip', 'install', '--upgrade', '--user', 'youtube-dl',
                     ],
@@ -9947,6 +9991,9 @@ class TartubeApp(Gtk.Application):
                     'ytdl_update_pip3_recommend',
                     'ytdl_update_pip3_omit_user',
                     'ytdl_update_pip3_no_dependencies',
+                    'ytdl_update_pipx',
+                    'ytdl_update_pipx_omit_user',
+                    'ytdl_update_pipx_no_dependencies',
                     'ytdl_update_pip',
                     'ytdl_update_pip_omit_user',
                     'ytdl_update_pip_no_dependencies',
@@ -11986,7 +12033,7 @@ class TartubeApp(Gtk.Application):
         # If the youtube-dl archive file(s) were temporarily blocked for a
         #   video re-download, re-enable them
         self.block_ytdl_archive_flag = False
-
+        
         # If Tartube is due to shut down, then shut it down
         show_newbie_dialogue_flag = False
 
@@ -15163,7 +15210,7 @@ class TartubeApp(Gtk.Application):
                 dialogue_move_select_flag = True
             else:
                 dialogue_move_select_flag = False
-
+                
             if dialogue_win.button2.get_active():
                 dialogue_move_container_flag = True
             else:
@@ -15183,7 +15230,7 @@ class TartubeApp(Gtk.Application):
 
                 if response == Gtk.ResponseType.YES:
                     self.move_container_to_top_continue(media_data_obj)
-
+                    
         # Don't prompt, just move
         else:
             self.move_container_to_top_continue(media_data_obj)
@@ -15392,7 +15439,7 @@ class TartubeApp(Gtk.Application):
                 dialogue_move_select_flag = True
             else:
                 dialogue_move_select_flag = False
-
+                
             if dialogue_win.button2.get_active():
                 dialogue_move_container_flag = True
             else:
@@ -15412,7 +15459,7 @@ class TartubeApp(Gtk.Application):
 
                 if response == Gtk.ResponseType.YES:
                     self.move_container_continue(source_obj, dest_obj)
-
+                    
         # Don't prompt, just move
         else:
             self.move_container_continue(source_obj, dest_obj)
@@ -15539,7 +15586,7 @@ class TartubeApp(Gtk.Application):
                 dialogue_move_select_flag = True
             else:
                 dialogue_move_select_flag = False
-
+                
             if dialogue_win.button2.get_active():
                 dialogue_move_video_flag = True
             else:
@@ -15558,7 +15605,7 @@ class TartubeApp(Gtk.Application):
 
                 if response == Gtk.ResponseType.YES:
                     self.move_videos_continue(dest_obj, video_list)
-
+                    
         # Don't prompt, just move
         else:
             self.move_videos_continue(dest_obj, video_list)
@@ -15719,7 +15766,7 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_catalogue_redraw_all(
                     self.main_win_obj.video_index_current_dbid,
                 )
-
+            
         # Append video IDs to the archive file
         if archive_path is not None and id_list:
 
@@ -15740,7 +15787,7 @@ class TartubeApp(Gtk.Application):
         # Show confirmation dialogue, if required (but always show one on
         #   failure)
         if self.dialogue_move_video_flag or fail_count:
-
+        
             msg = _('Videos moved') + ': ' + str(success_count) \
             + '\n' + _('Videos not moved') + ': ' \
             + str(fail_count + already_count)
@@ -27257,7 +27304,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.block_ytdl_archive_flag = True
 
-
+            
     def set_catalogue_draw_blocked_flag(self, flag):
 
         if not flag:
@@ -27729,7 +27776,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.dialogue_move_select_flag = True
 
-
+            
     def set_dialogue_move_video_flag(self, flag):
 
         if not flag:

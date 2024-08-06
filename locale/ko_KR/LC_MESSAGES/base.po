@@ -11183,8 +11183,8 @@ msgid "unavailable"
 msgstr ""
 
 #: .././media.py:680 .././media.py:2283
-msgid "Errors\\Warnings"
-msgstr "오류\\경고"
+msgid "Errors/Warnings"
+msgstr "오류/경고"
 
 #: .././media.py:2217
 msgid ""
