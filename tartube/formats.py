@@ -47,6 +47,7 @@ locale_setup_list = [
     'tr',       'Türkçe',
     'vi',       'Tiếng Việt',
     'zh_CN',    '中文简体',
+    'zh_Hant',  '正體字',
 ]
 
 LOCALE_DEFAULT = locale_setup_list[0]

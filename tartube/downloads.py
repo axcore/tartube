@@ -2296,7 +2296,6 @@ class DownloadList(object):
                         if not dbid in check_dict:
 
                             obj = self.app_obj.media_reg_dict[dbid]
-
                             self.create_item(
                                 obj,
                                 scheduled_obj,
@@ -2577,20 +2576,23 @@ class DownloadList(object):
 
         Return values:
 
-            The downloads.DownloadItem object created (or None if no object is
-                created; only required by calls from
-                mainapp.TartubeApp.download_watch_videos() )
+            A list of downloads.DownloadItem objects created (an empty list if
+                none are created)
 
         """
 
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 2592 create_item')
 
+        # (Use two lists for code clarity)
+        return_list = []
+        empty_list = []
+
         # Sanity check - if no URL is specified, then there is nothing to
         #   download
         if not isinstance(media_data_obj, media.Folder) \
         and media_data_obj.source is None:
-            return None
+            return empty_list
 
         # Apply the operation_type override, if specified
         if override_operation_type is not None:
@@ -2604,7 +2606,7 @@ class DownloadList(object):
                     'Invalid argument in Classic Mode tab download operation',
                 )
 
-                return None
+                return empty_list
 
             else:
 
@@ -2644,7 +2646,7 @@ class DownloadList(object):
         #   (because they are all children of some other non-private folder)
         if isinstance(media_data_obj, media.Folder) \
         and media_data_obj.priv_flag:
-            return None
+            return empty_list
 
         # Don't download videos that we already have
         # Don't download videos if they're in a channel or playlist (since
@@ -2667,7 +2669,7 @@ class DownloadList(object):
             and not media_data_obj.dbid \
             in self.app_obj.temp_stamp_buffer_dict \
             and not media_data_obj.dbid in self.app_obj.temp_slice_buffer_dict:
-                return
+                return empty_list
 
             if (
                 not isinstance(media_data_obj.parent_obj, media.Folder) \
@@ -2680,7 +2682,7 @@ class DownloadList(object):
                     ) or media_data_obj.dl_flag
                 )
             ):
-                return None
+                return empty_list
 
             if isinstance(media_data_obj.parent_obj, media.Folder) \
             and (
@@ -2692,7 +2694,7 @@ class DownloadList(object):
             and media_data_obj.file_name \
             and not media_data_obj.live_mode \
             and utils.find_thumbnail(self.app_obj, media_data_obj):
-                return None
+                return empty_list
 
             if custom_flag \
             and self.custom_dl_obj \
@@ -2710,7 +2712,7 @@ class DownloadList(object):
                         )
                     )
                 ):
-                    return None
+                    return empty_list
 
                 elif (
                     self.custom_dl_obj.ignore_stream_flag \
@@ -2725,7 +2727,7 @@ class DownloadList(object):
                     self.custom_dl_obj.dl_if_old_stream_flag \
                     and not media_data_obj.was_live_flag
                 ):
-                    return
+                    return empty_list
 
         # Don't download videos in channels/playlists/folders which have been
         #   marked unavailable, because their external directory is not
@@ -2733,11 +2735,11 @@ class DownloadList(object):
         if isinstance(media_data_obj, media.Video):
             if media_data_obj.parent_obj.dbid \
             in self.app_obj.container_unavailable_dict:
-                return None
+                return empty_list
 
         elif not isinstance(media_data_obj, media.Video) \
         and media_data_obj.dbid in self.app_obj.container_unavailable_dict:
-            return None
+            return empty_list
 
         # Don't simulated downloads of video in channels/playlists/folders
         #   whose whose .dl_no_db_flag is set
@@ -2751,21 +2753,19 @@ class DownloadList(object):
                 and media_data_obj.dl_no_db_flag
             )
         ):
-            return None
+            return empty_list
 
         # Don't create a download.DownloadItem object if checking/download is
         #   disabled for the media data object
         if not isinstance(media_data_obj, media.Video) \
         and media_data_obj.dl_disable_flag:
-            return None
+            return empty_list
 
         # Don't create a download.DownloadItem object for a media.Folder,
         #   obviously
         # Don't create a download.DownloadItem object for a media.Channel or
         #   media.Playlist during a custom download in which videos are to be
         #   downloaded independently
-        download_item_obj = None
-
         if (
             isinstance(media_data_obj, media.Video)
             and custom_flag
@@ -2822,7 +2822,9 @@ class DownloadList(object):
                 ignore_limits_flag,
             )
 
-            # ...and add it to our list
+            # ...and add it to our lists
+            return_list.append(download_item_obj)
+
             if broadcast_flag:
                 self.download_item_list.insert(0, download_item_obj.item_id)
             elif priority_flag:
@@ -2853,7 +2855,7 @@ class DownloadList(object):
             and self.custom_dl_obj.dl_by_video_flag
         ):
             for child_obj in media_data_obj.child_list:
-                self.create_item(
+                return_list += self.create_item(
                     child_obj,
                     scheduled_obj,
                     operation_type,
@@ -2863,7 +2865,7 @@ class DownloadList(object):
                 )
 
         # Procedure complete
-        return download_item_obj
+        return return_list
 
 
     def create_dummy_item(self, media_data_obj):
@@ -3461,6 +3463,12 @@ class VideoDownloader(object):
         #   media.Video object, but a channel/playlist is detected (regardless
         #   of the value of mainapp.TartubeApp.operation_convert_mode)
         self.url_is_not_video_flag = False
+        # Flag which specifies whether formats.ACTIVE_STAGE_PRE_PROCESS or
+        #   formats.ACTIVE_STAGE_POST_PROCESS currently applies
+        # Set to True by self.extract_stdout_data() when
+        #   formats.ACTIVE_STAGE_DOWNLOAD is detected; set back to False by the
+        #   same function when the start of a new video download is detected
+        self.video_download_started_flag = False
 
         # Buffer for youtube-dl error/warning messages that can be associated
         #   with a particular video ID
@@ -5167,7 +5175,7 @@ class VideoDownloader(object):
 
             # Add the new channel/playlist to the download manager's list of
             #   things to download...
-            new_download_item_obj \
+            return_list \
             = self.download_manager_obj.download_list_obj.create_item(
                 new_container_obj,
                 self.download_item_obj.scheduled_obj,
@@ -5175,13 +5183,15 @@ class VideoDownloader(object):
                 False,                  # priority_flag
                 self.download_item_obj.ignore_limits_flag,
             )
-            # ...and add a row the Progress List
-            GObject.timeout_add(
-                0,
-                app_obj.main_win_obj.progress_list_add_row,
-                new_download_item_obj.item_id,
-                new_download_item_obj.media_data_obj,
-            )
+
+            # ...and add rows in the Progress List
+            for new_download_item_obj in return_list:
+                GObject.timeout_add(
+                    0,
+                    app_obj.main_win_obj.progress_list_add_row,
+                    new_download_item_obj.item_id,
+                    new_download_item_obj.media_data_obj,
+                )
 
             # Stop this download job, allowing the replacement one to start
             self.stop()
@@ -5366,7 +5376,7 @@ class VideoDownloader(object):
                 self.confirm_archived_video(match.group(1))
                 self.download_manager_obj.register_video('other')
                 return dl_stat_dict
-                
+
         # Likewise for the frame messages from youtube-dl direct downloads
         match = re.search(
             r'^frame.*size\=\s*([\S]+).*bitrate\=\s*([\S]+)',
@@ -5377,6 +5387,10 @@ class VideoDownloader(object):
             dl_stat_dict['speed'] = match.groups()[1]
             return dl_stat_dict
 
+        # Detect the start of a new channel/playlist/video download
+        if stdout_list[1] == 'Extracting' and stdout_list[2] == 'URL:':
+            self.video_download_started_flag = False
+
         # Extract the data. Because of the (small) possibility of a Python
         #   IndexError, we need to wrap the whole thing in a try..except
         try:
@@ -5385,6 +5399,8 @@ class VideoDownloader(object):
             if stdout_list[0] == '[download]':
 
                 dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
+                self.video_download_started_flag = True
+
                 if self.network_error_time is not None:
                     self.network_error_time = None
 
@@ -5515,6 +5531,7 @@ class VideoDownloader(object):
                 #   https://github.com/rg3/youtube-dl/blob/master/youtube_dl/
                 #       downloader/hls.py#L54
                 dl_stat_dict['status'] = formats.ACTIVE_STAGE_DOWNLOAD
+                self.video_download_started_flag = True
 
                 if len(stdout_list) == 7:
                     segment_no = float(stdout_list[6])
@@ -5688,9 +5705,14 @@ class VideoDownloader(object):
                 # (Just ignore this output)
                 return dl_stat_dict
 
+            elif self.video_download_started_flag:
+
+                # The download has already started
+                dl_stat_dict['status'] = formats.ACTIVE_STAGE_POST_PROCESS
+
             else:
 
-                # The download has started
+                # The download is about to start
                 dl_stat_dict['status'] = formats.ACTIVE_STAGE_PRE_PROCESS
 
         except:
@@ -11205,7 +11227,10 @@ class StreamManager(threading.Thread):
         #   then the mainapp.TartubeApp function has already been called
         if self.running_flag:
             self.running_flag = False
-            self.app_obj.livestream_manager_finished()
+            GObject.timeout_add(
+                0,
+                self.app_obj.livestream_manager_finished,
+            )
 
 
     def stop_livestream_operation(self):
@@ -11231,7 +11256,10 @@ class StreamManager(threading.Thread):
 
         # Call the mainapp.TartubeApp function to update everything (it's not
         #   called from self.run(), in this situation)
-        self.app_obj.livestream_manager_finished()
+        GObject.timeout_add(
+            0,
+            self.app_obj.livestream_manager_finished,
+        )
 
 
 class MiniJSONFetcher(object):

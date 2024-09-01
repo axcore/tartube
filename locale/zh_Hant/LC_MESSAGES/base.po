@@ -3,39 +3,41 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-08-31 14:10+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2024-07-25 06:09+0000\n"
+"Last-Translator: hugoalh <hugoalh@users.noreply.hosted.weblate.org>\n"
+"Language-Team: Chinese (Traditional) <https://hosted.weblate.org/projects/"
+"tartube/language-names/zh_Hant/>\n"
+"Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.7-dev\n"
 
 #: .././mainapp.py:317
 msgid "Tiny"
-msgstr ""
+msgstr "微小"
 
 #: .././mainapp.py:318
 msgid "Small"
-msgstr ""
+msgstr "小"
 
 #: .././mainapp.py:319 .././config.py:7201
 msgid "Medium"
-msgstr ""
+msgstr "中"
 
 #: .././mainapp.py:320
 msgid "Large"
-msgstr ""
+msgstr "大"
 
 #: .././mainapp.py:321
 msgid "Enormous"
-msgstr ""
+msgstr "巨大"
 
 #: .././mainapp.py:1116
 msgid ""
@@ -45,6 +47,9 @@ msgid ""
 "conversions, restart Tartube. To stop these messages, disable thumbnail "
 "conversions"
 msgstr ""
+"無法將縮圖從 .webp 轉換為 .jpg。在你的系統上安裝 FFmpeg 或（如果已安裝 "
+"FFmpeg）在你設定正確的 FFmpeg 路徑之前，不會再嘗試進行任何轉換。若要嘗試更多"
+"轉換，重新啟動 Tartube。若要停止這些訊息，停用縮圖轉換"
 
 #: .././mainapp.py:2413
 msgid ""
@@ -348,7 +353,7 @@ msgstr ""
 
 #: .././mainapp.py:12068
 msgid "Videos downloaded:"
-msgstr ""
+msgstr "已下載影片："
 
 #: .././mainapp.py:12069 .././config.py:31251 .././config.py:31313
 msgid "Videos checked:"
@@ -399,11 +404,11 @@ msgstr ""
 
 #: .././mainapp.py:12512
 msgid "version:"
-msgstr ""
+msgstr "版本："
 
 #: .././mainapp.py:12516
 msgid "(unknown)"
-msgstr ""
+msgstr "（未知）"
 
 #: .././mainapp.py:12621
 msgid ""
@@ -537,7 +542,7 @@ msgstr ""
 
 #: .././mainapp.py:13750
 msgid "Errors:"
-msgstr ""
+msgstr "錯誤："
 
 #: .././mainapp.py:15152 .././mainapp.py:15380
 msgid ""
@@ -709,21 +714,21 @@ msgstr ""
 #: .././mainapp.py:20073 .././mainwin.py:1929 .././config.py:740
 #: .././config.py:1108 .././config.py:18252 .././config.py:22248
 msgid "Videos"
-msgstr ""
+msgstr "影片"
 
 #: .././mainapp.py:20074 .././config.py:743 .././config.py:18285
 #: .././config.py:22281
 msgid "Channels"
-msgstr ""
+msgstr "頻道"
 
 #: .././mainapp.py:20075 .././config.py:746 .././config.py:18296
 #: .././config.py:22292
 msgid "Playlists"
-msgstr ""
+msgstr "播放清單"
 
 #: .././mainapp.py:20076 .././config.py:749
 msgid "Folders"
-msgstr ""
+msgstr "資料夾"
 
 #: .././mainapp.py:20866
 msgid ""
@@ -968,7 +973,7 @@ msgstr ""
 #. File column
 #: .././mainwin.py:1379 .././config.py:11044
 msgid "_File"
-msgstr ""
+msgstr "檔案 (&F)"
 
 #: .././mainwin.py:1386
 msgid "_Database preferences..."
@@ -993,12 +998,12 @@ msgstr ""
 #. Quit
 #: .././mainwin.py:1421 .././mainwin.py:30201
 msgid "_Quit"
-msgstr ""
+msgstr "退出 (&Q)"
 
 #. Edit column
 #: .././mainwin.py:1426
 msgid "_Edit"
-msgstr ""
+msgstr "編輯 (&E)"
 
 #: .././mainwin.py:1433
 msgid "_System preferences..."
@@ -1010,7 +1015,7 @@ msgstr ""
 
 #: .././mainwin.py:1447
 msgid "_System"
-msgstr ""
+msgstr "系統 (&S)"
 
 #: .././mainwin.py:1454
 msgid "Open _MSYS2 terminal..."
@@ -1031,7 +1036,7 @@ msgstr ""
 #. Media column
 #: .././mainwin.py:1488 .././config.py:19391
 msgid "_Media"
-msgstr ""
+msgstr "媒體 (&M)"
 
 #: .././mainwin.py:1495
 msgid "Add _videos..."
@@ -1071,7 +1076,7 @@ msgstr ""
 
 #: .././mainwin.py:1564
 msgid "_Export/import"
-msgstr ""
+msgstr "匯出／匯入 (&E)"
 
 #: .././mainwin.py:1597
 msgid "_Switch between views"
@@ -1087,7 +1092,7 @@ msgstr ""
 
 #: .././mainwin.py:1622
 msgid "S_how/hide"
-msgstr ""
+msgstr "顯示／隱藏 (&H)"
 
 #: .././mainwin.py:1629
 msgid "_Switch profile"
@@ -1115,7 +1120,7 @@ msgstr ""
 
 #: .././mainwin.py:1688
 msgid "Pr_ofiles"
-msgstr ""
+msgstr "設定檔 (&O)"
 
 #: .././mainwin.py:1701
 msgid "Ad_d test media"
@@ -1151,11 +1156,11 @@ msgstr ""
 
 #: .././mainwin.py:1753
 msgid "U_pdate"
-msgstr ""
+msgstr "更新 (&P)"
 
 #: .././mainwin.py:1759 .././mainwin.py:5943
 msgid "_Test"
-msgstr ""
+msgstr "測試 (&T)"
 
 #: .././mainwin.py:1770
 msgid "Install _FFmpeg..."
@@ -1201,11 +1206,11 @@ msgstr ""
 #. Help column
 #: .././mainwin.py:1850
 msgid "_Help"
-msgstr ""
+msgstr "說明"
 
 #: .././mainwin.py:1856
 msgid "_About..."
-msgstr ""
+msgstr "關於…"
 
 #: .././mainwin.py:1864
 msgid "Show _tutorial..."
@@ -1213,15 +1218,15 @@ msgstr ""
 
 #: .././mainwin.py:1873
 msgid "Check for _updates"
-msgstr ""
+msgstr "檢查更新"
 
 #: .././mainwin.py:1879
 msgid "Go to _website"
-msgstr ""
+msgstr "前往網站"
 
 #: .././mainwin.py:1888
 msgid "Send _feedback"
-msgstr ""
+msgstr "提供回饋意見"
 
 #: .././mainwin.py:1907
 msgid "TRANSLATOR'S NOTE: Main window toolbar starts here"
@@ -1233,11 +1238,11 @@ msgstr ""
 
 #: .././mainwin.py:1948 .././mainwin.py:28398 .././media.py:110
 msgid "Channel"
-msgstr ""
+msgstr "頻道"
 
 #: .././mainwin.py:1958
 msgid "Add a new channel"
-msgstr ""
+msgstr "新增頻道"
 
 #: .././mainwin.py:1969 .././mainwin.py:28400 .././media.py:112
 msgid "Playlist"
@@ -1249,11 +1254,11 @@ msgstr ""
 
 #: .././mainwin.py:1990 .././mainwin.py:28402 .././media.py:114
 msgid "Folder"
-msgstr ""
+msgstr "資料夾"
 
 #: .././mainwin.py:2000
 msgid "Add a new folder"
-msgstr ""
+msgstr "新增資料夾"
 
 #: .././mainwin.py:2014 .././mainwin.py:13113 .././config.py:23820
 msgid "Check"
@@ -1276,7 +1281,7 @@ msgstr ""
 #: .././mainwin.py:28599 .././mainwin.py:28625 .././config.py:23696
 #: .././config.py:23822
 msgid "Download"
-msgstr ""
+msgstr "下載"
 
 #: .././mainwin.py:2046 .././mainwin.py:2332 .././mainwin.py:4719
 #: .././mainwin.py:5054
@@ -1295,7 +1300,7 @@ msgstr ""
 
 #: .././mainwin.py:2097 .././config.py:20234
 msgid "System preferences"
-msgstr ""
+msgstr "系統設定"
 
 #: .././mainwin.py:2111 .././config.py:4927 .././config.py:4936
 msgid "General download options"
@@ -1331,7 +1336,7 @@ msgstr ""
 
 #: .././mainwin.py:2190
 msgid "Close Tartube"
-msgstr ""
+msgstr "關閉 Tartube"
 
 #: .././mainwin.py:2206
 msgid "TRANSLATOR'S NOTE: Main window tabs are defined here"
@@ -1399,11 +1404,11 @@ msgstr ""
 #: .././mainwin.py:2448 .././mainwin.py:2996 .././mainwin.py:3096
 #: .././mainwin.py:3729 .././mainwin.py:13122
 msgid "Size"
-msgstr ""
+msgstr "大小"
 
 #: .././mainwin.py:2458
 msgid "Set page size"
-msgstr ""
+msgstr "設定頁面大小"
 
 #: .././mainwin.py:2481
 msgid "Go to first page"
@@ -1411,7 +1416,7 @@ msgstr ""
 
 #: .././mainwin.py:2496
 msgid "Go to previous page"
-msgstr ""
+msgstr "往上一頁"
 
 #: .././mainwin.py:2513
 msgid "Go to next page"
@@ -1446,7 +1451,7 @@ msgstr ""
 #: .././config.py:21974 .././config.py:23696 .././config.py:24804
 #: .././config.py:27132 .././config.py:27415
 msgid "Name"
-msgstr ""
+msgstr "名稱"
 
 #: .././mainwin.py:2600
 msgid "Download time"
@@ -1712,7 +1717,7 @@ msgstr ""
 
 #: .././mainwin.py:3800
 msgid "Play video"
-msgstr ""
+msgstr "播放影片"
 
 #: .././mainwin.py:3823
 msgid "Open destination(s)"
@@ -1834,7 +1839,7 @@ msgstr ""
 
 #: .././mainwin.py:4347 .././config.py:23501
 msgid "Show video names"
-msgstr ""
+msgstr "顯示影片名稱"
 
 #: .././mainwin.py:4365 .././config.py:23512
 msgid "Show full messages"
@@ -2861,7 +2866,7 @@ msgstr ""
 #: .././mainwin.py:13119 .././mainwin.py:26313 .././mainwin.py:27454
 #: .././config.py:18274 .././config.py:22270
 msgid "Other"
-msgstr ""
+msgstr "其他"
 
 #: .././mainwin.py:15019
 msgid ""
@@ -3192,7 +3197,7 @@ msgstr ""
 #: .././mainwin.py:26394 .././mainwin.py:26397 .././mainwin.py:26909
 #: .././mainwin.py:28517 .././mainwin.py:28519
 msgid "Open"
-msgstr ""
+msgstr "開啟"
 
 #: .././mainwin.py:26091 .././mainwin.py:26401 .././mainwin.py:28523
 msgid "When the livestream starts, open it"
@@ -3504,7 +3509,7 @@ msgstr ""
 
 #: .././mainwin.py:30614 .././config.py:21974
 msgid "URL"
-msgstr ""
+msgstr "網址"
 
 #. Add more buttons
 #: .././mainwin.py:30656
@@ -4214,7 +4219,7 @@ msgstr ""
 #. 'Cancel' button
 #: .././mainwin.py:35920 .././config.py:1264
 msgid "Cancel"
-msgstr ""
+msgstr "取消"
 
 #. 'OK' button
 #: .././mainwin.py:35924 .././config.py:1255 .././config.py:2439
@@ -5174,7 +5179,7 @@ msgstr ""
 
 #: .././config.py:1267
 msgid "Cancel changes"
-msgstr ""
+msgstr "取消變更"
 
 #: .././config.py:2065
 msgid "Listed as"
@@ -5202,7 +5207,7 @@ msgstr ""
 
 #: .././config.py:2216 .././config.py:5443
 msgid "Video URL"
-msgstr ""
+msgstr "影片網址"
 
 #: .././config.py:2239 .././config.py:7527
 msgid "_Options"
@@ -5222,7 +5227,7 @@ msgstr ""
 
 #: .././config.py:2442
 msgid "Close this window"
-msgstr ""
+msgstr "關閉此視窗"
 
 #: .././config.py:2851
 msgid ""
@@ -7149,6 +7154,8 @@ msgid ""
 "random Rate Factor and then change it near the end of the video to "
 "eventually reach the target bitrate."
 msgstr ""
+"可以指定平均位元速率但僅運行一次，但不建議。然後，FFmpeg 將使用隨機速率因子對"
+"影片的開頭進行編碼，其後在影片末尾附近對其進行變更以最終達到目標位元速率。"
 
 #: .././config.py:11438
 msgid "Manual rate factor"
@@ -8274,7 +8281,7 @@ msgstr ""
 
 #: .././config.py:19639
 msgid "Other settings"
-msgstr ""
+msgstr "其他設定"
 
 #: .././config.py:19645
 msgid ""
@@ -9039,7 +9046,7 @@ msgstr ""
 
 #: .././config.py:23063
 msgid "Close to the tray, rather than closing the application"
-msgstr ""
+msgstr "最小化至系統匣，而非關閉程式"
 
 #: .././config.py:23075
 msgid ""
@@ -9265,7 +9272,7 @@ msgstr ""
 #: .././config.py:23752 .././config.py:24867 .././config.py:27197
 #: .././config.py:27478
 msgid "Edit"
-msgstr ""
+msgstr "編輯"
 
 #: .././config.py:23824 .././formats.py:1237
 msgid "Custom"

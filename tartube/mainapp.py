@@ -2002,7 +2002,7 @@ class TartubeApp(Gtk.Application):
         # Applies only to the Videos tab; the Classic Mode tab has a button
         #   near the bottom, which the user can use to ignore the archive file
         self.block_ytdl_archive_flag = False
-        
+
         # Flag set to True if, when checking videos/channels/playlists, we
         #   should apply a timeout (in case youtube-dl gets stuck downloading
         #   the JSON data)
@@ -4265,7 +4265,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-197)
-            200-299: mainwin.py     (in use: 201-276)
+            200-299: mainwin.py     (in use: 201-277)
             300-399: downloads.py   (in use: 301-310)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
@@ -5691,7 +5691,7 @@ class TartubeApp(Gtk.Application):
 
             self.ytdl_update_list = ytdl_update_list
 
-        
+
     def load_config_import_scheduled(self, version, json_dict):
 
         """"Called by self.load_config().
@@ -8339,7 +8339,7 @@ class TartubeApp(Gtk.Application):
                     natname = re.sub(r'^[\s]+', ' ', natname)
 
                     media_data_obj.natname = natname
-                    
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -11944,7 +11944,7 @@ class TartubeApp(Gtk.Application):
         orig_media_data_list \
         = self.download_manager_obj.download_list_obj.orig_media_data_list
         # For Classic Mode tab custom downloads, get the list of videos which
-        #   were extrascted, along with their metadata
+        #   were extracted, along with their metadata
         classic_extract_list = self.download_manager_obj.classic_extract_list
 
         # Get the number of videos downloaded (real and simulated), as well as
@@ -12033,7 +12033,7 @@ class TartubeApp(Gtk.Application):
         # If the youtube-dl archive file(s) were temporarily blocked for a
         #   video re-download, re-enable them
         self.block_ytdl_archive_flag = False
-        
+
         # If Tartube is due to shut down, then shut it down
         show_newbie_dialogue_flag = False
 
@@ -13417,7 +13417,8 @@ class TartubeApp(Gtk.Application):
 
     def livestream_manager_finished(self):
 
-        """Called by downloads.StreamManager.run().
+        """Called by downloads.StreamManager.run() and
+        .stop_livestream_operation().
 
         The livestream operation has finished, so update IVs and main window
         widgets.
@@ -13447,15 +13448,11 @@ class TartubeApp(Gtk.Application):
 
         # Any videos whose livestream status has changed must be redrawn in
         #   the Video catalogue
-        # (This function is called from the downloads.StreamManager object, so
-        #   to prevent a crash, its calls must be wrapped in a timer)
         if self.main_win_obj.video_index_current_dbid \
         == self.fixed_live_folder.dbid:
 
             # Livestreams folder visible; just redraw it
-            GObject.timeout_add(
-                0,
-                self.main_win_obj.video_catalogue_redraw_all,
+            self.main_win_obj.video_catalogue_redraw_all(
                 self.fixed_live_folder.dbid,
             )
 
@@ -13471,12 +13468,7 @@ class TartubeApp(Gtk.Application):
                 temp_dict[this_obj.dbid] = this_obj
 
             for video_obj in temp_dict.values():
-
-                GObject.timeout_add(
-                    0,
-                    self.main_win_obj.video_catalogue_update_video,
-                    video_obj,
-                )
+                self.main_win_obj.video_catalogue_update_video(video_obj)
 
         # Notify the user and/or open videos in the system's web browser, if
         #   a waiting livestream has just gone live (and if allowed to do so)
@@ -13548,10 +13540,11 @@ class TartubeApp(Gtk.Application):
             else:
 
                 # Download operation already in progress
+                return_list = []
                 for video_obj in dl_dict.values():
 
-                    download_item_obj \
-                    = self.download_manager_obj.download_list_obj.create_item(
+                    return_list \
+                    += self.download_manager_obj.download_list_obj.create_item(
                         video_obj,
                         None,           # media.Scheduled object
                         'real',         # override_operation_type
@@ -13559,16 +13552,16 @@ class TartubeApp(Gtk.Application):
                         False,          # ignore_limits_flag
                     )
 
-                    if download_item_obj:
+                for download_item_obj in return_list:
 
-                        # Add a row to the Progress List
-                        self.main_win_obj.progress_list_add_row(
-                            download_item_obj.item_id,
-                            video_obj,
-                        )
+                    # Add a row to the Progress List
+                    self.main_win_obj.progress_list_add_row(
+                        download_item_obj.item_id,
+                        download_item_obj.media_data_obj,
+                    )
 
-                        # Update the main window's progress bar
-                        self.download_manager_obj.nudge_progress_bar()
+                    # Update the main window's progress bar
+                    self.download_manager_obj.nudge_progress_bar()
 
 
     def process_manager_start(self, options_obj, video_list):
@@ -15210,7 +15203,7 @@ class TartubeApp(Gtk.Application):
                 dialogue_move_select_flag = True
             else:
                 dialogue_move_select_flag = False
-                
+
             if dialogue_win.button2.get_active():
                 dialogue_move_container_flag = True
             else:
@@ -15230,7 +15223,7 @@ class TartubeApp(Gtk.Application):
 
                 if response == Gtk.ResponseType.YES:
                     self.move_container_to_top_continue(media_data_obj)
-                    
+
         # Don't prompt, just move
         else:
             self.move_container_to_top_continue(media_data_obj)
@@ -15439,7 +15432,7 @@ class TartubeApp(Gtk.Application):
                 dialogue_move_select_flag = True
             else:
                 dialogue_move_select_flag = False
-                
+
             if dialogue_win.button2.get_active():
                 dialogue_move_container_flag = True
             else:
@@ -15459,7 +15452,7 @@ class TartubeApp(Gtk.Application):
 
                 if response == Gtk.ResponseType.YES:
                     self.move_container_continue(source_obj, dest_obj)
-                    
+
         # Don't prompt, just move
         else:
             self.move_container_continue(source_obj, dest_obj)
@@ -15586,7 +15579,7 @@ class TartubeApp(Gtk.Application):
                 dialogue_move_select_flag = True
             else:
                 dialogue_move_select_flag = False
-                
+
             if dialogue_win.button2.get_active():
                 dialogue_move_video_flag = True
             else:
@@ -15605,7 +15598,7 @@ class TartubeApp(Gtk.Application):
 
                 if response == Gtk.ResponseType.YES:
                     self.move_videos_continue(dest_obj, video_list)
-                    
+
         # Don't prompt, just move
         else:
             self.move_videos_continue(dest_obj, video_list)
@@ -15766,7 +15759,7 @@ class TartubeApp(Gtk.Application):
                 self.main_win_obj.video_catalogue_redraw_all(
                     self.main_win_obj.video_index_current_dbid,
                 )
-            
+
         # Append video IDs to the archive file
         if archive_path is not None and id_list:
 
@@ -15787,7 +15780,7 @@ class TartubeApp(Gtk.Application):
         # Show confirmation dialogue, if required (but always show one on
         #   failure)
         if self.dialogue_move_video_flag or fail_count:
-        
+
             msg = _('Videos moved') + ': ' + str(success_count) \
             + '\n' + _('Videos not moved') + ': ' \
             + str(fail_count + already_count)
@@ -20916,9 +20909,11 @@ class TartubeApp(Gtk.Application):
 
             # Download operation already in progress. Add these videos to its
             #   list
+            return_list = []
             for video_obj in video_list:
-                download_item_obj \
-                = self.download_manager_obj.download_list_obj.create_item(
+
+                return_list \
+                += self.download_manager_obj.download_list_obj.create_item(
                     video_obj,
                     None,           # media.Scheduled object
                     'real',         # override_operation_type
@@ -20926,16 +20921,16 @@ class TartubeApp(Gtk.Application):
                     False,          # ignore_limits_flag
                 )
 
-                if download_item_obj:
+            for download_item_obj in return_list:
 
-                    # Add a row to the Progress List
-                    self.main_win_obj.progress_list_add_row(
-                        download_item_obj.item_id,
-                        video_obj,
-                    )
+                # Add a row to the Progress List
+                self.main_win_obj.progress_list_add_row(
+                    download_item_obj.item_id,
+                    download_item_obj.media_data_obj,
+                )
 
-                    # Update the main window's progress bar
-                    self.download_manager_obj.nudge_progress_bar()
+                # Update the main window's progress bar
+                self.download_manager_obj.nudge_progress_bar()
 
         else:
 
@@ -23033,7 +23028,7 @@ class TartubeApp(Gtk.Application):
             else:
                 priority_flag = False
 
-            download_item_obj \
+            return_list \
             = self.download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
                 scheduled_obj,
@@ -23042,12 +23037,12 @@ class TartubeApp(Gtk.Application):
                 ignore_limits_flag,
             )
 
-            if download_item_obj:
+            for download_item_obj in return_list:
 
                 # Add a row to the Progress List
                 self.main_win_obj.progress_list_add_row(
                     download_item_obj.item_id,
-                    media_data_obj,
+                    download_item_obj.media_data_obj,
                 )
 
                 # Update the main window's progress bar
@@ -23118,15 +23113,19 @@ class TartubeApp(Gtk.Application):
         # If a list of videos, rather than a grid, is visible, then insert any
         #   rows that were to be inserted, but which could not be a few moments
         #   ago
-        GObject.timeout_add(
-            0,
-            self.main_win_obj.video_catalogue_retry_insert_items,
-        )
+        if self.main_win_obj.video_catalogue_temp_list:
+            GObject.timeout_add(
+                0,
+                self.main_win_obj.video_catalogue_retry_insert_items,
+            )
 
         # Reset confirmation messages in the Drag and Drop tab, if it's time
         #   to reset them
         for wrapper_obj in self.main_win_obj.drag_drop_dict.values():
-            wrapper_obj.check_reset()
+
+            if wrapper_obj.reset_time is not None \
+            and wrapper_obj.reset_time < time.time():
+                wrapper_obj.do_reset()
 
         # Return 1 to keep the timer going
         return 1
@@ -27304,7 +27303,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.block_ytdl_archive_flag = True
 
-            
+
     def set_catalogue_draw_blocked_flag(self, flag):
 
         if not flag:
@@ -27776,7 +27775,7 @@ class TartubeApp(Gtk.Application):
         else:
             self.dialogue_move_select_flag = True
 
-            
+
     def set_dialogue_move_video_flag(self, flag):
 
         if not flag:

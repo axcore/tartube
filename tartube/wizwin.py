@@ -728,7 +728,6 @@ class SetupWizWin(GenericWizWin):
             self.page_list.append('setup_finish_page_strict')
 
         else:
-            self.page_list.append('setup_fetch_ffmpeg_page') # !!! test remove
             self.page_list.append('setup_fetch_downloader_page')
             self.page_list.append('setup_classic_mode_page')
             self.page_list.append('setup_finish_page_default')

@@ -1,3 +1,49 @@
+v2.5.040 (31 Jul 2024)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- Fixed rare crashes caused by the system tray icon (Git #577)
+- Fixed failure to add videos/channels/playlists to the Progress List (the
+    top half of the Progress tab) in certain circumstances (Git #651)
+- In the Classic Mode tab, livestreams would not download when the 'is a
+    livestream' button was selected, but they downloaded just fine when it
+    wasn't selected. Fixed (Git #643)
+    
+MINOR FIXES
+- Fixed incorrect sorting of videos whose names begin/end with whitespace
+    characters or quotes (Git #611)
+- In the preferences window, Downloaders > Forks tab, fixed the broken button
+    'When using other downloaders, filter out youtube-dl options' (Git #614)
+- Fixed inability to re-download videos when the youtube-dl archive file is
+    enabled (Git #613, #623)
+- In the Classic Mode tab, the 'Clear downloaded' button didn't work for any
+    videos which were not downloaded because of the youtube-dl archive file,
+    when use of that file was enabled. Fixed (Git #621)
+- In the Custom Download Settings window, the spinbutton to set the maximum
+    delay did not work. Fixed it (Reddit)
+- When using the 'strict' installers, it was not possible to set the path to
+    the youtube-dl executable due to more broken buttons. Fixed (Git #633)
+- Fixed various python errors and warnings generated only by the most recent
+    versions of Python
+- In the setup wizard, removed the FFmpeg installation page for users who
+    should not have been able to see it
+- While downloading Odysee videos, "Pre-processing" is seen in the Progress tab
+    both before AND after the actual video download. Fixed it
+- When DEBUG_FUNC flags are enabled (by editing the source code), tweaked the
+    code so that text is not constantly sent to STDOUT while Tartube is idle
+- When changing Tartube's locale in the preferences window, the message
+    'The new setting will be applied when Tartube restarts" appears in the
+    wrong place, messing up the formatting. Fixed
+
+MINOR NEW FEATURES
+- Added (traditional) Chinese translation. Thanks to hugoalh
+- In the Video Index (the left-hand column in the Videos tab), you can now
+    disable dialogue windows when moving videos/channels/playlists/folders.
+    Click Edit > System preferences > Windows > Dialogues, and deselect the
+    'Prompt the user..." buttons (Git #624)
+- Linux users can now use both pip3 or pipx to install or update youtube-dl
+    and other components
+
 v2.5.0 (3 Jan 2024)
 -------------------------------------------------------------------------------
 

@@ -11464,25 +11464,23 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('mwn 11462 video_catalogue_retry_insert_items')
 
-        if self.video_catalogue_temp_list:
+        while self.video_catalogue_temp_list:
 
-            while self.video_catalogue_temp_list:
+            wrapper_obj = self.video_catalogue_temp_list.pop()
 
-                wrapper_obj = self.video_catalogue_temp_list.pop()
+            try:
+                self.catalogue_listbox.add(wrapper_obj)
+            except:
+                # Still can't add the row; try again later
+                self.video_catalogue_temp_list.append(wrapper_obj)
+                return
 
-                try:
-                    self.catalogue_listbox.add(wrapper_obj)
-                except:
-                    # Still can't add the row; try again later
-                    self.video_catalogue_temp_list.append(wrapper_obj)
-                    return
+        # All items added. Force the Gtk.ListBox to sort its rows, so that
+        #   videos are displayed in the correct order
+        self.catalogue_listbox.invalidate_sort()
 
-            # All items added. Force the Gtk.ListBox to sort its rows, so that
-            #   videos are displayed in the correct order
-            self.catalogue_listbox.invalidate_sort()
-
-            # Procedure complete
-            self.catalogue_listbox.show_all()
+        # Procedure complete
+        self.catalogue_listbox.show_all()
 
 
     def video_catalogue_delete_video(self, video_obj):
@@ -16334,7 +16332,7 @@ class MainWin(Gtk.ApplicationWindow):
                 return
 
         # Add the channel/playlist/folder to the download list
-        download_item_obj = download_manager_obj.download_list_obj.create_item(
+        return_list = download_manager_obj.download_list_obj.create_item(
             media_data_obj,
             None,               # media.Scheduled object
             'sim',              # override_operation_type
@@ -16342,12 +16340,12 @@ class MainWin(Gtk.ApplicationWindow):
             False,              # ignore_limits_flag
         )
 
-        if download_item_obj:
+        for download_item_obj in return_list:
 
             # Add a row to the Progress List
             self.progress_list_add_row(
                 download_item_obj.item_id,
-                media_data_obj,
+                download_item_obj.media_data_obj,
             )
 
             # Update the main window's progress bar
@@ -16626,7 +16624,7 @@ class MainWin(Gtk.ApplicationWindow):
                 return
 
         # Add the channel/playlist/folder to the download list
-        download_item_obj = download_manager_obj.download_list_obj.create_item(
+        return_list = download_manager_obj.download_list_obj.create_item(
             media_data_obj,
             None,           # media.Scheduled object
             'real',         # override_operation_type
@@ -16634,12 +16632,12 @@ class MainWin(Gtk.ApplicationWindow):
             False,          # ignore_limits_flag
         )
 
-        if download_item_obj:
+        for download_item_obj in return_list:
 
             # Add a row to the Progress List
             self.progress_list_add_row(
                 download_item_obj.item_id,
-                media_data_obj,
+                download_item_obj.media_data_obj,
             )
 
             # Update the main window's progress bar
@@ -18364,8 +18362,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Download operation already in progress. Add this video to its
             #   list
-            download_item_obj \
-            = download_manager_obj.download_list_obj.create_item(
+            return_list = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
                 None,               # media.Scheduled object
                 'sim',              # override_operation_type
@@ -18373,12 +18370,12 @@ class MainWin(Gtk.ApplicationWindow):
                 False,              # ignore_limits_flag
             )
 
-            if download_item_obj:
+            for download_item_obj in return_list:
 
                 # Add a row to the Progress List
                 self.progress_list_add_row(
                     download_item_obj.item_id,
-                    media_data_obj,
+                    download_item_obj.media_data_obj,
                 )
 
                 # Update the main window's progress bar
@@ -18429,9 +18426,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Download operation already in progress. Add these video to its
             #   list
+            return_list = []
             for media_data_obj in media_data_list:
-                download_item_obj \
-                = download_manager_obj.download_list_obj.create_item(
+
+                return_list \
+                += download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
                     None,           # media.Scheduled object
                     'sim',          # override_operation_type
@@ -18439,16 +18438,16 @@ class MainWin(Gtk.ApplicationWindow):
                     False,          # ignore_limits_flag
                 )
 
-                if download_item_obj:
+            for download_item_obj in return_list:
 
-                    # Add a row to the Progress List
-                    self.progress_list_add_row(
-                        download_item_obj.item_id,
-                        media_data_obj,
-                    )
+                # Add a row to the Progress List
+                self.progress_list_add_row(
+                    download_item_obj.item_id,
+                    download_item_obj.media_data_obj,
+                )
 
-                    # Update the main window's progress bar
-                    self.app_obj.download_manager_obj.nudge_progress_bar()
+                # Update the main window's progress bar
+                self.app_obj.download_manager_obj.nudge_progress_bar()
 
         else:
 
@@ -18783,8 +18782,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Download operation already in progress. Add this video to its
             #   list
-            download_item_obj \
-            = download_manager_obj.download_list_obj.create_item(
+            return_list = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
                 None,           # media.Scheduled object
                 'real',         # override_operation_type
@@ -18792,12 +18790,12 @@ class MainWin(Gtk.ApplicationWindow):
                 False,          # ignore_limits_flag
             )
 
-            if download_item_obj:
+            for download_item_obj in return_list:
 
                 # Add a row to the Progress List
                 self.progress_list_add_row(
                     download_item_obj.item_id,
-                    media_data_obj,
+                    download_item_obj.media_data_obj,
                 )
 
                 # Update the main window's progress bar
@@ -18852,9 +18850,11 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Download operation already in progress. Add these videos to its
             #   list
+            return_list = []
             for media_data_obj in media_data_list:
-                download_item_obj \
-                = download_manager_obj.download_list_obj.create_item(
+
+                return_list \
+                += download_manager_obj.download_list_obj.create_item(
                     media_data_obj,
                     None,               # media.Scheduled object
                     'real',             # override_operation_type
@@ -18862,16 +18862,16 @@ class MainWin(Gtk.ApplicationWindow):
                     False,              # ignore_limits_flag
                 )
 
-                if download_item_obj:
+            for download_item_obj in return_list:
 
-                    # Add a row to the Progress List
-                    self.progress_list_add_row(
-                        download_item_obj.item_id,
-                        media_data_obj,
-                    )
+                # Add a row to the Progress List
+                self.progress_list_add_row(
+                    download_item_obj.item_id,
+                    download_item_obj.media_data_obj,
+                )
 
-                    # Update the main window's progress bar
-                    self.app_obj.download_manager_obj.nudge_progress_bar()
+                # Update the main window's progress bar
+                self.app_obj.download_manager_obj.nudge_progress_bar()
 
         else:
 
@@ -19405,8 +19405,7 @@ class MainWin(Gtk.ApplicationWindow):
 
             # Download operation already in progress. Add this video to its
             #   list
-            download_item_obj \
-            = download_manager_obj.download_list_obj.create_item(
+            return_list = download_manager_obj.download_list_obj.create_item(
                 media_data_obj,
                 None,           # media.Scheduled object
                 'real',         # override_operation_type
@@ -19414,12 +19413,12 @@ class MainWin(Gtk.ApplicationWindow):
                 False,          # ignore_limits_flag
             )
 
-            if download_item_obj:
+            for download_item_obj in return_list:
 
                 # Add a row to the Progress List
                 self.progress_list_add_row(
                     download_item_obj.item_id,
-                    media_data_obj,
+                    download_item_obj.media_data_obj,
                 )
 
                 # Update the main window's progress bar
@@ -20121,7 +20120,7 @@ class MainWin(Gtk.ApplicationWindow):
         #   re-downloading of the video
         # Temporarily block usage of the archive file
         self.app_obj.set_block_ytdl_archive_flag(True)
-        
+
         # Now we're ready to start the download operation
         self.app_obj.download_manager_start('real', False, [media_data_obj] )
 
@@ -27506,7 +27505,7 @@ class ComplexCatalogueItem(object):
             else:
 
                 # Download operation already in progress
-                download_item_obj \
+                return_list \
                 = app_obj.download_manager_obj.download_list_obj.create_item(
                     self.video_obj,
                     None,               # media.Scheduled object
@@ -27515,12 +27514,12 @@ class ComplexCatalogueItem(object):
                     False,              # ignore_limits_flag
                 )
 
-                if download_item_obj:
+                for download_item_obj in return_list:
 
                     # Add a row to the Progress List
                     self.main_win_obj.progress_list_add_row(
                         download_item_obj.item_id,
-                        self.video_obj,
+                        download_item_obj.media_data_obj,
                     )
 
                     # Update the main window's progress bar
@@ -29815,23 +29814,21 @@ class DropZoneBox(Gtk.Frame):
                 )
 
 
-    def check_reset(self):
+    def do_reset(self):
 
         """Called (several times a second) by
         mainapp.TartubeApp.script_fast_timer_callback().
 
-        If it's time to remove the message displayed in the dropzone, then
-        remove it and update IVs.
+        It's time to remove the message displayed in the dropzone, so remove it
+        and update IVs.
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('mwn 29811 check_reset')
+            utils.debug_time('mwn 29811 do_reset')
 
-        if self.reset_time is not None \
-        and self.reset_time < time.time():
-            self.update_text = None
-            self.reset_time = None
-            self.update_widgets()
+        self.update_text = None
+        self.reset_time = None
+        self.update_widgets()
 
 
     # Callback class methods
@@ -30081,15 +30078,40 @@ class StatusIcon(Gtk.StatusIcon):
         else:
             icon = formats.STATUS_ICON_DICT['default_icon']
 
-        self.set_from_file(
-            os.path.abspath(
-                os.path.join(
-                    self.app_obj.main_win_obj.icon_dir_path,
-                    'status',
-                    icon,
-                ),
+        # DEBUG: Git #577: this seems to be the source of the
+        #   'cairo_surface_reference' crashes, but they are difficult to
+        #   reproduce; perhaps this will work
+#       self.set_from_file(
+#           os.path.abspath(
+#               os.path.join(
+#                   self.app_obj.main_win_obj.icon_dir_path,
+#                   'status',
+#                   icon,
+#               ),
+#           )
+#       )
+
+        try:
+            self.set_from_file(
+                os.path.abspath(
+                    os.path.join(
+                        self.app_obj.main_win_obj.icon_dir_path,
+                        'status',
+                        icon,
+                    ),
+                )
             )
-        )
+
+        except Exception as e:
+            self.app_obj.system_error(
+                277,
+                'Disabling system tray icon after Gtk error: ' + str(e)
+            )
+
+            self.app_obj.set_show_status_icon_flag(False)
+            self.app_obj.set_open_in_tray_flag(False)
+            self.app_obj.set_close_to_tray_flag(False)
+            self.app_obj.set_restore_posn_from_tray_flag(False)
 
 
     # Callback class methods
@@ -33794,7 +33816,7 @@ class DeleteContainerDialogue(Gtk.Dialog):
         self.button = None                      # Gtk.RadioButton
         self.button2 = None                     # Gtk.RadioButton
         self.button3 = None                     # Gtk.CheckButton
-        
+
 
         # IV list - other
         # ---------------
@@ -36054,7 +36076,7 @@ class MoveContainerDialogue(Gtk.Dialog):
     Python class handling a dialogue window that prompts the user for
     confirmation, before a media.Channel, media.Playlist or media.Folder object
     in the Video Index.
-    
+
     Args:
 
         main_win_obj (mainwin.MainWin): The parent main window
@@ -36164,7 +36186,7 @@ class MoveContainerDialogue(Gtk.Dialog):
                 main_win_obj.pixbuf_dict['warning_large'],
             )
             grid.attach(image, 0, 2, 1, 1)
-        
+
             label2 = Gtk.Label(
                 utils.tidy_up_long_string(
                     _(
@@ -36215,7 +36237,7 @@ class MoveVideoDialogue(Gtk.Dialog):
 
         dest_obj (media.Channel, media.Playlist or media.Folder): The
             destination container
-            
+
         media_list (list): List of media.Video objects to be deleted
 
     """
@@ -36306,7 +36328,7 @@ class MoveVideoDialogue(Gtk.Dialog):
                 main_win_obj.pixbuf_dict['warning_large'],
             )
             grid.attach(image, 0, 2, 1, 1)
-        
+
             label2 = Gtk.Label(
                 utils.tidy_up_long_string(
                     _(

@@ -20730,15 +20730,18 @@ class SystemPrefWin(GenericPrefWin):
                 formats.LOCALE_LIST.index(self.app_obj.current_locale) + 1
             )
 
+        # N.B. The call to self.on_locale_combo_changed() can create another
+        #   secondary grid at 0, 4
+
         # Preferences mode
         self.add_label(grid,
             '<u>' + _('Preferences mode') + '</u>',
-            0, 4, grid_width, 1,
+            0, 5, grid_width, 1,
         )
 
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
-        grid2 = self.add_secondary_grid(grid, 0, 5, grid_width, 1)
+        grid2 = self.add_secondary_grid(grid, 0, 6, grid_width, 1)
 
         if self.app_obj.simple_prefs_flag:
             frame = self.add_pixbuf(grid2,
@@ -31654,7 +31657,7 @@ class SystemPrefWin(GenericPrefWin):
         """Called from callback in self.setup_downloader_forks_tab().
 
         Sets the flag to filter out yt-dlp options, when using a fork.
-        
+
         Args:
 
             checkbutton (Gtk.Checkbutton): The widget clicked
@@ -32218,7 +32221,7 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_override_local(locale)
 
         # Add some more widgets to tell the user to restart Tartube
-        #   As the user might not know the language, show an icon as well as
+        # As the user might not know the language, show an icon as well as
         #   some text
         # Use an extra grid to avoid messing up the layout of widgets above
         grid2 = self.add_secondary_grid(grid, 0, 4, 3, 1)
@@ -32236,8 +32239,7 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid2,
             '<i>' + _(
-                'The new setting will be applied when Tartube' \
-                + ' restarts',
+                'The new setting will be applied when Tartube restarts',
             ) + '</i>',
             1, 0, 1, 1,
         )
@@ -32563,7 +32565,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Enables/disables prompting the user before moving channels/playlists/
         folders in the Video Index.
-        
+
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -32584,7 +32586,7 @@ class SystemPrefWin(GenericPrefWin):
 
         Enables/disables selecting a channel/playlist/folder, after media has
         been moved into it.
-        
+
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -32598,14 +32600,14 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.dialogue_move_select_flag:
             self.app_obj.set_dialogue_move_select_flag(False)
 
-            
+
     def on_move_video_button_toggled(self, checkbutton):
 
         """Called from a callback in self.setup_windows_dialogues_tab().
 
         Enables/disables prompting the user before moving videos in the Video
         Index.
-        
+
         Args:
 
             checkbutton (Gtk.CheckButton): The widget clicked
@@ -32619,7 +32621,7 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.dialogue_move_video_flag:
             self.app_obj.set_dialogue_move_video_flag(False)
 
-            
+
     def on_moviepy_button_toggled(self, checkbutton):
 
         """Called from callback in self.setup_general_modules_tab().
