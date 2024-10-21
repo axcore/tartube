@@ -72,7 +72,7 @@ class FFmpegManager(object):
     # Public class methods
 
 
-    def convert_webp(self, thumbnail_filename):
+    def convert_webp(self, thumbnail_filename, retain_flag=False):
 
         """Called by mainapp.TartubeApp.update_video_when_file_found(),
         downloads.VideoDownloader.confirm_sim_video() and
@@ -96,6 +96,12 @@ class FFmpegManager(object):
             thumbnail_filename (str): Full path to the webp file to be
                 converted to jpg
 
+        Optional args:
+
+            retain_flag (bool): True if the original 'thumbnail_filename' file
+                should be retained after the conversion, regardless of the
+                value of mainapp.TartubeApp settings
+
         Return values:
 
             False if an attempted conversion fails, or True otherwise
@@ -112,8 +118,6 @@ class FFmpegManager(object):
         if self.app_obj.ffmpeg_convert_webp_flag \
         and self.app_obj.ffmpeg_retain_webp_flag:
             retain_flag = True
-        else:
-            retain_flag = False
 
         # Correct extension for .webp files with the wrong extension
         #   (youtube-dl #25687, #25717)

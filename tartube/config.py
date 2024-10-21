@@ -27247,8 +27247,6 @@ class SystemPrefWin(GenericPrefWin):
         )
         label.set_hexpand(True)
 
-        # !!! DEBUG: Clicking the button creates a positional argument error
-        # !!!       for no obvious reason
         button8 = Gtk.Button()
         grid2.attach(button8, 6, 0, 1, 1)
         button8.set_label(_('Refresh list'))
@@ -27258,7 +27256,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
 
-    def setup_options_dl_list_tab_update_treeview(self):
+    def setup_options_dl_list_tab_update_treeview(self, button=None):
 
         """Can be called by anything.
 

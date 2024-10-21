@@ -46,7 +46,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Stable release: **v2.5.040 (31 Aug 2024)**
 
-Development release: **v2.5.040 (31 Aug 2024)**
+Development release: **v2.5.047 (21 Oct 2024)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 

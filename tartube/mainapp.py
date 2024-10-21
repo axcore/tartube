@@ -2113,27 +2113,6 @@ class TartubeApp(Gtk.Application):
         #   media.Playlist
         self.split_video_auto_delete_flag = False
 
-        # Temporary timestamp buffer
-        # Entries are added by PrepareClipDialogue, and removed by code in
-        #   downloads.py or process.py as soon as the operation starts. (As a
-        #   safeguard, the buffer is completely emptied at the end of a
-        #   download/process operation)
-        # Dictionary in the form
-        #   temp_stamp_buffer_dict[dbid] = list
-        # ...where 'dbid' is the .dbid of a media.Video, and 'list' is in the
-        #   form:
-        #       [download_type, stamp_list, stamp_list...]
-        # ...where 'stamp_list' uses the same group-of-3 format as
-        #   media.Video.stamp_list, and 'download_type' is one of the following
-        #   values:
-        #       'chapters': Use yt-dlp's --split-chapters option. When set to
-        #           this value, any 'stamp_list' values are ignored
-        #       'downloader': Use yt-dlp's '--download-sections' options
-        #       'ffmpeg': Use FFmpeg
-        #       'create': Create clips from a video that's already been
-        #           downloaded, using FFmpeg
-        self.temp_stamp_buffer_dict = {}
-
         # Flag set to True if downloads.VideoDownloader should contact the
         #   SponsorBlock server, when checking/downloading videos
         self.sblock_fetch_flag = False
@@ -2155,6 +2134,26 @@ class TartubeApp(Gtk.Application):
         #   after it is sliced (since they are then incorrect)
         self.slice_video_cleanup_flag = True
 
+        # Temporary timestamp buffer
+        # Entries are added by PrepareClipDialogue, and removed by code in
+        #   downloads.py or process.py as soon as the operation starts. (As a
+        #   safeguard, the buffer is completely emptied at the end of a
+        #   download/process operation)
+        # Dictionary in the form
+        #   temp_stamp_buffer_dict[dbid] = list
+        # ...where 'dbid' is the .dbid of a media.Video, and 'list' is in the
+        #   form:
+        #       [download_type, stamp_list, stamp_list...]
+        # ...where 'stamp_list' uses the same group-of-3 format as
+        #   media.Video.stamp_list, and 'download_type' is one of the following
+        #   values:
+        #       'chapters': Use yt-dlp's --split-chapters option. When set to
+        #           this value, any 'stamp_list' values are ignored
+        #       'downloader': Use yt-dlp's '--download-sections' options
+        #       'ffmpeg': Use FFmpeg
+        #       'create': Create clips from a video that's already been
+        #           downloaded, using FFmpeg
+        self.temp_stamp_buffer_dict = {}
         # Temporary video slice buffer
         # Entries are added by PrepareSliceDialogue, and removed by code in
         #   downloads.py or process.py as soon as the operation starts. (As a
@@ -2173,7 +2172,6 @@ class TartubeApp(Gtk.Application):
         #       'create': Remove slices from a video that's already been
         #           downloaded, again using FFmpeg
         self.temp_slice_buffer_dict = {}
-
         # Temporary output template override buffer
         # Set by a call from
         #   mainwin.MainWin.on_video_catalogue_output_override()
@@ -2184,6 +2182,18 @@ class TartubeApp(Gtk.Application):
         # ...where 'dbid' is the .dbid of a media.Video, and 'name' is any
         #   acceptable filename for the operating system
         self.temp_output_override_dict = {}
+        # Temporary file removal buffer
+        # Set by a call from self.update_video_when_file_found()
+        # Depending on download options, various metadata files and thumbnails
+        #   may be retained once the video has been downloaded, or may be moved
+        #   to a temporary folder pending deletion. The move/deletion now
+        #   occurs at the end of the download operation, to prevent problems
+        #   such as thumbnails being moved before they can be embedded in their
+        #   videos
+        # A list of 'temp_dict' constructions, one for each downloaded video,
+        #   one for each in the form described in the comments for
+        #   self.update_video_when_file_found()
+        self.temp_deletion_buffer_list = []
 
         # Flag set to True if download operations with yt-dlp should add the
         #   '--write-comments' option, downloading comments to the .info.json
@@ -9783,30 +9793,33 @@ class TartubeApp(Gtk.Application):
 
         for dbid in self.container_reg_dict.keys():
 
-            media_data_obj = self.media_reg_dict[dbid]
+            if dbid in self.media_reg_dict:
 
-            if isinstance(media_data_obj, media.Channel) and not channel_obj:
+                media_data_obj = self.media_reg_dict[dbid]
 
-                channel_obj = media_data_obj
-                count += 1
-                if count >= 3:
-                    break
+                if isinstance(media_data_obj, media.Channel) \
+                and not channel_obj:
 
-            elif isinstance(media_data_obj, media.Playlist) \
-            and not playlist_obj:
+                    channel_obj = media_data_obj
+                    count += 1
+                    if count >= 3:
+                        break
 
-                playlist_obj = media_data_obj
-                count += 1
-                if count >= 3:
-                    break
+                elif isinstance(media_data_obj, media.Playlist) \
+                and not playlist_obj:
 
-            elif isinstance(media_data_obj, media.Folder) \
-            and not folder_obj:
+                    playlist_obj = media_data_obj
+                    count += 1
+                    if count >= 3:
+                        break
 
-                folder_obj = media_data_obj
-                count += 1
-                if count >= 3:
-                    break
+                elif isinstance(media_data_obj, media.Folder) \
+                and not folder_obj:
+
+                    folder_obj = media_data_obj
+                    count += 1
+                    if count >= 3:
+                        break
 
         return video_obj, channel_obj, playlist_obj, folder_obj
 
@@ -11961,6 +11974,11 @@ class TartubeApp(Gtk.Application):
         #   custom download manager
         custom_dl_obj = self.download_manager_obj.custom_dl_obj
 
+        # Remove any metadata files that are due for removal, and convert
+        #   .webp thumbnails to .jpg
+        for temp_dict in self.temp_deletion_buffer_list:
+            self.remove_metadata_files_after_download(temp_dict)
+
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
         # For refresh operations, refresh.RefreshManager.stop_time() might not
@@ -12103,10 +12121,11 @@ class TartubeApp(Gtk.Application):
         # In any case, reset those IVs
         self.halt_after_operation_flag = False
         self.no_dialogue_this_time_flag = False
-        # Also reset temporary clip/slice/override buffers
+        # Also reset temporary clip/slice/override/file removal buffers
         self.temp_stamp_buffer_dict = {}
         self.temp_slice_buffer_dict = {}
         self.temp_output_override_dict = {}
+        self.temp_deletion_buffer_list = []
         # Also reset operation IVs
         self.operation_halted_flag = False
 
@@ -14264,89 +14283,23 @@ class TartubeApp(Gtk.Application):
         )
         if thumb_path is not None \
         and not self.ffmpeg_fail_flag \
-        and self.ffmpeg_convert_webp_flag \
-        and not self.ffmpeg_manager_obj.convert_webp(thumb_path):
+        and self.ffmpeg_convert_webp_flag:
 
-            self.ffmpeg_fail_flag = True
-            self.system_error(135, self.ffmpeg_fail_msg)
+            # The True argument specifies that 'thumb_path' should not be
+            #   deleted yet
+            if not self.ffmpeg_manager_obj.convert_webp(thumb_path, True):
+                self.ffmpeg_fail_flag = True
+                self.system_error(135, self.ffmpeg_fail_msg)
+            elif not self.ffmpeg_retain_webp_flag:
+                # Conversion succeeded, so mark the original thumbnail for
+                #   deletion in the subsequent call to
+                #   self.remove_metadata_files_after_download()
+                temp_dict['delete_webp_path'] = thumb_path
 
-        # Discard the description, JSON, annotations and thumbnail files, if
-        #   required to do so. The files are moved to Tartube's temporary
-        #   directory, to be deleted at or before the next startup
-        # If the files aren't discarded, move them into the sub-directories
-        #   '.thumbs' or '.data', if required
-
-        # Description file
-        if 'keep_description' in temp_dict \
-        and not temp_dict['keep_description']:
-
-            old_path = video_obj.check_actual_path_by_ext(self, '.description')
-            if old_path is not None:
-
-                utils.convert_path_to_temp(
-                    self,
-                    old_path,
-                    True,               # Move the file
-                )
-
-        elif 'move_description' in temp_dict \
-        and temp_dict['move_description']:
-
-            utils.move_metadata_to_subdir(self, video_obj, '.description')
-
-        # JSON file
-        if 'keep_info' in temp_dict and not temp_dict['keep_info']:
-
-            old_path = video_obj.check_actual_path_by_ext(self, '.info.json')
-            if old_path is not None:
-
-                utils.convert_path_to_temp(
-                    self,
-                    old_path,
-                    True,               # Move the file
-                )
-
-        elif 'move_info' in temp_dict and temp_dict['move_info']:
-
-            utils.move_metadata_to_subdir(self, video_obj, '.info.json')
-
-        # Annotations file
-        if 'keep_annotations' in temp_dict \
-        and not temp_dict['keep_annotations']:
-
-            old_path = video_obj.check_actual_path_by_ext(
-                self,
-                '.annotations.xml',
-            )
-
-            if old_path is not None:
-
-                utils.convert_path_to_temp(
-                    self,
-                    old_path,
-                    True,               # Move the file
-                )
-
-        elif 'move_annotations' in temp_dict \
-        and temp_dict['move_annotations']:
-
-            utils.move_metadata_to_subdir(self, video_obj, '.annotations.xml')
-
-        # Thumbnail
-        if 'keep_thumbnail' in temp_dict and not temp_dict['keep_thumbnail']:
-
-            old_path = utils.find_thumbnail(self, video_obj)
-
-            if old_path is not None:
-                utils.convert_path_to_temp(
-                    self,
-                    old_path,
-                    True,               # Move the file
-                )
-
-        elif 'move_thumbnail' in temp_dict and temp_dict['move_thumbnail']:
-
-            utils.move_thumbnail_to_subdir(self, video_obj)
+        # Store 'temp_dict' in a temporary buffer, so that later calls to
+        #   self.remove_metadata_files_after_download() can remove metadata
+        #   files (if required)
+        self.temp_deletion_buffer_list.append(temp_dict)
 
         # Mark the video as (fully) downloaded (and update everything else)
         self.mark_video_downloaded(video_obj, True)
@@ -14521,6 +14474,130 @@ class TartubeApp(Gtk.Application):
                         )
                     elif not video_obj.was_live_flag:
                         video_obj.set_was_live_flag(True)
+
+
+    def remove_metadata_files_after_download(self, temp_dict):
+
+        """Called by self.download_manager_finished().
+
+        Depending on download options, various metadata files and thumbnails
+        may be retained once the video has been downloaded, or may be moved to
+        a temporary folder pending deletion.
+
+        The removal used to occur during the call to
+        self.update_video_when_file_found(). In order to prevent sporadic
+        problems such as thumbnails being removed before youtube-dl can embed
+        them in their videos, the removal is now delayed until the end of the
+        download operation.
+
+        This funcion is called once for every downloaded video.
+
+        Args:
+
+            temp_dict (dict): Dictionary of values used to update the video
+                object, in the form:
+
+                'video_obj': not required by this function, as we already have
+                    it
+                'row_num': not required by this function
+                'keep_description', 'keep_info', 'keep_annotations',
+                    'keep_thumbnail', 'move_description', 'move_info',
+                    'move_annotations', 'move_thumbnail': flags from the
+                    options.OptionsManager object used for to download the
+                    video ('keep_description', etc, are not not added to the
+                    dictionary at all for simulated downloads)
+                'delete_webp_path': if specified, the path to a .webp
+                    thumbnail that would have been deleted during the call to
+                    self.update_video_when_file_found(), if it were possible;
+                    instead, we delete it here
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('app 14316 remove_metadata_files_after_download')
+
+        video_obj = temp_dict['video_obj']
+
+        # Discard the description, JSON, annotations and thumbnail files, if
+        #   required to do so. The files are moved to Tartube's temporary
+        #   directory, to be deleted at or before the next startup
+        # If the files aren't discarded, move them into the sub-directories
+        #   '.thumbs' or '.data', if required
+
+        # Description file
+        if 'keep_description' in temp_dict \
+        and not temp_dict['keep_description']:
+
+            old_path = video_obj.check_actual_path_by_ext(self, '.description')
+            if old_path is not None:
+
+                utils.convert_path_to_temp(
+                    self,
+                    old_path,
+                    True,               # Move the file
+                )
+
+        elif 'move_description' in temp_dict \
+        and temp_dict['move_description']:
+
+            utils.move_metadata_to_subdir(self, video_obj, '.description')
+
+        # JSON file
+        if 'keep_info' in temp_dict and not temp_dict['keep_info']:
+
+            old_path = video_obj.check_actual_path_by_ext(self, '.info.json')
+            if old_path is not None:
+
+                utils.convert_path_to_temp(
+                    self,
+                    old_path,
+                    True,               # Move the file
+                )
+
+        elif 'move_info' in temp_dict and temp_dict['move_info']:
+
+            utils.move_metadata_to_subdir(self, video_obj, '.info.json')
+
+        # Annotations file
+        if 'keep_annotations' in temp_dict \
+        and not temp_dict['keep_annotations']:
+
+            old_path = video_obj.check_actual_path_by_ext(
+                self,
+                '.annotations.xml',
+            )
+
+            if old_path is not None:
+
+                utils.convert_path_to_temp(
+                    self,
+                    old_path,
+                    True,               # Move the file
+                )
+
+        elif 'move_annotations' in temp_dict \
+        and temp_dict['move_annotations']:
+
+            utils.move_metadata_to_subdir(self, video_obj, '.annotations.xml')
+
+        # Thumbnail
+        if 'keep_thumbnail' in temp_dict and not temp_dict['keep_thumbnail']:
+
+            old_path = utils.find_thumbnail(self, video_obj)
+
+            if old_path is not None:
+                utils.convert_path_to_temp(
+                    self,
+                    old_path,
+                    True,               # Move the file
+                )
+
+        elif 'move_thumbnail' in temp_dict and temp_dict['move_thumbnail']:
+
+            utils.move_thumbnail_to_subdir(self, video_obj)
+
+        if 'delete_webp_path' in temp_dict:
+            os.remove(temp_dict['delete_webp_path'])
 
 
     def update_video_from_filesystem(self, video_obj, video_path,
