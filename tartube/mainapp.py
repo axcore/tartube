@@ -4275,7 +4275,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-197)
-            200-299: mainwin.py     (in use: 201-277)
+            200-299: mainwin.py     (in use: 201-278)
             300-399: downloads.py   (in use: 301-310)
             400-499: config.py      (in use: 401-406)
             500-599: utils.py       (in use: 501-503)
@@ -16093,7 +16093,7 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.results_list_update_row_on_delete(video_obj.dbid)
 
 
-    def delete_video_files(self, video_obj):
+    def delete_video_files(self, video_obj, retain_media_flag=False):
 
         """Called by self.delete_video(), .on_button_classic_redownload() and
         mainwin.MainWin.on_video_catalogue_re_download().
@@ -16105,6 +16105,11 @@ class TartubeApp(Gtk.Application):
 
             video_obj (media.Video): The media.Video object whose files should
                 be deleted
+
+        Optional args:
+
+            retain_media_flag (bool): If True, all associated files are
+                deleted, but the video/audio files themselves
 
         """
 
@@ -16124,8 +16129,9 @@ class TartubeApp(Gtk.Application):
             'info.json',
             'annotations.xml',
         ]
-        ext_list.extend(formats.VIDEO_FORMAT_LIST)
-        ext_list.extend(formats.AUDIO_FORMAT_LIST)
+        if not retain_media_flag:
+            ext_list.extend(formats.VIDEO_FORMAT_LIST)
+            ext_list.extend(formats.AUDIO_FORMAT_LIST)
 
         for ext in ext_list:
 

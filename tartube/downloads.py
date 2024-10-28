@@ -2648,7 +2648,8 @@ class DownloadList(object):
         and media_data_obj.priv_flag:
             return empty_list
 
-        # Don't download videos that we already have
+        # Don't download videos that we already have (but do check a video
+        #   that's already been downloaded)
         # Don't download videos if they're in a channel or playlist (since
         #   downloading the channel/playlist downloads the videos it contains)
         # (Exception: download a single video if that's what the calling code
@@ -2666,6 +2667,7 @@ class DownloadList(object):
         if isinstance(media_data_obj, media.Video):
 
             if media_data_obj.dl_flag \
+            and operation_type != 'sim' \
             and not media_data_obj.dbid \
             in self.app_obj.temp_stamp_buffer_dict \
             and not media_data_obj.dbid in self.app_obj.temp_slice_buffer_dict:
@@ -4693,8 +4695,12 @@ class VideoDownloader(object):
             if video_obj in self.missing_video_check_list:
                 self.missing_video_check_list.remove(video_obj)
 
+            # A media.Video object that already exists is not displayed in the
+            #   Results list (unless it's a downloaded video that is being
+            #   re-checked)
             if video_obj.file_name \
-            and video_obj.name != app_obj.default_video_name:
+            and video_obj.name != app_obj.default_video_name \
+            and not video_obj.dl_flag:
 
                 # This video must not be displayed in the Results List, and
                 #   counts towards the limit (if any) specified by

@@ -52,10 +52,14 @@ from mainapp import _
 
 
 # Import matplotlib stuff
+# try..except works around matplotlib problems described in Git #592, #66
 if mainapp.HAVE_MATPLOTLIB_FLAG:
-    from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
-    from matplotlib.figure import Figure
-    from matplotlib.ticker import MaxNLocator
+    try:
+        from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+        from matplotlib.figure import Figure
+        from matplotlib.ticker import MaxNLocator
+    except:
+        mainapp.HAVE_MATPLOTLIB_FLAG = False
 
 # Classes
 
@@ -684,6 +688,83 @@ class GenericConfigWin(Gtk.Window):
         return combo, combo2, combo3, combo4, combo5
 
 
+    def add_youtube_warning(self, grid, x, y, wid, hei):
+
+        """Can be called by any config window tab, especially those that
+        provide a way to pass user credentials to the website (such as
+        --username/--password, imported browser cookies, .netrc files etc).
+
+        As of October 2024, some methods will not work, and some may even
+        cause the deletion of a YouTube account. The user should consult the
+        latest yt-dlp warnings about this issue, before downloading restricted
+        videos:
+
+        https://github.com/yt-dlp/yt-dlp/issues/3766
+                Return values:
+
+        Args:
+
+            grid (Gtk.Grid): The grid on which widgets are arranged in their
+                tab
+
+            x, y, wid, hei (int): Position on the grid at which the warning is
+                placed
+
+        Return values:
+
+            The new Gtk.Grid on which the warning is placed
+
+        """
+
+        # (To avoid messing up the neat format of the rows above, add a
+        #   secondary grid, and put the next set of widgets inside it)
+        grid2 = self.add_secondary_grid(grid, x, y, wid, hei)
+
+        frame = self.add_pixbuf(grid2,
+            'attention_large',
+            0, 0, 1, 1,
+        )
+        frame.set_hexpand(False)
+        frame.set_border_width(self.spacing_size)
+        frame.set_size_request(75, -1)
+
+        frame2 = Gtk.Frame()
+        grid2.attach(frame2, 1, 0, 1, 1)
+
+        grid3 = Gtk.Grid()
+        frame2.add(grid3)
+        grid3.set_border_width(self.spacing_size * 2)
+        grid3.set_column_spacing(self.spacing_size * 2)
+        grid3.set_row_spacing(self.spacing_size)
+
+        label = Gtk.Label()
+        grid3.attach(label, 0, 0, 1, 1)
+        label.set_markup(
+            _(
+                'WARNING! YouTube is trying to block applications like' \
+                + ' Tartube!',
+            ),
+        )
+        label.set_hexpand(True)
+        label.set_alignment(0, 0.5)
+
+        label2 = Gtk.Label()
+        grid3.attach(label2, 0, 1, 1, 1)
+        label2.set_markup(
+            '<a href="' \
+            + html.escape('https://github.com/yt-dlp/yt-dlp/issues/3766') \
+            + '" title="' \
+            + _('yt-dlp Known Issues FAQ') \
+            + '">' \
+            + _('Before trying to download restricted videos, read the FAQ!') \
+            + '</a>',
+        )
+        label2.set_hexpand(True)
+        label2.set_alignment(0, 0.5)
+
+        return grid2
+
+
     def get_options_applied_text(self, options_obj):
 
         """ Called by OptionsEditWin.setup_name_tab() and
@@ -901,6 +982,7 @@ class GenericConfigWin(Gtk.Window):
             The formatted string 'yt-dlp only'
 
         """
+
         return ' <b>[' + _('yt-dlp only') + ']</b>'
 
 
@@ -7951,6 +8033,8 @@ class OptionsEditWin(GenericEditWin):
         )
         self.add_tooltip('--ap-password PASSWORD', label7, entry7)
 
+        self.add_youtube_warning(grid, 0, 8, 2, 1)
+
 
     def setup_advanced_netrc_tab(self, inner_notebook):
 
@@ -8030,6 +8114,8 @@ class OptionsEditWin(GenericEditWin):
 
             textbuffer.set_text(str.join('', line_list))
             entry.set_text(netrc_path)
+
+        self.add_youtube_warning(grid, 0, 4, grid_width, 1)
 
         # (Signal connect from above)
         button.connect(

@@ -7075,29 +7075,29 @@ class MainWin(Gtk.ApplicationWindow):
         popup_menu = Gtk.Menu()
 
         # Check/download videos
-        check_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('_Check video'),
-        )
-        check_menu_item.connect(
-            'activate',
-            self.on_video_catalogue_check,
-            video_obj,
-        )
-        # (We can add another video to the downloads.DownloadList object, even
-        #   after a download operation has started)
-        if (
-            self.app_obj.current_manager_obj \
-            and not self.app_obj.download_manager_obj
-        ) or (
-            self.app_obj.download_manager_obj \
-            and self.app_obj.download_manager_obj.operation_classic_flag
-        ) or video_obj.source is None \
-        or unavailable_flag \
-        or video_obj.parent_obj.dl_no_db_flag:
-            check_menu_item.set_sensitive(False)
-        popup_menu.append(check_menu_item)
-
         if not video_obj.dl_flag:
+
+            check_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('_Check video'),
+            )
+            check_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_check,
+                video_obj,
+            )
+            # (We can add another video to the downloads.DownloadList object,
+            #   even after a download operation has started)
+            if (
+                self.app_obj.current_manager_obj \
+                and not self.app_obj.download_manager_obj
+            ) or (
+                self.app_obj.download_manager_obj \
+                and self.app_obj.download_manager_obj.operation_classic_flag
+            ) or video_obj.source is None \
+            or unavailable_flag \
+            or video_obj.parent_obj.dl_no_db_flag:
+                check_menu_item.set_sensitive(False)
+            popup_menu.append(check_menu_item)
 
             download_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 _('_Download video'),
@@ -7121,6 +7121,22 @@ class MainWin(Gtk.ApplicationWindow):
             popup_menu.append(download_menu_item)
 
         else:
+
+            check_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Re-_check video'),
+            )
+            check_menu_item.connect(
+                'activate',
+                self.on_video_catalogue_re_check,
+                video_obj,
+            )
+            if __main__.__pkg_no_download_flag__ \
+            or self.app_obj.current_manager_obj \
+            or video_obj.source is None \
+            or video_obj.live_mode == 1 \
+            or unavailable_flag:
+                check_menu_item.set_sensitive(False)
+            popup_menu.append(check_menu_item)
 
             download_menu_item = Gtk.MenuItem.new_with_mnemonic(
                 _('Re-_download this video')
@@ -20082,6 +20098,51 @@ class MainWin(Gtk.ApplicationWindow):
                 False,
                 [media_data_obj],
             )
+
+
+    def on_video_catalogue_re_check(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu().
+
+        Re-checks the right-clicked media data object.
+
+        A downloaded video can be re-checked at any time, and any missing
+        metadata files/thumbnails will be replaced.
+
+        This function first deletes the metadata files/thumbnails, so that they
+        are all replaced.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('mwn 20092 on_video_catalogue_re_check')
+
+        if self.app_obj.current_manager_obj:
+            return self.app_obj.system_error(
+                278,
+                'Callback request denied due to current conditions',
+            )
+
+        # Delete the metadata/thumbnail files associated with the video. The
+        #   True argument tells the function not to delete the video/audio
+        #   files themselves)
+        self.app_obj.delete_video_files(media_data_obj, True)
+
+        # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl will
+        #   have created a ytdl_archive.txt, recording every video ever
+        #   downloaded in the parent directory. This will prevent a successful
+        #   re-downloading of the video
+        # Temporarily block usage of the archive file
+        self.app_obj.set_block_ytdl_archive_flag(True)
+
+        # Now we're ready to start the download operation
+        self.app_obj.download_manager_start('sim', False, [media_data_obj] )
 
 
     def on_video_catalogue_re_download(self, menu_item, media_data_obj):
