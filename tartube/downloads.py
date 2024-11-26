@@ -3998,14 +3998,13 @@ class VideoDownloader(object):
         if not isinstance(media_data_obj, media.Video) \
         and media_data_obj.dl_no_db_flag:
 
-            # Deal with the video description, JSON data and thumbnail,
-            #   according to the settings in options.OptionsManager
-            utils.handle_files_after_download(
-                app_obj,
-                self.download_worker_obj.options_manager_obj,
-                dir_path,
-                filename,
-            )
+            # Add this video to the buffer that will handle the removal of
+            #   metadata files, at the end of the download operation
+            app_obj.other_metadata_buffer_list.append({
+                'options_obj': self.download_worker_obj.options_manager_obj,
+                'dir_path': dir_path,
+                'filename': filename,
+            })
 
             # Register the download with DownloadManager, so that download
             #   limits can be applied, if required
@@ -4162,14 +4161,14 @@ class VideoDownloader(object):
                 True,       # Write to terminal/log, if allowed
             )
 
-        # Deal with the video description, JSON data and thumbnail, according
-        #   to the settings in options.OptionsManager
-        utils.handle_files_after_download(
-            app_obj,
-            self.download_worker_obj.options_manager_obj,
-            dir_path,
-            filename,
-        )
+        # Add this video to the buffer that will handle the removal of metadata
+        #   files, at the end of the download operation
+        app_obj.other_metadata_buffer_list.append({
+            'options_obj': self.download_worker_obj.options_manager_obj,
+            'dir_path': dir_path,
+            'filename': filename,
+            'dummy_obj': dummy_obj,
+        })
 
         # Register the download with DownloadManager, so that download limits
         #   can be applied, if required

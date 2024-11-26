@@ -52,14 +52,11 @@ from mainapp import _
 
 
 # Import matplotlib stuff
-# try..except works around matplotlib problems described in Git #592, #66
 if mainapp.HAVE_MATPLOTLIB_FLAG:
-    try:
-        from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
-        from matplotlib.figure import Figure
-        from matplotlib.ticker import MaxNLocator
-    except:
-        mainapp.HAVE_MATPLOTLIB_FLAG = False
+    from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+    from matplotlib.figure import Figure
+    from matplotlib.ticker import MaxNLocator
+
 
 # Classes
 

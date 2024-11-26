@@ -4476,6 +4476,20 @@ class MainWin(Gtk.ApplicationWindow):
     # (Moodify main window widgets)
 
 
+    def show_all_if_visible(self):
+
+        """Can be called by anything; especially by functions like
+        mainapp.TartubeApp.download_manager_continue().
+
+        During (for example) a scheduled download operation, a minimised main
+        window becomes visible on the desktop. As a workaround, this function
+        can be called instead of calling .show_all() directly.
+        """
+
+        if self.is_visible():
+            self.show_all()
+
+
     def desensitise_test_widgets(self):
 
         """Called by mainapp.TartubeApp.on_menu_test().

@@ -1,3 +1,38 @@
+v2.5.059 (26 Nov 2024)
+-------------------------------------------------------------------------------
+
+WARNING:
+- yt-dlp users are experiencing various issues when they try to download
+    certain YouTube videos, particularly age-restricted videos. For a list of
+    known issues, please read this page:
+
+    https://github.com/yt-dlp/yt-dlp/issues/3766
+
+- Tartube users will now see a warning in certain situations (for example,
+    Edit > General download options > Advanced > Authentication) (Git #662)
+
+MAJOR FIXES
+- Fixed failure to embed thumbnails in downloaded vidoes, if the thumbnails
+    were set to be deleted after the download. Thumbnails, and other metadata
+    files, are now deleted only at the end of the entire download operations,
+    which should resolve this and all similar problems, both in the Videos tab
+    and the Classic Mode tab (Git #626)
+- Fixed rare error when trying to load the Tartube database (Git #653)
+- Fixed crash when the matplotlib is unable to start on the user's system
+    (Git #592, #663)
+
+MINOR FIXES
+- When a scheduled download starts and the Tartube main window is minimised,
+    it automatically un-minimises itself. Fixed (Git #664)
+- In the preferences window, Options > Download options tab, fixed the broken
+    'Refresh List' button
+
+MINOR NEW FEATURES
+- You can now re-check a video that has been downloaded (by right-clicking the
+    video and selecting 'Re-check video'. Re-checking will re-download all
+    metatdata files (including the thumbnail), but won't replace the video file
+    itself (Git #661)
+
 v2.5.040 (31 Jul 2024)
 -------------------------------------------------------------------------------
 
