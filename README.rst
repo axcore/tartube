@@ -44,13 +44,13 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.5.062** (5 Dec 2024 on MS Windows), **v2.5.059** (26 Nov 2024 on all other systems)
+Stable release: **v2.5.059 (26 Nov 2024)**
 
-Development release: **v2.5.062 (5 Dec 2024)**
+Development release: **v2.5.066 (20 Dec 2024)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.062/install-tartube-2.5.062-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.062/install-tartube-with-ffmpeg-2.5.062-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.062/tartube-2.5.062-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.059/install-tartube-2.5.059-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.059/install-tartube-with-ffmpeg-2.5.059-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.059/tartube-2.5.059-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
 - `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.059/python3-tartube_2.5.059.deb/download>`__ from Sourceforge
 - `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.059/tartube-2.5.059.rpm/download>`__ from Sourceforge

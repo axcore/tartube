@@ -20755,7 +20755,7 @@ class SystemPrefWin(GenericPrefWin):
             # (Some locales are in format "en_GB", some in format "fr")
             if not 'flag_' + this_locale in \
             self.app_obj.main_win_obj.pixbuf_dict:
-                flag_locale = current_locale[:2]
+                flag_locale = this_locale[:2]
             else:
                 flag_locale = this_locale
 
@@ -20802,16 +20802,25 @@ class SystemPrefWin(GenericPrefWin):
         combo2.pack_start(renderer_text, True)
         combo2.add_attribute(renderer_text, 'text', 1)
 
-        # !!! DEBUG
-        # Git 518: User reports .current_locale is set to 'en_MY', but I can't
-        #   reproduce it
-        if self.app_obj.current_locale is None \
-        or not self.app_obj.current_locale in formats.LOCALE_LIST:
+        if self.app_obj.current_locale is None:
             combo2.set_active(0)
-        else:
+
+        elif self.app_obj.current_locale in formats.LOCALE_LIST:
             combo2.set_active(
                 formats.LOCALE_LIST.index(self.app_obj.current_locale) + 1
             )
+
+        else:
+
+            # (Some locales are in format "en_GB", some in format "fr")
+            alt_locale = self.app_obj.current_locale[:2]
+            if alt_locale in formats.LOCALE_LIST:
+                combo2.set_active(
+                    formats.LOCALE_LIST.index(alt_locale) + 1
+                )
+
+            else:
+                combo2.set_active(0)
 
         # N.B. The call to self.on_locale_combo_changed() can create another
         #   secondary grid at 0, 4

@@ -36,8 +36,8 @@ from mainapp import _
 
 # Supported locales: <ISO 639-1>_<ISO 3166-1 alpha-2>
 locale_setup_list = [
-    'de',       'Deutsch',
     'en_GB',    'English',
+    'de',       'Deutsch',
     'en_US',    'English (American)',
     'es',       'Español',
     'fr',       'Français',
