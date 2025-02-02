@@ -1,3 +1,51 @@
+v2.5.100 (2 Feb 2025)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- In the download options window, 'Formats' tab, fixed the incorrect handling
+    of multiple formats: multiple formats should of course be specified with
+    '-f 100/101/102', not '-f 100+101+102'. Also added special handling when
+    all specified formats are either video-only or audio-only, so that yt-dlp
+    receives '-f (137/136)+(140/139)'. (Note that double quotes would be
+    required if using this pattern in the 'Additional download options' box,
+    i.e. '-f "(137/136)+(140/139)"' (Git #680)
+- In the Classic Mode tab, fixed the broken 'Download in this format/Convert
+    to this format' combo (Git #672)
+- Fixed several issues to do with broken locales, some of which affected all
+    locales, some of which affected only the German locale (Git #670)
+- Fixed inability to install yt-dlp and/or FFmpeg on MS Windows (this fix was
+    rolled out to MS Windows users as v2.5.062). Also fixed Tartube's inability
+    to spot a successful yt-dlp installation in some circumstances (Git #665,
+    #679)
+
+MAJOR NEW FEATURES
+- When you re-check or re-download a video, the video and its associated
+    metadata files are moved to a temporary folder, rather than being deleted
+    immediately. If the re-check/re-download fails, the original files are
+    moved back to their original location. This process is not foolproof (it
+    would not automatically recover files in the event of a loss of power, for
+    example), but should work in most cases (Git #676, #680 and others)
+- In the System Preferences window, in the Operations > Stop tab, you can
+    prevent Tartube from trying to process an entire channel or playlist, by
+    specifying that a download should stop after finding the first few videos
+    that have already been checked/downloaded. You can now specify that videos
+    that have been filtered out because of upload date, view count and/or age
+    limit should be counted as a checked/downloaded video. This feature is
+    optional and disabled by default (Git #671)
+
+MINOR NEW FEATURES
+- In the download options window, in the 'Name' tab, the tooltip for the
+    'Additional download options' box shows a warning about surrounding
+    arguments with quotes, when they contain shell special characters (Git
+    #680)
+- In the download options window, 'Formats' tab, added a setting to hide
+    formats that are apparently obsolete on YouTube. Also added some new
+    formats that are currently in use on YouTube, and expanded the descriptions
+    for many of the formats (existing and new)
+- In the same window, the 'Type extractor code directly' button now allows you
+    to specify formats like '140-drc' that aren't among the list of standard
+    formats for Tartube (Git #680)
+
 v2.5.059 (26 Nov 2024)
 -------------------------------------------------------------------------------
 
@@ -43,7 +91,7 @@ MAJOR FIXES
 - In the Classic Mode tab, livestreams would not download when the 'is a
     livestream' button was selected, but they downloaded just fine when it
     wasn't selected. Fixed (Git #643)
-    
+
 MINOR FIXES
 - Fixed incorrect sorting of videos whose names begin/end with whitespace
     characters or quotes (Git #611)
@@ -2888,10 +2936,10 @@ MINOR FIXES
 - When deleting large channels/playlists/folders, sometimes not everything was
     deleted, and the user had to delete the item a second time. This was due to
     inconsistencies in the Tartube database, which have now been fixed
-- Channels/playlists/folders beginning with a number, e.g. '5 Pewdiepie', were
-    supposed to be displayed in numerical order, rather than in strict
-    alphabetical order. This did not work as intended (e.g. '11 Pewdiepie' was
-    listed before '1 T-Series'). Fixed again
+- Channels/playlists/folders beginning with a number, e.g. '5 Games Channel',
+    were supposed to be displayed in numerical order, rather than in strict
+    alphabetical order. This did not work as intended (e.g. '11 Games Channel'
+    was listed before '1 Comedy Channel'). Fixed again
 - In the 'Delete channel' dialogue window (and so on), the name of the channel
     to be deleted is now displayed prominently
 - The size of the MS Windows installer has been reduced by about 40%

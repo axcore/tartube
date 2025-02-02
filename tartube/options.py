@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -615,9 +615,9 @@ class OptionsManager(object):
         video_format_mode (str): 'all' to download all available formats,
             ignoring the preference list (sets the option 'all_formats').
             'single' to download the first available format in
-            'video_format_list'. 'single_agree' to download the first format in
-            'video_format_list' that's available for all videos. 'multiple' to
-            download all available formats in 'video_format_list'
+            'video_format_list'. 'combine' to download the first video and the
+            first audio format in the list, to be combined as a single file,
+            'multiple' to download all available formats in 'video_format_list'
 
         subs_lang_list (list): List of language tags which are used to set
             the 'subs_lang' option
@@ -725,10 +725,11 @@ class OptionsManager(object):
 
             if code != '0':
 
-                if formats.VIDEO_OPTION_TYPE_DICT[code] is False:
-                    video_list.append(code)
-                else:
+                if code in formats.VIDEO_OPTION_TYPE_DICT and \
+                formats.VIDEO_OPTION_TYPE_DICT[code] == 'audio':
                     audio_list.append(code)
+                else:
+                    video_list.append(code)
 
         comb_list.extend(video_list)
         comb_list.extend(audio_list)
@@ -917,7 +918,7 @@ class OptionsManager(object):
             'match_title_list': [],
             'reject_title_list': [],
             'video_format_list': [],
-            'video_format_mode': 'single',
+            'video_format_mode': 'combine',
             'subs_lang_list': [ 'en' ],
             'downloader_config': False,
         }
@@ -1394,7 +1395,7 @@ class OptionsParser(object):
 #           OptionHolder('match_title_list', '', []),
 #           OptionHolder('reject_title_list', '', []),
 #           OptionHolder('video_format_list', '', []),
-#           OptionHolder('video_format_mode', '', 'single'),
+#           OptionHolder('video_format_mode', '', 'combine'),
 #           OptionHolder('subs_lang_list', '', []),
 #           OptionHolder('downloader_config', '', False),
         ]
@@ -1910,72 +1911,112 @@ class OptionsParser(object):
                 convert_flag, this_format, this_res \
                 = utils.extract_dummy_format(media_data_obj.dummy_format)
 
-                if not convert_flag and this_res is None:
+                if not convert_flag:
 
                     # Download the video in the specified format and
                     #   resolution, if available
 
-                    # Ignore all video/audio formats except the one specified
-                    #   by the user in the Classic Mode tab
-                    copy_dict['video_format'] = this_format
-                    copy_dict['all_formats'] = False
-                    copy_dict['video_format_list'] = []
-                    copy_dict['video_format_mode'] = ''
-                    copy_dict['recode_video'] = ''
+                    # e.g. Default > 720p > Download in this format
+                    if this_format is None and this_res is not None:
 
-                    # v2.1.009: Since the user doesn't have the possibility of
-                    #   setting the -f and --merge-output-format options to the
-                    #   same value (e.g. 'mp4'), we must do so artificially
-                    # yt-dlp supports: avi, flv, mkv, mov, mp4, webm
-                    if this_format in formats.VIDEO_FORMAT_DICT \
-                    and this_format != 'ogg':
-                        copy_dict['merge_output_format'] = this_format
-
-                    return
-
-                elif this_format is not None \
-                and this_format in formats.VIDEO_FORMAT_DICT:
-
-                    # Converting video formats requires post-processing
-                    # Ignore all video/audio formats except the one specified
-                    #   by the user in the Classic Mode tab
-                    if this_res is None:
-                        copy_dict['video_format'] = '0'
-                    else:
-                        copy_dict['video_format'] \
-                        = 'bestvideo[height<=?' + this_res + ']' \
+                        copy_dict['video_format'] = \
+                        'bestvideo[height<=?' + this_res + ']' \
                         + '+bestaudio/best[height<=?' + this_res + ']'
+                        copy_dict['all_formats'] = False
+                        copy_dict['video_format_list'] = []
+                        copy_dict['video_format_mode'] = ''
+                        copy_dict['recode_video'] = ''
 
-                    copy_dict['all_formats'] = False
-                    copy_dict['video_format_list'] = []
-                    copy_dict['video_format_mode'] = ''
-                    copy_dict['recode_video'] = this_format
+                        return
 
-                    return
+                    # e.g. mp4 > Highest > Download in this format
+                    elif this_format is not None and this_res is None:
 
-                elif this_format is not None \
-                and this_format in formats.AUDIO_FORMAT_DICT:
+                        copy_dict['video_format'] = this_format
+                        copy_dict['all_formats'] = False
+                        copy_dict['video_format_list'] = []
+                        copy_dict['video_format_mode'] = ''
+                        copy_dict['recode_video'] = ''
 
-                    # Converting audio formats requires post-processing
-                    copy_dict['video_format'] = '0'
-                    copy_dict['all_formats'] = False
-                    copy_dict['video_format_list'] = []
-                    copy_dict['video_format_mode'] = ''
-                    copy_dict['extract_audio'] = True
-                    copy_dict['audio_format'] = this_format
-                    copy_dict['recode_video'] = ''
+                        # v2.1.009: Since the user doesn't have the possibility
+                        #   of setting the -f and --merge-output-format options
+                        #   to the same value (e.g. 'mp4'), we must do so
+                        #   artificially
+                        # yt-dlp supports: avi, flv, mkv, mov, mp4, webm
+                        if this_format in formats.VIDEO_FORMAT_DICT \
+                        and this_format != 'ogg':
+                            copy_dict['merge_output_format'] = this_format
 
-                    return
+                        return
 
-                elif this_format is None and this_res is not None:
+                    # e.g. mp4 > 720p > Download in this format
+                    else:
 
-                    copy_dict['video_format'] = \
-                    'bestvideo[height<=?' + this_res + ']' \
-                    + '+bestaudio/best[height<=?' + this_res + ']'
-                    copy_dict['all_formats'] = False
-                    copy_dict['video_format_list'] = []
-                    copy_dict['video_format_mode'] = ''
-                    copy_dict['recode_video'] = ''
+                        copy_dict['video_format'] = \
+                        'bestvideo[height<=?' + this_res + ']' \
+                        + '+bestaudio/best[height<=?' + this_res + ']' \
+                        + '[ext=' + this_format + ']'
+                        copy_dict['all_formats'] = False
+                        copy_dict['video_format_list'] = []
+                        copy_dict['video_format_mode'] = ''
+                        copy_dict['recode_video'] = ''
+
+                        if this_format in formats.VIDEO_FORMAT_DICT \
+                        and this_format != 'ogg':
+                            copy_dict['merge_output_format'] = this_format
+
+                        return
+
+                else:
+
+                    # Convert the video after download (which requires
+                    #   post-processing)
+
+                    # e.g. Default > 720p > Convert to this format
+                    # N.B. This cannot actually be selected
+#                   if this_format is None and this_res is not None:
+#
+#                       copy_dict['video_format'] = \
+#                       'bestvideo[height<=?' + this_res + ']' \
+#                       + '+bestaudio/best[height<=?' + this_res + ']'
+#                       copy_dict['all_formats'] = False
+#                       copy_dict['video_format_list'] = []
+#                       copy_dict['video_format_mode'] = ''
+#                       copy_dict['recode_video'] = ''
+#
+#                       return
+
+                    # e.g. mp4 > Highest > Convert to this format
+                    # e.g. mp4 > 720p > Convert to this format
+                    if this_format is not None \
+                    and this_format in formats.VIDEO_FORMAT_DICT:
+
+                        if this_res is None:
+                            copy_dict['video_format'] = '0'
+                        else:
+                            copy_dict['video_format'] \
+                            = 'bestvideo[height<=?' + this_res + ']' \
+                            + '+bestaudio/best[height<=?' + this_res + ']'
+
+                        copy_dict['all_formats'] = False
+                        copy_dict['video_format_list'] = []
+                        copy_dict['video_format_mode'] = ''
+                        copy_dict['recode_video'] = this_format
+
+                        return
+
+                    elif this_format is not None \
+                    and this_format in formats.AUDIO_FORMAT_DICT:
+
+                        copy_dict['video_format'] = '0'
+                        copy_dict['all_formats'] = False
+                        copy_dict['video_format_list'] = []
+                        copy_dict['video_format_mode'] = ''
+                        copy_dict['extract_audio'] = True
+                        copy_dict['audio_format'] = this_format
+                        copy_dict['recode_video'] = ''
+
+                        return
 
         # Special case: for simulated downloads, don't specify any video
         #   formats; if the format isn't available for some videos, we'll get
@@ -2056,19 +2097,50 @@ class OptionsParser(object):
                 copy_dict['video_format'] = 0
                 copy_dict['all_formats'] = True
 
-            else:
-
+            elif video_format_mode == 'multiple':
+                copy_dict['video_format'] = ','.join(video_format_list)
                 copy_dict['all_formats'] = False
 
-                if video_format_mode == 'single_agree':
-                    char = '/'
-                elif video_format_mode == 'multiple':
-                    char = ','
-                else:
-                    # mode is 'single'
-                    char = '+'
+            elif video_format_mode == 'combine':
 
-                copy_dict['video_format'] = char.join(video_format_list)
+                # If 'video_format_list' consists only of video-only and
+                #   audio-only formats, then they can be combined in the form
+                #       -f (V/V/V...)+(A/A/A...)
+                # Otherwise, treat 'combine' the same as 'single', combining
+                #   the formats in the form
+                #       -f V/V/V/A/A/A...
+                # (See Git #680)
+
+                video_only_list = []
+                audio_only_list = []
+                default_list = []
+                for value in video_format_list:
+                    if not value in formats.VIDEO_OPTION_TYPE_DICT:
+                        default_list.append(value)
+                    elif formats.VIDEO_OPTION_TYPE_DICT[value] == 'video':
+                        video_only_list.append(value)
+                    elif formats.VIDEO_OPTION_TYPE_DICT[value] == 'audio':
+                        audio_only_list.append(value)
+                    else:
+                        default_list.append(value)
+
+                if not default_list and video_only_list and audio_only_list:
+                    copy_dict['video_format'] = '(' + \
+                    '/'.join(video_only_list) \
+                    + ')+(' \
+                    + '/'.join(audio_only_list) \
+                    + ')'
+                    copy_dict['all_formats'] = False
+
+                else:
+                    # Handle 'video_format_mode' as if its value were 'single'
+                    copy_dict['video_format'] = '/'.join(video_format_list)
+                    copy_dict['all_formats'] = False
+
+            else:
+                # 'video_format_mode' is 'single'
+                copy_dict['video_format'] = '/'.join(video_format_list)
+                copy_dict['all_formats'] = False
 
             copy_dict['video_format_list'] = []
             copy_dict['video_format_mode'] = ''

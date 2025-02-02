@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -3568,8 +3568,8 @@ class MainWin(Gtk.ApplicationWindow):
 
         # Clarifiers
         combo_list3 = [
-            _('Convert to this format'),
             _('Download in this format'),
+            _('Convert to this format'),
         ]
 
         self.classic_convert_liststore = Gtk.ListStore(str)
@@ -20143,10 +20143,9 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        # Delete the metadata/thumbnail files associated with the video. The
-        #   True argument tells the function not to delete the video/audio
-        #   files themselves)
-        self.app_obj.delete_video_files(media_data_obj, True)
+        # Move files associated with the video to a temporary directory, so
+        #   they can be recovered if the re-download fails
+        self.app_obj.move_video_files_before_redownload(media_data_obj)
 
         # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl will
         #   have created a ytdl_archive.txt, recording every video ever
@@ -20182,12 +20181,11 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        # Delete the files associated with the video
-        self.app_obj.delete_video_files(media_data_obj)
-
-        # No download operation will start, if the media.Video object is marked
-        #   as downloaded
-        self.app_obj.mark_video_downloaded(media_data_obj, False)
+        # Move files associated with the video to a temporary directory, so
+        #   they can be recovered if the re-download fails
+        # Also mark the media.Video object as not downloaded (the download
+        #   operation will not start otherwise)
+        self.app_obj.move_video_files_before_redownload(media_data_obj)
 
         # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl will
         #   have created a ytdl_archive.txt, recording every video ever
@@ -22097,7 +22095,7 @@ class MainWin(Gtk.ApplicationWindow):
         # (Update the IV)
         tree_iter = self.classic_format_combo.get_active_iter()
         text = model[tree_iter][0]
-        # (Should only be possible to set the first of thse items, but we'll
+        # (Should only be possible to set the first of these items, but we'll
         #   check anyway)
         if text != default_item and text != video_item and text != audio_item:
             # (Ignore the first two space characters)
@@ -34831,37 +34829,14 @@ class ExtractorCodeDialogue(Gtk.Dialog):
         grid.set_border_width(parent_win_obj.spacing_size)
         grid.set_row_spacing(parent_win_obj.spacing_size)
 
-        # (Get the minimum and maximum numeric values specified in formats.py.
-        #   Actually, the user can type a non-numeric value appearing as a key
-        #   in formats.VIDEO_OPTION_TYPE_DICT, e.g. '144p' or 'mp4', but we
-        #   don't advertise the fact
-        min_code = 1
-        max_code = 1
-        for value in formats.VIDEO_OPTION_TYPE_DICT.keys():
-
-            if value.isdigit():
-                if int(value) < min_code:
-                    min_code = int(value)
-                elif int(value) > max_code:
-                    max_code = int(value)
-
         label = Gtk.Label()
         grid.attach(label, 0, 0, 1, 1)
         label.set_markup(
-            _(
-            'Type an extractor code in the range {0}-{1}'
-            ).format(str(min_code), str(max_code)) \
-            + '\n' + _(
-            '(mp3, mp4 etc are also acceptable)',
-            )
+            _('Type an extractor code, e.g. 1080p')
         )
 
-        label2 = Gtk.Label()
-        grid.attach(label, 0, 1, 1, 1)
-        label2.set_markup(_('e.g. 136 for mp4 720p'))
-
         entry = Gtk.Entry()
-        grid.attach(entry, 0, 2, 1, 1)
+        grid.attach(entry, 0, 1, 1, 1)
         entry.connect('changed', self.on_entry_changed)
         entry.connect('activate', self.on_entry_activated)
 

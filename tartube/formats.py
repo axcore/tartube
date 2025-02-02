@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -575,146 +575,169 @@ SPONSORBLOCK_ACTION_LIST = [
 
 video_option_setup_list = [
     # List of YouTube extractor (format) codes, based on the original list in
-    #   youtube-dl-gui, and supplemented by this list:
-    #
-    #   https://gist.github.com/sidneys/7095afe4da4ae58694d128b1034e01e2
-    #
-    # Unfortunately, as of late September 2019, that list was already out of
-    #   date
-    # Unfortunately, the list is YouTube-specific, and will not necessarily
-    #   work on other websites
+    #   youtube-dl-gui, and supplemented by various other sources (most of
+    #   which are no longer available)
+    # As of January 2025, I am using this source:
+    #   https://gist.github.com/MartinEesmaa/2f4b261cb90a47e9c41ba115a011a4aa
     #
     # I'm not sure about the meaning of some extractor codes; in those cases,
     #   I add the code itself to distinguish it from similar codes (e.g.
     #   compare codes 18 and 396)
     #
     # Dummy extractor codes - progressive scan resolutions
-    '144p',     'Any format [144p]',                        False,
-    '240p',     'Any format [240p]',                        False,
-    '360p',     'Any format [360p]',                        False,
-    '480p',     'Any format [480p]',                        False,
-    '720p',     'Any format [720p]',                        False,
-    '720p60',   'Any format [720p 60fps]',                  False,
-    '1080p',    'Any format [1080p]',                       False,
-    '1080p60',  'Any format [1080p 60fps]',                 False,
-    '1440p',    'Any format [1440p]',                       False,
-    '1440p60',  'Any format [1440p 60fps]',                 False,
-    '2160p',    'Any format [2160p]',                       False,
-    '2160p60',  'Any format [2160p 60fps]',                 False,
-    '4320p',    'Any format [4320p]',                       False,
-    '4320p60',  'Any format [4320p 60fps]',                 False,
+    '144p',     'Any format [144p]', False, False, False,
+    '240p',     'Any format [240p]', False, False, False,
+    '360p',     'Any format [360p]', False, False, False,
+    '480p',     'Any format [480p]', False, False, False,
+    '720p',     'Any format [720p]', False, False, False,
+    '720p60',   'Any format [720p 60fps]', False, False, False,
+    '1080p',    'Any format [1080p]', False, False, False,
+    '1080p60',  'Any format [1080p 60fps]', False, False, False,
+    '1440p',    'Any format [1440p]', False, False, False,
+    '1440p60',  'Any format [1440p 60fps]', False, False, False,
+    '2160p',    'Any format [2160p]', False, False, False,
+    '2160p60',  'Any format [2160p 60fps]', False, False, False,
+    '4320p',    'Any format [4320p]', False, False, False,
+    '4320p60',  'Any format [4320p 60fps]', False, False, False,
     # Dummy extractor codes - other
-    '3gp',      '3gp',                                      False,
-    'flv',      'flv',                                      False,
-    'm4a',      'm4a',                                      True,
-    'mp4',      'mp4',                                      False,
-    'webm',     'webm',                                     False,
+    '3gp',      '3GP', False, False, False,
+    'flv',      'FLV', False, False, False,
+    'm4a',      'M4A', False, True, False,
+    'mp4',      'MP4', False, False, False,
+    'webm',     'WEBM', False, False, False,
     # Real extractor codes
-    '17',       '3gp [144p] <17>',                          False,
-    '36',       '3gp [240p] <36>',                          False,
-    '5',        'flv [240p] <5>',                           False,
-    '6',        'flv [270p] <6>',                           False,
-    '34',       'flv [360p] <34>',                          False,
-    '35',       'flv [480p] <35>',                          False,
+    '13',       '3GP MPEG-4 (Simple, L0) [144p] AAC (LC) [unknown, Mono 1] <13>', False, False, False,
+    '17',       '3GP MPEG-4 (Simple, L0) [144p] AAC (LC) [24k, Mono 1] <17>', False, False, False,
+    '36',       '3GP MPEG-4 (Simple, L0) [144p] AAC (LC) [24k, Mono 1] <36>', False, False, False,
+    '5',        'FLV H.263 (Sorenson Spark) [240p, 4:3] MP3 [64k, Mono 1] <5>', False, False, False,
+    '6',        'FLV H.263 (Sorenson Spark) [270p, 4:3] MP3 [64k, Mono 1] <6>', False, False, False,
+    '34',       'FLV H.264 (Main, L3.0] [360p] AAC [128k, Stereo 2] <34>', False, False, False,
+    '35',       'FLV H.264 (Main, L3.0] [480p] AAC [128k, Stereo 2] <35>', False, False, False,
     # v1.3.037 - not sure whether the HLS format codes should be added here, or
     #   not. 'hls' has not been added as a dummy extractor code because
     #   youtube-dl doesn't support that
-    '151',      'hls [72p] <151>',                          False,
-    '132',      'hls [240p] <132>',                         False,
-    '92',       'hls [240p] (3D) <92>',                     False,
-    '93',       'hls [360p] (3D) <93>',                     False,
-    '94',       'hls [480p] (3D) <94>',                     False,
-    '95',       'hls [720p] (3D) <95>',                     False,
-    '96',       'hls [1080p] <96>',                         False,
-    '139',      'm4a 48k (DASH Audio) <139>',               True,
-    '140',      'm4a 128k (DASH Audio) <140>',              True,
-    '256',      'm4a 192k (DASH Audio) <256>',              True,
-    '141',      'm4a 256k (DASH Audio) <141>',              True,
-    '258',      'm4a 384k (DASH Audio) <258>',              True,
-    '18',       'mp4 [360p] <18>',                          False,
-    '22',       'mp4 [720p] <22>',                          False,
-    '37',       'mp4 [1080p] <37>',                         False,
-    '38',       'mp4 [4K] <38>',                            False,
-    '160',      'mp4 [144p] (DASH Video) <160>',            False,
-    '133',      'mp4 [240p] (DASH Video) <133>',            False,
-    '134',      'mp4 [360p] (DASH Video) <134>',            False,
-    '135',      'mp4 [480p] (DASH Video) <135>',            False,
-    '136',      'mp4 [720p] (DASH Video) <136>',            False,
-    '298',      'mp4 [720p 60fps] (DASH Video) <298>',      False,
-    '137',      'mp4 [1080p] (DASH Video) <137>',           False,
-    '299',      'mp4 [1080p 60fps] (DASH Video) <299>',     False,
-    '264',      'mp4 [1440p] (DASH Video) <264>',           False,
-    '138',      'mp4 [2160p] (DASH Video) <138>',           False,
-    '266',      'mp4 [2160p 60fps] (DASH Video) <266>',     False,
-    '82',       'mp4 [360p] (3D) <82>',                     False,
-    '83',       'mp4 [480p] (3D) <83>',                     False,
-    '84',       'mp4 [720p] (3D) <84>',                     False,
-    '85',       'mp4 [1080p] (3D) <85>',                    False,
-    '394',      'mp4 [144p] <394>',                         False,
-    '395',      'mp4 [240p] <395>',                         False,
-    '396',      'mp4 [360p] <396>',                         False,
-    '397',      'mp4 [480p] <397>',                         False,
-    '398',      'mp4 [720p] <398>',                         False,
-    '399',      'mp4 [1080p] <399>',                        False,
-    '400',      'mp4 [1440p] <400>',                        False,
-    '401',      'mp4 [2160p] <401>',                        False,
-    '402',      'mp4 [2880p] <402>',                        False,
-    '571',      'mp4 [8k] <571>',                           False,
-    '43',       'webm [360p] <43>',                         False,
-    '44',       'webm [480p] <44>',                         False,
-    '45',       'webm [720p] <45>',                         False,
-    '46',       'webm [1080p] <46>',                        False,
-    '242',      'webm [240p] (DASH Video) <242>',           False,
-    '243',      'webm [360p] (DASH Video) <243>',           False,
-    '244',      'webm [480p] (DASH Video) <244>',           False,
-    '247',      'webm [720p] (DASH Video) <247>',           False,
-    '302',      'webm [720p 60fps] (DASH Video) <302>',     False,
-    '248',      'webm [1080p] (DASH Video) <248>',          False,
-    '303',      'webm [1080p 60fps] (DASH Video) <303>',    False,
-    '271',      'webm [1440p] (DASH Video) <271>',          False,
-    '308',      'webm [1440p 60fps] (DASH Video) <300>',    False,
-    '313',      'webm [2160p] (DASH Video) <313>',          False,
-    '315',      'webm [2160p 60fps] (DASH Video) <315>',    False,
-    '272',      'webm [4320p] (DASH Video) <272>',          False,
-    '100',      'webm [360p] (3D) <100>',                   False,
-    '101',      'webm [480p] (3D) <101>',                   False,
-    '102',      'webm [720p] (3D) <102>',                   False,
-    '330',      'webm [144p 60fps] (HDR) <330>',            False,
-    '331',      'webm [240p 60fps] (HDR) <331>',            False,
-    '332',      'webm [360p 60fps] (HDR) <332>',            False,
-    '333',      'webm [480p 60fps] (HDR) <333>',            False,
-    '334',      'webm [720p 60fps] (HDR) <334>',            False,
-    '335',      'webm [1080p 60fps] (HDR) <335>',           False,
-    '336',      'webm [1440p 60fps] (HDR) <336>',           False,
-    '337',      'webm [2160p 60fps] (HDR) <337>',           False,
-    '600',      'webm (36k Audio) <600>',                   True,
-    '249',      'webm (52k Audio) <249>',                   True,
-    '250',      'webm (64k Audio) <250>',                   True,
-    '251',      'webm (116k Audio) <251>',                  True,
-    '219',      'webm [144p] <219>',                        False,
-    '278',      'webm [144p] <278>',                        False,
-    '167',      'webm [360p] <167>',                        False,
-    '168',      'webm [480p] <168>',                        False,
-    '218',      'webm [480p] <218>',                        False,
-    '245',      'webm [480p] <245>',                        False,
-    '246',      'webm [480p] <246>',                        False,
-    '169',      'webm [1080p] <169>',                       False,
-    '171',      'webm 48k (DASH Audio) <171>',              True,
-    '172',      'webm 256k (DASH Audio) <172>',             True,
+    '151',      'HLS [72p] <151>', False, False, True,
+    '132',      'HLS [240p] <132>', False, False, True,
+    '91',       'HLS (MPEG-TS) H.264 (Baseline, L1.1) [144p] AAC (HE v1) [48k] (Livestream) <91>', False, False, False,
+    '92',       'HLS (MPEG-TS) H.264 (Main, L2.1) [240p] AAC (HE v1) [48k] (Livestream) <92>', False, False, False,
+    '93',       'HLS (MPEG-TS) H.264 (Main, L3.0) [360p] AAC (LC) [128k] (Livestream) <93>', False, False, False,
+    '94',       'HLS (MPEG-TS) H.264 (Main, L3.1) [480p] AAC (LC) [128k] (Livestream) <94>', False, False, False,
+    '95',       'HLS (MPEG-TS) H.264 (Main, L3.1) [720p] AAC (LC) [128k] (Livestream) <95>', False, False, False,
+    '96',       'HLS (MPEG-TS) H.264 (High, L4.0) [1080p] AAC (LC) [128k] (Livestream) <96>', False, False, False,
+    '300',      'HLS (MPEG-TS) H.264 (Main, L3.2) [HFR 720p] AAC (LC) [128k] (Livestream) <300>', False, False, False,
+    '301',      'HLS (MPEG-TS) H.264 (High, L4.2) [HFR 1080p] AAC (LC) [128k] (Livestream) <301>', False, False, False,
+    '139',      'M4A AAC (HE v1) [48k, Stereo 2] (DASH Audio) <139>', False, True, False,
+    '140',      'M4A AAC (LC) [128k, Stereo 2] (DASH Audio) <140>', False, True, False,
+    '256',      'M4A AAC (HE v1) [192k, Surround 5.1] (DASH Audio) <256>', False, True, False,
+    '141',      'M4A AAC (LC) [256k, Stereo 2] (DASH Audio) <141>', False, True, False,
+    '258',      'M4A AAC (LC) [384k, Surround 5.1] (DASH Audio) <258>', False, True, False,
+    '18',       'MP4 H.264 (Main, L3.0] [360p] AAC (LC) [96k/128k, Stereo 2] <18>', False, False, False,
+    '22',       'MP4 H.264 (High, L3.1] [720p] AAC (LC) [128k, Stereo 2] <22>', False, False, False,
+    '37',       'MP4 H.264 (High, L4.0] [1080p] AAC (LC) [128k, Stereo 2] <37>', False, False, False,
+    '38',       'MP4 H.264 [3072p] AAC [192k, Stereo 2] <38>', False, False, False,
+    '59',       'MP4 H.264 (Main, L3.1) [480p] AAC (LC) [128k, Stereo 2] <59>', False, False, False,
+    '78',       'MP4 H.264 [480p] AAC [128k, Stereo 2] <78>', False, False, False,
+    '160',      'MP4 [144p] (DASH Video) <160>', True, False, True,
+    '133',      'MP4 [240p] (DASH Video) <133>', True, False, True,
+    '134',      'MP4 [360p] (DASH Video) <134>', True, False, True,
+    '135',      'MP4 [480p] (DASH Video) <135>', True, False, True,
+    '136',      'MP4 [720p] (DASH Video) <136>', True, False, True,
+    '298',      'MP4 [720p 60fps] (DASH Video) <298>', True, False, True,
+    '137',      'MP4 [1080p] (DASH Video) <137>', True, False, True,
+    '299',      'MP4 [1080p 60fps] (DASH Video) <299>', True, False, True,
+    '264',      'MP4 [1440p] (DASH Video) <264>', True, False, True,
+    '138',      'MP4 [2160p] (DASH Video) <138>', True, False, True,
+    '266',      'MP4 [2160p 60fps] (DASH Video) <266>', True, False, True,
+    '82',       'MP4 [360p] (3D) <82>', False, False, True,
+    '83',       'MP4 [480p] (3D) <83>', False, False, True,
+    '84',       'MP4 [720p] (3D) <84>', False, False, True,
+    '85',       'MP4 [1080p] (3D) <85>', False, False, True,
+    '394',      'MP4 [144p] <394>', False, False, True,
+    '395',      'MP4 [240p] <395>', False, False, True,
+    '396',      'MP4 [360p] <396>', False, False, True,
+    '397',      'MP4 [480p] <397>', False, False, True,
+    '398',      'MP4 [720p] <398>', False, False, True,
+    '399',      'MP4 [1080p] <399>', False, False, True,
+    '400',      'MP4 [1440p] <400>', False, False, True,
+    '401',      'MP4 [2160p] <401>', False, False, True,
+    '402',      'MP4 [2880p] <402>', False, False, True,
+    '571',      'MP4 [8k] <571>', False, False, True,
+    '325',      'MP4 DTSE [384k, Surround 5.1] (DASH Audio) <325>', False, True, False,
+    '327',      'MP4 AAC (LC) [256k, Surround 5.1] (DASH Audio) <325>', False, True, False,
+    '328',      'MP4 EAC3 [384k, Surround 5.1] (DASH Audio) <325>', False, True, False,
+    '380',      'MP4 AC3 [384k, Surround 5.1] (DASH Audio) <380>', False, True, False,
+    '43',       'WEBM VP8 [360p] Vorbis [128k, Stereo 2] <43>', False, False, False,
+    '44',       'WEBM VP8 [480p] Vorbis [128k, Stereo 2] <44>', False, False, False,
+    '45',       'WEBM VP8 [720p] Vorbis [192k, Stereo 2] <45>', False, False, False,
+    '46',       'WEBM VP8 [1080p] Vorbis [192k, Stereo 2] <46>', False, False, False,
+    '242',      'WEBM [240p] (DASH Video) <242>', True, False, True,
+    '243',      'WEBM [360p] (DASH Video) <243>', True, False, True,
+    '244',      'WEBM [480p] (DASH Video) <244>', True, False, True,
+    '247',      'WEBM [720p] (DASH Video) <247>', True, False, True,
+    '302',      'WEBM [720p 60fps] (DASH Video) <302>', True, False, True,
+    '248',      'WEBM [1080p] (DASH Video) <248>', True, False, True,
+    '303',      'WEBM [1080p 60fps] (DASH Video) <303>', True, False, True,
+    '271',      'WEBM [1440p] (DASH Video) <271>', True, False, True,
+    '308',      'WEBM [1440p 60fps] (DASH Video) <300>', True, False, True,
+    '313',      'WEBM [2160p] (DASH Video) <313>', True, False, True,
+    '315',      'WEBM [2160p 60fps] (DASH Video) <315>', True, False, True,
+    '272',      'WEBM [4320p] (DASH Video) <272>', True, False, True,
+    '100',      'WEBM [360p] (3D) <100>', False, False, True,
+    '101',      'WEBM [480p] (3D) <101>', False, False, True,
+    '102',      'WEBM [720p] (3D) <102>', False, False, True,
+    '330',      'WEBM [144p 60fps] (HDR) <330>', False, False, True,
+    '331',      'WEBM [240p 60fps] (HDR) <331>', False, False, True,
+    '332',      'WEBM [360p 60fps] (HDR) <332>', False, False, True,
+    '333',      'WEBM [480p 60fps] (HDR) <333>', False, False, True,
+    '334',      'WEBM [720p 60fps] (HDR) <334>', False, False, True,
+    '335',      'WEBM [1080p 60fps] (HDR) <335>', False, False, True,
+    '336',      'WEBM [1440p 60fps] (HDR) <336>', False, False, True,
+    '337',      'WEBM [2160p 60fps] (HDR) <337>', False, False, True,
+    '600',      'WEBM Opus (VBR ~35k, Stereo 2) (DASH Audio) <600>', False, True, False,
+    '249',      'WEBM Opus [VBR ~50k, Stereo 2] (DASH Audio) <249>', False, True, False,
+    '250',      'WEBM Opus [VBR ~64k, Stereo 2] (DASH Audio) <250>', False, True, False,
+    '251',      'WEBM Opus [VBR <=160k, Stereo 2] (DASH Audio) <251>', False, True, False,
+    '219',      'WEBM [144p] <219>', False, False, True,
+    '278',      'WEBM [144p] <278>', False, False, True,
+    '167',      'WEBM [360p] <167>', False, False, True,
+    '168',      'WEBM [480p] <168>', False, False, True,
+    '218',      'WEBM [480p] <218>', False, False, True,
+    '245',      'WEBM [480p] <245>', False, False, True,
+    '246',      'WEBM [480p] <246>', False, False, True,
+    '169',      'WEBM [1080p] <169>',  False, False, True,
+    '171',      'WEBM 48k (DASH Audio) <171>', False, True, True,
+    '172',      'WEBM 256k (DASH Audio) <172>', False, True, True,
+    '338',      'WEBM Opus [VBR ~480k, Quadraphonic 4] (DASH Audio) <388>', False, True, False,
+    '599',      'WEBM AAC (HE v1) [30k, Stereo 2] (Dash Audio) <599>', False, True, False,
+    '774',      'WEBM Opus [VBR ~256k, Stereo 2] (Dash Audio) <774>', False, True, False,
+    '779',      'WEBM vp9 [1080x608, <30 FPS] <779>', False, False, False,
+    '780',      'WEBM vp9 [1080x608, <30 FPS] <780>', False, False, False,
+    '788',      'WEBM vp9 [1080x608, <30 FPS] <788>', False, False, False,
 ]
 
 VIDEO_OPTION_LIST = []
 VIDEO_OPTION_DICT = {}
 VIDEO_OPTION_TYPE_DICT = {}
+VIDEO_OPTION_OBSOLETE_DICT = {}
 
 while video_option_setup_list:
     value = video_option_setup_list.pop(0)
     key = video_option_setup_list.pop(0)
+    video_only_flag = video_option_setup_list.pop(0)
     audio_only_flag = video_option_setup_list.pop(0)
+    obsolete_flag = video_option_setup_list.pop(0)
 
     VIDEO_OPTION_LIST.append(key)
     VIDEO_OPTION_DICT[key] = value
-    VIDEO_OPTION_TYPE_DICT[value] = audio_only_flag
+
+    if video_only_flag:
+        VIDEO_OPTION_TYPE_DICT[value] = 'video'
+    elif audio_only_flag:
+        VIDEO_OPTION_TYPE_DICT[value] = 'audio'
+    else:
+        VIDEO_OPTION_TYPE_DICT[value] = 'default'
+
+    VIDEO_OPTION_OBSOLETE_DICT[value] = obsolete_flag
 
 video_resolution_setup_list = [
     '144p',     '144',

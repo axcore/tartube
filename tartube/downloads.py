@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -3498,6 +3498,16 @@ class VideoDownloader(object):
         #   value = True (not required)
         self.video_error_warning_dict = {}
 
+        # List of regexes used by self.extract_stdout_data() to check for
+        #   certain filtered videos
+        # As of January 2025, these regexes match both youtube-dl and yt-dlp
+        self.filter_regex_list = [
+            r'upload date is not in range',
+            r'because it has not reached minimum view count',
+            r'because it has exceeded the maximum view count',
+            r'because it is age restricted',
+        ]
+
         # For channels/playlists, a list of child media.Video objects, used to
         #   track missing videos (when required)
         self.missing_video_check_list = []
@@ -3958,6 +3968,44 @@ class VideoDownloader(object):
             self.missing_video_check_list.remove(match_obj)
 
 
+    def confirm_filtered_video(self):
+
+        """Called by self.extract_stdout_data().
+
+        A modified version of self.confirm_old_video(), handling only the
+        checks for operation limits.
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            utils.debug_time('dld 3944 confirm_filtered_video')
+
+        # Create shortcut variables (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+
+        # This filtered video applies towards the limit specified by
+        #  mainapp.TartubeApp.operation_download_limit (which the calling code
+        #   has already checked is enabled)
+
+        self.video_limit_count += 1
+
+        if not isinstance(self.download_item_obj.media_data_obj, media.Video) \
+        and not self.download_item_obj.ignore_limits_flag:
+
+            if (
+                self.dl_sim_flag \
+                and app_obj.operation_check_limit \
+                and self.video_limit_count >= app_obj.operation_check_limit
+            ) or (
+                not self.dl_sim_flag \
+                and app_obj.operation_download_limit \
+                and self.video_limit_count >= app_obj.operation_download_limit
+            ):
+                # Limit reached; stop downloading videos in this channel/
+                #   playlist
+                self.stop()
+
+
     def confirm_new_video(self, dir_path, filename, extension, \
     merge_flag=False):
 
@@ -4378,7 +4426,7 @@ class VideoDownloader(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 4368 confirm_sim_video')
 
-        # Import the main application and download list (for convenience)
+        # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
         dl_list_obj = self.download_manager_obj.download_list_obj
         # Call self.stop(), if the limit described in the comments for
@@ -4843,7 +4891,7 @@ class VideoDownloader(object):
 
             if not options_dict['sim_keep_description']:
 
-                descrip_path = utils.convert_path_to_temp(
+                descrip_path = utils.convert_path_to_temp_dl_dir(
                     app_obj,
                     descrip_path,
                 )
@@ -4875,7 +4923,10 @@ class VideoDownloader(object):
             )
 
             if not options_dict['sim_keep_info']:
-                json_path = utils.convert_path_to_temp(app_obj, json_path)
+                json_path = utils.convert_path_to_temp_dl_dir(
+                    app_obj,
+                    json_path,
+                )
 
             if json_path is not None and not os.path.isfile(json_path):
 
@@ -4903,7 +4954,8 @@ class VideoDownloader(object):
 #            )
 #
 #            if not options_dict['sim_keep_annotations']:
-#                xml_path = utils.convert_path_to_temp(app_obj, xml_path)
+#                xml_path \
+#                = utils.convert_path_to_temp_dl_dir(app_obj, xml_path)
 
         if thumbnail and options_dict['write_thumbnail']:
 
@@ -4924,7 +4976,10 @@ class VideoDownloader(object):
             thumb_path = video_obj.get_actual_path_by_ext(app_obj, remote_ext)
 
             if not options_dict['sim_keep_thumbnail']:
-                thumb_path = utils.convert_path_to_temp(app_obj, thumb_path)
+                thumb_path = utils.convert_path_to_temp_dl_dir(
+                    app_obj,
+                    thumb_path,
+                )
 
             if thumb_path is not None and not os.path.isfile(thumb_path):
 
@@ -5332,7 +5387,8 @@ class VideoDownloader(object):
         if DEBUG_FUNC_FLAG:
             utils.debug_time('dld 5309 extract_stdout_data')
 
-        # Import the media data object (for convenience)
+        # Import the main application and media data object (for convenience)
+        app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
 
         # Initialise the dictionary with default key-value pairs for the main
@@ -5366,7 +5422,6 @@ class VideoDownloader(object):
             + 'archive$',
             stdout,
         )
-
         if match:
 
             # In the Classic Mode tab, marking a (dummy) video as downloaded
@@ -5391,6 +5446,17 @@ class VideoDownloader(object):
             dl_stat_dict['filesize'] = match.groups()[0]
             dl_stat_dict['speed'] = match.groups()[1]
             return dl_stat_dict
+
+        # Depending on settings, some filtered videos may count towards the
+        #   operation limit. As we have to match several regexes, first check
+        #   that the operation limit is enabled
+        if app_obj.operation_limit_include_out_of_range_flag is True:
+
+            for regex in self.filter_regex_list:
+                match = re.search(regex, stdout)
+                if match:
+                    self.confirm_filtered_video()
+                    return dl_stat_dict
 
         # Detect the start of a new channel/playlist/video download
         if stdout_list[1] == 'Extracting' and stdout_list[2] == 'URL:':
@@ -5654,7 +5720,7 @@ class VideoDownloader(object):
                     except:
                         GObject.timeout_add(
                             0,
-                            self.download_manager_obj.app_obj.system_error,
+                            app_obj.system_error,
                             306,
                             'Invalid JSON data received from server',
                         )
@@ -5725,7 +5791,7 @@ class VideoDownloader(object):
             # !!! DEBUG Git #395
             GObject.timeout_add(
                 0,
-                self.download_manager_obj.app_obj.system_error,
+                app_obj.system_error,
                 319,
                 'VideoDownloader.extract_stdout_data() index error. This is' \
                 + ' an unresolved bug; please show the authors the URL that' \
@@ -10877,7 +10943,7 @@ class JSONFetcher(object):
 
                 options_obj = self.download_worker_obj.options_manager_obj
                 if not options_obj.options_dict['sim_keep_thumbnail']:
-                    local_thumb_path = utils.convert_path_to_temp(
+                    local_thumb_path = utils.convert_path_to_temp_dl_dir(
                         app_obj,
                         local_thumb_path,
                     )

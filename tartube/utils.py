@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -916,6 +916,88 @@ def clip_set_destination(app_obj, video_obj):
         return parent_obj, parent_dir, dest_obj, dest_dir
 
 
+def compile_list_of_video_files(app_obj, video_obj, ignore_media_flag=False):
+
+    """Called by mainapp.TartubeApp.delete_video_files() or by any other code.
+
+    Compiles a list of files associated with the specified video, including not
+    just the original video/audio file, but its metadata files too.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The media.Video object whose files should be
+            compiled
+
+    Optional args:
+
+        ignore_media_flag (bool): If True, all associated files are added to
+            the list, but the video/audio files themselves are not
+
+    Return values:
+
+        A list of paths to files associated with the video (and which actually
+            exist on the filesystem)
+
+    """
+
+    return_list = []
+
+    # There might be thousands of files in the directory, so using os.walk() or
+    #   something like that might be too expensive
+    # Also, post-processing might create various artefacts, all of which must
+    #   be handled here
+    ext_list = [
+        'description',
+        'info.json',
+        'annotations.xml',
+    ]
+    if not ignore_media_flag:
+        ext_list.extend(formats.VIDEO_FORMAT_LIST)
+        ext_list.extend(formats.AUDIO_FORMAT_LIST)
+
+    for ext in ext_list:
+
+        if video_obj.dummy_flag:
+
+            if video_obj.dummy_path is None:
+
+                # Nothing to delete
+                continue
+
+            else:
+
+                dummy_file, dummy_ext = os.path.splitext(video_obj.dummy_path)
+                main_path = dummy_file + '.' + ext
+                if os.path.isfile(main_path):
+                    return_list.append(main_path)
+
+        else:
+
+            main_path = video_obj.get_default_path_by_ext(app_obj, ext)
+            if os.path.isfile(main_path):
+                return_list.append(main_path)
+
+            else:
+
+                subdir_path \
+                = video_obj.get_default_path_in_subdirectory_by_ext(
+                    app_obj,
+                    ext,
+                )
+
+                if os.path.isfile(subdir_path):
+                    return_list.append(subdir_path)
+
+    # (Thumbnails might be in one of two locations, so are handled separately)
+    thumb_path = find_thumbnail(app_obj, video_obj)
+    if thumb_path and os.path.isfile(thumb_path):
+        return_list.append(thumb_path)
+
+    return return_list
+
+
 def compile_mini_options_dict(options_manager_obj):
 
     """Called by downloads.VideoDownloader.confirm_new_video() and
@@ -1146,7 +1228,7 @@ def convert_enhanced_template_from_url(convert_type, enhanced_name, url):
     return None
 
 
-def convert_path_to_temp(app_obj, old_path, move_flag=False):
+def convert_path_to_temp_dl_dir(app_obj, old_path, move_flag=False):
 
     """Can be called by anything.
 
@@ -1180,14 +1262,14 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
         # Special case: if 'old_path' is outside Tartube's data directory, then
         #   there is no equivalent path in the temporary directory
-        # Instead. dump everything into ../tartube-data/.temp/.dump
+        # Instead. dump everything into ../tartube-data/.temp/dump
         # There is a small risk of duplicates, but that shouldn't be anything
         #   more than an inconvenience
         old_dir, old_file = os.path.split(old_path)
         new_path = os.path.abspath(
             os.path.join(
                 app_obj.temp_dir,
-                '.dump',
+                'dump',
                 old_file,
             ),
         )
@@ -1209,13 +1291,11 @@ def convert_path_to_temp(app_obj, old_path, move_flag=False):
 
     # On MS Windows, a file name new_path must not exist, or an exception will
     #   be raised
-    if os.path.isfile(new_path) \
-    and not app_obj.remove_file(new_path):
+    if os.path.isfile(new_path) and not app_obj.remove_file(new_path):
         return None
 
     # Move the file now, if the calling code requires that
     if move_flag:
-
         rename_file(app_obj, old_path, new_path)
 
     # Return the converted file path
@@ -3807,6 +3887,53 @@ def match_subs(custom_dl_obj, subs_list):
     return False
 
 
+def move_files_to_temp_redo_dir(app_obj, video_obj, path_list):
+
+    """Modified version of utils.convert_path_to_temp_dl_dir(), called by
+    mainapp.TartubeApp.move_video_files_before_redownload().
+
+    Moves a list of files associated with a media.Video (including the media
+    file itself) to a temporary directory, so that those files can be recovered
+    if the download fails.
+
+    Args:
+
+        app_obj (mainapp.TartubeApp): The main application
+
+        video_obj (media.Video): The video to be re-checked or re-downloaded
+
+        path_list (list): A non-empty list of file paths
+
+    """
+
+    # The destination folder must exist, before moving files into it
+    new_dir = os.path.abspath(
+        os.path.join(
+            app_obj.temp_redo_dir,
+            str(video_obj.dbid),
+        ),
+    )
+
+    if not os.path.exists(new_dir):
+        if not app_obj.make_directory(new_dir):
+            return
+
+    # Move the files
+    for old_path in path_list:
+
+        old_dir, old_file = os.path.split(old_path)
+        new_path = os.path.abspath(
+            os.path.join(new_dir, old_file)
+        )
+
+        # On MS Windows, a file name new_path must not exist, or an exception
+        #   will be raised
+        if os.path.isfile(new_path) and not app_obj.remove_file(new_path):
+            return
+        else:
+           rename_file(app_obj, old_path, new_path)
+
+
 def move_metadata_to_subdir(app_obj, video_obj, ext):
 
     """Can be called by anything.
@@ -4029,7 +4156,7 @@ def rename_file(app_obj, old_path, new_path):
 
     """Can be called by anything.
 
-    Renames (mmoves) a file. (Is not usually called for directories, but could
+    Renames (moves) a file. (Is not usually called for directories, but could
     be.)
 
     Args:

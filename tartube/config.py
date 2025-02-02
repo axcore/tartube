@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -4448,6 +4448,9 @@ class OptionsEditWin(GenericEditWin):
         # The Gtk.ListStore containing the user's preferred video/audio formats
         #   (which must be redrawn when self.apply_changes() is called)
         self.formats_liststore = None           # Gtk.ListStore
+        # The Gtk.CheckButton specifying whether obsolete formats should be
+        #   hidden in that list
+        self.formats_checkbutton = None         # Gtk.CheckButton
 
         # IV list - other
         # ---------------
@@ -4789,7 +4792,7 @@ class OptionsEditWin(GenericEditWin):
         entry2.set_hexpand(False)
         entry2.set_max_length(8)
 
-        label = self.add_label(grid,
+        label2 = self.add_label(grid,
             _('Description'),
             0, 1, 1, 1,
         )
@@ -4800,7 +4803,7 @@ class OptionsEditWin(GenericEditWin):
         )
         entry3.set_hexpand(True)
 
-        label2 = self.add_label(grid,
+        label3 = self.add_label(grid,
             _('Download options applied to'),
             0, 2, 1, 1,
         )
@@ -4822,7 +4825,7 @@ class OptionsEditWin(GenericEditWin):
 
         if self.app_obj.simple_options_flag:
 
-            self.add_label(grid,
+            label4 = self.add_label(grid,
                 _(
                 'Additional download options, e.g. --write-subs (do not use' \
                 + ' -o or --output)',
@@ -4832,7 +4835,7 @@ class OptionsEditWin(GenericEditWin):
 
         else:
 
-            self.add_label(grid,
+            label4 = self.add_label(grid,
                 _('Additional download options'),
                 0, 3, 1, 1,
             )
@@ -4875,9 +4878,18 @@ class OptionsEditWin(GenericEditWin):
                 checkbutton2,
             )
 
-        self.add_textview(grid,
+        textview, textbuffer = self.add_textview(grid,
             'extra_cmd_string',
             0, 5, grid_width, 1,
+        )
+        self.add_tooltip(
+            _(
+                'Arguments containing special shell characters' \
+                + '(+ - & < > = ? * ! : ; \\ / and brackets) should be' \
+                + ' enclosed within quotes, e.g. -f "(137/136)"',
+            ),
+            label4,
+            textview,
         )
 
         # (To avoid messing up the neat format of the rows above, add a
@@ -6801,6 +6813,26 @@ class OptionsEditWin(GenericEditWin):
             self.setup_formats_advanced_tab(inner_notebook)
 
 
+    def setup_formats_preferred_tab(self, inner_notebook):
+
+        """Called by self.setup_formats_tab().
+
+        Sets up the 'Preferred' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('_Preferred'),
+            inner_notebook,
+        )
+
+        self.setup_formats_tab_add_grid(grid)
+
+
     def setup_formats_tab_add_grid(self, grid):
 
         """Called by self.setup_formats_tab() and
@@ -6885,9 +6917,7 @@ class OptionsEditWin(GenericEditWin):
         treeview, liststore = self.add_treeview(grid,
             0, 3, 2, 1,
         )
-
-        for key in formats.VIDEO_OPTION_LIST:
-            liststore.append([key])
+        self.setup_formats_tab_update_list(liststore)
 
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
@@ -6908,6 +6938,19 @@ class OptionsEditWin(GenericEditWin):
         )
         button2.set_tooltip_text(_('Type extractor code directly'))
         # (Signal connect appears below)
+
+        self.formats_checkbutton = self.add_checkbutton(grid,
+            _('Hide obsolete YouTube formats'),
+            None,
+            0, 5, 2, 1,
+        )
+        if self.app_obj.hide_obsolete_formats_flag:
+            self.formats_checkbutton.set_active(True)
+        self.formats_checkbutton.connect(
+            'toggled',
+            self.on_obsolete_format_checkbutton_toggled,
+            liststore,
+        )
 
         # Right column
         self.add_label(grid,
@@ -7011,24 +7054,27 @@ class OptionsEditWin(GenericEditWin):
         self.add_tooltip('--merge-output-format FORMAT', label3, combo)
 
 
-    def setup_formats_preferred_tab(self, inner_notebook):
+    def setup_formats_tab_update_list(self, liststore):
 
-        """Called by self.setup_formats_tab().
+        """Called by self.setup_formats_tab_add_grid(), etc.
 
-        Sets up the 'Preferred' inner notebook tab.
+        Updates the (full) list of formats on the left-hand side.
 
         Args:
 
-            inner_notebook (Gtk.Notebook): The container for this tab
+            liststore (Gtk.ListStore): The liststore to update
 
         """
 
-        tab, grid = self.add_inner_notebook_tab(
-            _('_Preferred'),
-            inner_notebook,
-        )
+        liststore.clear()
 
-        self.setup_formats_tab_add_grid(grid)
+        for key in formats.VIDEO_OPTION_LIST:
+
+            value = formats.VIDEO_OPTION_DICT[key]
+
+            if not self.app_obj.hide_obsolete_formats_flag or \
+            not formats.VIDEO_OPTION_OBSOLETE_DICT[value]:
+                liststore.append([key])
 
 
     def setup_formats_advanced_tab(self, inner_notebook):
@@ -7091,14 +7137,14 @@ class OptionsEditWin(GenericEditWin):
         radiobutton2 = self.add_radiobutton(grid,
             radiobutton,
             _(
-            'From the preferred list, download the first format that\'s' \
-            + ' available for all videos',
+            'For each video, combine the first video and first audio format' \
+            + ' from the preferred list',
             ),
             None,
             None,
             0, (2 + extra_row), grid_width, 1,
         )
-        if self.retrieve_val('video_format_mode') == 'single_agree':
+        if self.retrieve_val('video_format_mode') == 'combine':
             radiobutton2.set_active(True)
         # (Signal connect appears below)
 
@@ -7136,7 +7182,7 @@ class OptionsEditWin(GenericEditWin):
         radiobutton2.connect(
             'toggled',
             self.on_video_format_mode_toggled,
-            'single_agree',
+            'combine',
         )
         radiobutton3.connect(
             'toggled',
@@ -8152,7 +8198,7 @@ class OptionsEditWin(GenericEditWin):
         label = self.add_label(grid,
             _(
             'Use this HTTP/HTTPS proxy (if set, overrides the proxies in' \
-            + ' Tartube\'s preferences window',
+            + ' Tartube\'s preferences window)',
             ),
             0, 1, grid_width, 1,
         )
@@ -8530,7 +8576,13 @@ class OptionsEditWin(GenericEditWin):
         # Refill the treeview
         format_list = self.retrieve_val('video_format_list')
         for item in format_list:
-            self.formats_liststore.append([rev_dict[item]])
+
+            if item in rev_dict:
+                self.formats_liststore.append([rev_dict[item]])
+            else:
+                # Non-standard format, not specified by
+                #   formats.VIDEO_OPTION_DICT
+                self.formats_liststore.append([item])
 
 
     # (Tab support functions - Downloads tab)
@@ -9751,8 +9803,12 @@ class OptionsEditWin(GenericEditWin):
 
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
-            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
-            extract_code = formats.VIDEO_OPTION_DICT[name]
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18',
+            #   unless it's a non-standard extractor code
+            if name in formats.VIDEO_OPTION_DICT:
+                extract_code = formats.VIDEO_OPTION_DICT[name]
+            else:
+                extract_code = name
 
         # Update the option
         format_list = self.retrieve_val('video_format_list')
@@ -9801,8 +9857,12 @@ class OptionsEditWin(GenericEditWin):
         else:
 
             name = model[tree_iter][0]
-            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
-            extract_code = formats.VIDEO_OPTION_DICT[name]
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18',
+            #   unless it's a non-standard extractor code
+            if name in formats.VIDEO_OPTION_DICT:
+                extract_code = formats.VIDEO_OPTION_DICT[name]
+            else:
+                extract_code = name
 
         # Update the option
         format_list = self.retrieve_val('video_format_list')
@@ -9843,7 +9903,8 @@ class OptionsEditWin(GenericEditWin):
 
         ignore_me = _(
             'TRANSLATOR\'S NOTE: Dialogue window, generated by:' \
-            + ' Download options > Formats > Preferred'
+            + ' Download options > Formats > Preferred > Type extractor code' \
+            + ' directly',
         )
 
         # Prompt the user to type an extractor code directly
@@ -9858,40 +9919,33 @@ class OptionsEditWin(GenericEditWin):
 
         if response == Gtk.ResponseType.OK and extract_code is not None:
 
-            if not extract_code in formats.VIDEO_OPTION_TYPE_DICT:
-
-                self.app_obj.dialogue_manager_obj.show_msg_dialogue(
-                    _('Unrecognised extractor code'),
-                    'error',
-                    'ok',
-                    self,           # Parent window is this window
-                )
-
+            # Update the option (code copied from
+            #   self.on_formats_tab_add_clicked() above)
+            format_list = self.retrieve_val('video_format_list')
+            if extract_code in format_list:
                 return
-
             else:
+                format_list.append(extract_code)
+                self.edit_dict['video_format_list'] = format_list
 
-                # Update the option (code copied from
-                #   self.on_formats_tab_add_clicked() above)
-                format_list = self.retrieve_val('video_format_list')
-                if extract_code in format_list:
-                    return
-                else:
-                    format_list.append(extract_code)
-                    self.edit_dict['video_format_list'] = format_list
+            # Update the other treeview, adding the specified format to it (but
+            #   don't modify this treeview)
+            add_flag = False
+            for name in formats.VIDEO_OPTION_DICT.keys():
+                if formats.VIDEO_OPTION_DICT[name] == extract_code:
+                    self.formats_liststore.append([name])
+                    add_flag = True
+                    break
 
-                # Update the other treeview, adding the format to it (and don't
-                #   modify this treeview)
-                for name in formats.VIDEO_OPTION_DICT.keys():
-                    if formats.VIDEO_OPTION_DICT[name] == extract_code:
-                        self.formats_liststore.append([name])
+            if not add_flag:
+                # Non-standard format, with no entry in
+                #   formats.VIDEO_OPTION_DICT
+                self.formats_liststore.append([extract_code])
 
-                        # Update other widgets, as required
-                        remove_button.set_sensitive(True)
-                        up_button.set_sensitive(True)
-                        down_button.set_sensitive(True)
-
-                        break
+            # Update other widgets, as required
+            remove_button.set_sensitive(True)
+            up_button.set_sensitive(True)
+            down_button.set_sensitive(True)
 
 
     def on_formats_tab_up_clicked(self, up_button, treeview):
@@ -9918,8 +9972,12 @@ class OptionsEditWin(GenericEditWin):
 
             this_iter = model.get_iter(path_list[0])
             name = model[this_iter][0]
-            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18'
-            extract_code = formats.VIDEO_OPTION_DICT[name]
+            # Convert string e.g. 'mp4 [360p]' to the extractor code e.g. '18',
+            #   unless it's a non-standard extractor code
+            if name in formats.VIDEO_OPTION_DICT:
+                extract_code = formats.VIDEO_OPTION_DICT[name]
+            else:
+                extract_code = name
 
         # Update the option
         format_list = self.retrieve_val('video_format_list')
@@ -10006,6 +10064,35 @@ class OptionsEditWin(GenericEditWin):
             'ok',
             self,           # Parent window is this window
         )
+
+
+    def on_obsolete_format_checkbutton_toggled(self, checkbutton, liststore):
+
+        """Called by callback in self.setup_formats_tab_add_grid().
+
+        Toggles the display of obsolete YouTube formats in the tab's list.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            liststore (Gtk.ListStore): The widget to update
+
+        """
+
+        self.app_obj.set_hide_obsolete_formats_flag(checkbutton.get_active())
+        self.setup_formats_tab_update_list(liststore)
+
+        # Also update any other OptionsEditWin windows that are currently open
+        for config_win_obj in self.app_obj.main_win_obj.config_win_list:
+
+            if isinstance(config_win_obj, OptionsEditWin) \
+            and config_win_obj.edit_obj != self.edit_obj \
+            and config_win_obj.formats_checkbutton.get_active \
+            != self.app_obj.hide_obsolete_formats_flag:
+                config_win_obj.formats_checkbutton.set_active(
+                    self.app_obj.hide_obsolete_formats_flag,
+                )
 
 
     def on_reset_options_clicked(self, button):
@@ -24443,9 +24530,9 @@ class SystemPrefWin(GenericPrefWin):
             1, 2, 1, 1,
         )
         entry.set_width_chars(4)
-        entry.connect('changed', self.on_check_limit_changed)
         if not self.app_obj.operation_limit_flag:
             entry.set_sensitive(False)
+        # (Signal connect appears below)
 
         self.add_label(grid,
             _('Stop after this many videos (when downloading)'),
@@ -24458,17 +24545,30 @@ class SystemPrefWin(GenericPrefWin):
             1, 3, 1, 1,
         )
         entry2.set_width_chars(4)
-        entry2.connect('changed', self.on_dl_limit_changed)
         if not self.app_obj.operation_limit_flag:
             entry2.set_sensitive(False)
+        # (Signal connect appears below)
 
-        # (Signal connect from above)
+        checkbutton2 = self.add_checkbutton(grid,
+            _('Include videos filtered by upload date, views or age limit'),
+            self.app_obj.operation_limit_include_out_of_range_flag,
+            True,               # Can be toggled by user
+            0, 4, grid_width, 1,
+        )
+        checkbutton2.set_hexpand(False)
+        # (Signal connect appears below)
+
+        # (Signal connects from above)
         checkbutton.connect(
             'toggled',
             self.on_limit_button_toggled,
             entry,
             entry2,
+            checkbutton2,
         )
+        entry.connect('changed', self.on_check_limit_changed)
+        entry2.connect('changed', self.on_dl_limit_changed)
+        checkbutton2.connect('toggled', self.on_limit_range_button_toggled)
 
 
     def setup_operations_downloads_tab(self, inner_notebook):
@@ -31915,8 +32015,9 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton2.set_sensitive(True)
 
 
-    def on_limit_button_toggled(self, checkbutton, entry, entry2):
-
+    def on_limit_button_toggled(
+        self, checkbutton, entry, entry2, checkbutton2
+    ):
         """Called from callback in self.setup_operations_block_tab().
 
         Sets the limit at which a download operation will stop downloading a
@@ -31929,18 +32030,45 @@ class SystemPrefWin(GenericPrefWin):
             entry, entry2 (Gtk.Entry): The entry boxes which must be
                 sensitised/desensitised, according to the new setting of the IV
 
+            checkbutton2 (Gtk.CheckButton): Another widget to be updated
+
         """
 
         if checkbutton.get_active() and not self.app_obj.operation_limit_flag:
             self.app_obj.set_operation_limit_flag(True)
             entry.set_sensitive(True)
             entry2.set_sensitive(True)
+            checkbutton2.set_sensitive(True)
 
         elif not checkbutton.get_active() \
         and self.app_obj.operation_limit_flag:
             self.app_obj.set_operation_limit_flag(False)
             entry.set_sensitive(False)
             entry2.set_sensitive(False)
+            checkbutton2.set_active(False)
+            checkbutton2.set_sensitive(False)
+
+
+    def on_limit_range_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_operations_block_tab().
+
+        Counts youtube-dl 'date is not in range' messages towards the download
+        limit for a channel or playlist.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.operation_limit_include_out_of_range_flag:
+            self.app_obj.set_operation_limit_include_out_of_range_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.operation_limit_include_out_of_range_flag:
+            self.app_obj.set_operation_limit_include_out_of_range_flag(False)
+
 
 
     def on_livestream_auto_alarm_button_toggled(self, checkbutton):

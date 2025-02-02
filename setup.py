@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -77,6 +77,7 @@ pkg_no_download_value = os.environ.get( pkg_no_download_var, None )
 
 script_exec = os.path.join('tartube', 'tartube')
 icon_path = '/tartube/icons/'
+locale_path = '/tartube/locale/'
 sound_path = '/tartube/sounds/'
 pkg_flag = False
 
@@ -129,6 +130,7 @@ if pkg_flag:
 
     # Icons/sounds must be copied into the right place
     icon_path = '/usr/share/tartube/icons/'
+    locale_path = '/usr/share/locale/'
     sound_path = '/usr/share/tartube/sounds/'
     # Add a desktop file
     param_list.append(('share/applications', ['pack/tartube.desktop']))
@@ -139,7 +141,7 @@ if pkg_flag:
 
 # For PyPI installations and Debian/RPM packaging, copy everything in ../icons
 #   and ../sounds into a suitable location
-subdir_list = [
+icon_subdir_list = [
     'dialogue',
     'external',
     'ico',
@@ -154,17 +156,26 @@ subdir_list = [
     'win',
 ]
 
-for subdir in subdir_list:
+for subdir in icon_subdir_list:
     for path in glob.glob('icons/' + subdir + '/*'):
         param_list.append((icon_path + subdir + '/', [path]))
 
+#for path in glob.glob('locale/*'):
+#    param_list.append((locale_path, [path]))
+for root, dirs, files in os.walk('locale'):
+    for file in files:
+        param_list.append((
+            os.path.join('/usr/share/locale', os.path.relpath(root, 'locale')),
+            [os.path.join(root, file)]
+        ))
+
 for path in glob.glob('sounds/*'):
-    param_list.append((sound_path + '/', [path]))
+    param_list.append((sound_path, [path]))
 
 # Setup
 setuptools.setup(
     name = 'tartube',
-    version = '2.5.066',
+    version = '2.5.100',
     description = 'GUI front-end for youtube-dl and yt-dlp',
     long_description = long_description,
     long_description_content_type = 'text/plain',
@@ -191,7 +202,7 @@ setuptools.setup(
     ],
     keywords = 'tartube video download youtube',
     packages = setuptools.find_packages(
-        exclude = ('docs', 'icons', 'nsis', 'tests'),
+        exclude = ('docs', 'icons', 'locale', 'nsis', 'tests'),
     ),
     include_package_data = True,
     python_requires = '>=3.0, <4',

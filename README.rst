@@ -44,16 +44,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.5.059 (26 Nov 2024)**
+Stable release: **v2.5.100 (2 Feb 2025)**
 
-Development release: **v2.5.066 (20 Dec 2024)**
+Development release: **v2.5.100 (2 Feb 2025)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.059/install-tartube-2.5.059-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.059/install-tartube-with-ffmpeg-2.5.059-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.059/tartube-2.5.059-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.100/install-tartube-2.5.100-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.100/install-tartube-with-ffmpeg-2.5.100-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.100/tartube-2.5.100-64bit-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.059/python3-tartube_2.5.059.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.059/tartube-2.5.059.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.100/python3-tartube_2.5.100.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.100/tartube-2.5.100.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -70,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.059/tartube_v2.5.059.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.100/tartube_v2.5.100.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -1387,7 +1387,7 @@ It's fine to add new videos to the database, or to remove them. Just be careful 
 
 - In **Tartube**'s main window, add each channel and playlist in the normal way
 - When you're ready, click the **Check all** button. This adds a list of videos to **Tartube**'s database, without actually downloading the videos themselves
-- Now copy the video files into **Tartube**'s data directory (folder). For example, copy all your **PewDiePie** videos into **../tartube-data/PewDiePie**
+- Now copy the video files into **Tartube**'s data directory (folder). For example, copy all your **Games Channel** videos into **../tartube-data/Games Channel**
 - In the **Tartube** menu, click **Operations > Refresh database...**
 - **Tartube** will search for video files, and try to match them with the list of videos you just compiled
 - The whole process might some time, so be patient

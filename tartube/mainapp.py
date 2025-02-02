@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -645,7 +645,7 @@ class TartubeApp(Gtk.Application):
         #       /.backups
         #           tartube_BU.db   [any number of database file backups]
         #       /.temp              [temporary directory, deleted on startup]
-        #       /pewdiepie          [example of a custom media.Channel]
+        #       /Example Channel    [example of a custom media.Channel]
         #       /Temporary Videos   [standard media.Folder]
         #       /Unsorted Videos    [standard media.Folder]
         #       /Video Clips        [standard media.Folder]
@@ -655,7 +655,7 @@ class TartubeApp(Gtk.Application):
         #       tartube_BU.db
         #       /.temp
         #       /downloads
-        #           /pewdiepie
+        #           /Example Channel
         #           /Temporary Videos
         #           /Unsorted Videos
         # Tartube can read from both stcuctures although, when creating a new
@@ -706,6 +706,18 @@ class TartubeApp(Gtk.Application):
                 'downloads',
             ),
         )
+        # Inside the temporary directory, a folder used when re-checking and
+        #   re-downloading videos; any files associated with the original
+        #   download are moved here, so they can be recovered if the re-check
+        #   or re-download fails
+        self.temp_redo_dir = os.path.abspath(
+            os.path.join(
+                os.path.expanduser('~'),
+                __main__.__packagename__ + '-data',
+                '.temp',
+                'redo',
+            ),
+        )
         # Inside the temporary directory, a test folder into which an info
         #   operation can allow youtube-dl to download files
         self.temp_test_dir = os.path.abspath(
@@ -727,6 +739,7 @@ class TartubeApp(Gtk.Application):
         self.backup_backup_dir = None
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
+        self.backup_temp_redo_dir = None
         self.backup_temp_test_dir = None
         self.backup_data_dir_alt_list = None
 
@@ -1373,6 +1386,11 @@ class TartubeApp(Gtk.Application):
         # Must be an positive integer or 0. If 0, no limit applies. Ignored if
         #   self.operation_limit_flag is False
         self.operation_download_limit = 3
+        # Flag set to True if videos filtered out by youtube-dl (because of the
+        #   --date, --datebefore, --dateafter, --min-views, --max-views,
+        #   --age-limit) should count towards the number of videos, after which
+        #   Tartube gives up. Ignored if self.operation_limit_flag is False
+        self.operation_limit_include_out_of_range_flag = False
 
         # Flag set to True if the newbie dialogue should appear after a failed
         #   download operation, explaining what to do
@@ -1600,6 +1618,15 @@ class TartubeApp(Gtk.Application):
         #   2), but for which downloads.StreamManager cannot obtain JSON data
         self.media_reg_live_vanished_dict = {}
 
+        # Dictionary of media.Video objects which are currently being re-
+        #   checked or re-downloaded, and whose files have been moved to a
+        #   temporary directory (so they can be recovered, if the re-download
+        #   fails)
+        # Dictionary in the form
+        #   key = media data object's unique .dbid
+        #   value = false for a re-check, true for a re-download
+        self.redownload_recovery_dict = {}
+
         # Some media data objects are fixed (i.e. are created when Tartube
         #   first starts, and cannot be deleted by the user). Shortcuts to
         #   those objects
@@ -1756,6 +1783,9 @@ class TartubeApp(Gtk.Application):
         # Flag set to True if options applied to a media.Video object should be
         #   deleted, once the video has been downloaded
         self.auto_delete_options_flag = True
+        # Flag set to True if obsolete video formats should be hidden in the
+        #   OptionsEditWin
+        self.hide_obsolete_formats_flag = False
 
         # FFmpeg options manager
         # We can pass a list of video(s) directly to the process operation,
@@ -3956,6 +3986,9 @@ class TartubeApp(Gtk.Application):
         if not os.path.isdir(self.temp_dl_dir):
             self.make_directory(self.temp_dl_dir)
 
+        if not os.path.isdir(self.temp_redo_dir):
+            self.make_directory(self.temp_redo_dir)
+
         if not os.path.isdir(self.temp_test_dir):
             self.make_directory(self.temp_test_dir)
 
@@ -4992,6 +5025,10 @@ class TartubeApp(Gtk.Application):
             self.operation_check_limit = json_dict['operation_check_limit']
             self.operation_download_limit \
             = json_dict['operation_download_limit']
+        if version >= 2005094 and \
+        'operation_limit_include_out_of_range_flag' in json_dict:
+            self.operation_limit_include_out_of_range_flag \
+            = json_dict['operation_limit_include_out_of_range_flag']
 
         if version >= 2003114 and 'show_newbie_dialogue_flag' in json_dict:
             self.show_newbie_dialogue_flag \
@@ -5019,6 +5056,9 @@ class TartubeApp(Gtk.Application):
         if version >= 2002116 and 'auto_delete_options_flag' in json_dict:
             self.auto_delete_options_flag \
             = json_dict['auto_delete_options_flag']
+        if version >= 2005078 and 'hide_obsolete_formats_flag' in json_dict:
+            self.hide_obsolete_formats_flag = \
+            json_dict['hide_obsolete_formats_flag']
 
          # Removed  v2.2.015
 #        if version >= 1001067:
@@ -6165,6 +6205,8 @@ class TartubeApp(Gtk.Application):
             'operation_limit_flag': self.operation_limit_flag,
             'operation_check_limit': self.operation_check_limit,
             'operation_download_limit': self.operation_download_limit,
+            'operation_limit_include_out_of_range_flag': \
+            self.operation_limit_include_out_of_range_flag,
 
             'show_newbie_dialogue_flag': self.show_newbie_dialogue_flag,
             'show_msys2_dialogue_flag': self.show_msys2_dialogue_flag,
@@ -6179,6 +6221,7 @@ class TartubeApp(Gtk.Application):
 
             'auto_clone_options_flag': self.auto_clone_options_flag,
             'auto_delete_options_flag': self.auto_delete_options_flag,
+            'hide_obsolete_formats_flag': self.hide_obsolete_formats_flag,
 
             'block_livestreams_flag': self.block_livestreams_flag,
             'enable_livestreams_flag': self.enable_livestreams_flag,
@@ -8366,6 +8409,16 @@ class TartubeApp(Gtk.Application):
 
                     media_data_obj.natname = natname
 
+        if version < 2005072:       # v2.5.072
+
+            # This version removes one of the old values for the
+            #   'video_format_mode' option
+            for options_obj in options_obj_list:
+
+                if options_obj.options_dict['video_format_mode'] \
+                == 'single_agree':
+                    options_obj.options_dict['video_format_mode'] = 'single'
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -8816,6 +8869,7 @@ class TartubeApp(Gtk.Application):
         self.backup_backup_dir = self.backup_dir
         self.backup_temp_dir = self.temp_dir
         self.backup_temp_dl_dir = self.temp_dl_dir
+        self.backup_temp_redo_dir = self.temp_redo_dir
         self.backup_temp_test_dir = self.temp_test_dir
         self.backup_data_dir_alt_list = self.data_dir_alt_list.copy()
 
@@ -8837,6 +8891,7 @@ class TartubeApp(Gtk.Application):
         self.backup_backup_dir = None
         self.backup_temp_dir = None
         self.backup_temp_dl_dir = None
+        self.backup_temp_redo_dir = None
         self.backup_temp_test_dir = None
         self.backup_data_dir_alt_list = None
 
@@ -8859,6 +8914,7 @@ class TartubeApp(Gtk.Application):
         self.dir = self.backup_dir
         self.temp_dir = self.backup_temp_dir
         self.temp_dl_dir = self.backup_temp_dl_dir
+        self.temp_redo_dir = self.backup_temp_redo_dir
         self.temp_test_dir = self.backup_temp_test_dir
         self.data_dir_alt_list = self.backup_data_dir_alt_list.copy()
 
@@ -8894,6 +8950,9 @@ class TartubeApp(Gtk.Application):
 
         if not os.path.isdir(self.temp_dl_dir):
             self.make_directory(self.temp_dl_dir)
+
+        if not os.path.isdir(self.temp_redo_dir):
+            self.make_directory(self.temp_redo_dir)
 
         if not os.path.isdir(self.temp_test_dir):
             self.make_directory(self.temp_test_dir)
@@ -9862,6 +9921,9 @@ class TartubeApp(Gtk.Application):
         self.temp_dir = os.path.abspath(os.path.join(self.data_dir, '.temp'))
         self.temp_dl_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'downloads'),
+        )
+        self.temp_redo_dir = os.path.abspath(
+            os.path.join(self.data_dir, '.temp', 'redo'),
         )
         self.temp_test_dir = os.path.abspath(
             os.path.join(self.data_dir, '.temp', 'ytdl-test'),
@@ -11384,42 +11446,35 @@ class TartubeApp(Gtk.Application):
             utils.debug_time('app 11278 apply_locale')
 
         LOCALE = None
-        error_msg = None
 
-        # The current working directory should be the same one as
-        #   self.script_parent_dir, so this relative path should work
-        try:
-            LOCALE = gettext.translation(
-                'base',
-                localedir = 'locale',
-                languages = [self.current_locale],
-            )
+        path_list = [
+            # The current working directory should be the same one as
+            #   self.script_parent_dir, so this relative path should work
+            'locale',
+            # If it dosen't work, then try an absolute path
+            os.path.abspath(
+                os.path.join(
+                    self.script_parent_dir,
+                    'locale',
+                ),
+            ),
+            # Also try /usr/share/locale for .deb installations
+            '/usr/share/locale',
+        ]
 
-        except Exception as e:
-            error_msg = str(e)
-
-        # If it dosen't work, then try an absolute path
-        if LOCALE is None:
+        for locale_path in path_list:
 
             try:
-                locale_path = os.path.abspath(
-                    os.path.join(
-                        self.script_parent_dir,
-                        'locale',
-                    ),
-                )
-
                 LOCALE = gettext.translation(
-                    'base',
+                    'tartube',
                     localedir = locale_path,
                     languages = [self.current_locale],
                 )
 
-            except Exception as e:
+                break
 
-                # Use the first error message, as it's probably more useful
-                if error_msg is None:
-                    error_msg = str(e)
+            except Exception as e:
+                pass
 
         if LOCALE is None:
 
@@ -11997,6 +12052,16 @@ class TartubeApp(Gtk.Application):
 
         for temp_dict in self.other_metadata_buffer_list:
             self.remove_other_metadata_files_after_download(temp_dict)
+
+        # Following a failed re-check or a re-download, recover any files
+        #   associated with those video(s)
+        for dbid in self.redownload_recovery_dict.keys():
+            self.recover_video_files_after_redownload(dbid)
+        # Empty the temporary directory used to store those files
+        if os.path.isdir(self.temp_redo_dir):
+            self.remove_directory(self.temp_redo_dir)
+
+        self.make_directory(self.temp_redo_dir)
 
         # Get the time taken by the download operation, so we can convert it
         #   into a nice string below (e.g. '05:15')
@@ -14085,6 +14150,11 @@ class TartubeApp(Gtk.Application):
             mini_options_dict,
         )
 
+        # For a re-checked or a re-downloaded video, there is no longer any
+        #   need to recover old files
+        if video_obj.dbid in self.redownload_recovery_dict:
+            del self.redownload_recovery_dict[video_obj.dbid]
+
 
     def announce_video_clone(self, video_obj):
 
@@ -14661,7 +14731,7 @@ class TartubeApp(Gtk.Application):
             old_path = video_obj.check_actual_path_by_ext(self, '.description')
             if old_path is not None:
 
-                utils.convert_path_to_temp(
+                utils.convert_path_to_temp_dl_dir(
                     self,
                     old_path,
                     True,               # Move the file
@@ -14678,7 +14748,7 @@ class TartubeApp(Gtk.Application):
             old_path = video_obj.check_actual_path_by_ext(self, '.info.json')
             if old_path is not None:
 
-                utils.convert_path_to_temp(
+                utils.convert_path_to_temp_dl_dir(
                     self,
                     old_path,
                     True,               # Move the file
@@ -14699,7 +14769,7 @@ class TartubeApp(Gtk.Application):
 
             if old_path is not None:
 
-                utils.convert_path_to_temp(
+                utils.convert_path_to_temp_dl_dir(
                     self,
                     old_path,
                     True,               # Move the file
@@ -14716,7 +14786,7 @@ class TartubeApp(Gtk.Application):
             old_path = utils.find_thumbnail(self, video_obj)
 
             if old_path is not None:
-                utils.convert_path_to_temp(
+                utils.convert_path_to_temp_dl_dir(
                     self,
                     old_path,
                     True,               # Move the file
@@ -14781,7 +14851,7 @@ class TartubeApp(Gtk.Application):
 
         if descrip_path and not options_obj.options_dict['keep_description']:
 
-            new_path = utils.convert_path_to_temp(
+            new_path = utils.convert_path_to_temp_dl_dir(
                 self,
                 descrip_path,
             )
@@ -14814,7 +14884,7 @@ class TartubeApp(Gtk.Application):
 
         if json_path and not options_obj.options_dict['keep_info']:
 
-            new_path = utils.convert_path_to_temp(self, json_path)
+            new_path = utils.convert_path_to_temp_dl_dir(self, json_path)
 
             if os.path.isfile(json_path):
                 if not os.path.isfile(new_path):
@@ -14848,7 +14918,7 @@ class TartubeApp(Gtk.Application):
 
         if thumb_path and not options_obj.options_dict['keep_thumbnail']:
 
-            new_path = utils.convert_path_to_temp(self, thumb_path)
+            new_path = utils.convert_path_to_temp_dl_dir(self, thumb_path)
 
             if os.path.isfile(thumb_path):
                 if not os.path.isfile(new_path):
@@ -16020,6 +16090,132 @@ class TartubeApp(Gtk.Application):
             )
 
 
+    # (Backup files before a redownload, and restore them if it fails)
+
+
+    def move_video_files_before_redownload(self, video_obj):
+
+        """Called by mainwin.MainWin.on_video_catalogue_re_download(), etc.
+
+        When a media.Video is to be re-checked or re-downloaded, we move its
+        associated files (including the media file itself) to a temporary
+        directory, so that those files can be recovered if the download fails.
+
+        Args:
+
+            video_obj (media.Video): The video whose files are to be moved
+
+        """
+
+        # Compile a list of files associated with this video, including the
+        #   media file itself. If no files are found, then there's nothing to
+        #   move
+        path_list = utils.compile_list_of_video_files(self, video_obj)
+        if not path_list:
+            return
+
+        # Mark this video as having recoverable files. The key-value pair added
+        #   here is removed at the end of the download operation, or when a
+        #   successful check/download is detected by a call to
+        #   self.announce_video_download()
+        self.redownload_recovery_dict[video_obj.dbid] = video_obj.dl_flag
+
+        # Move the associated media files
+        utils.move_files_to_temp_redo_dir(self, video_obj, path_list)
+
+        # Mark the video as not downloaded, so that the download operation can
+        #   start
+        if video_obj.dl_flag is True:
+            if not video_obj.dummy_flag:
+                self.mark_video_downloaded(video_obj, False)
+            else:
+                 video_obj.set_dl_flag(False)
+
+
+    def recover_video_files_after_redownload(self, dbid):
+
+        """Called by self.download_manager_finished().
+
+        After a failed re-check or re-download of a video, recover the files
+        previously associated with the video, which had been moved to a
+        temporary directory before the download operation started.
+
+        Args:
+
+            dbid (int): The .dbid of the media.Video object whose files should
+                be recovered
+
+        """
+
+        if dbid in self.media_reg_dict:
+
+            # media.Video in the database
+            video_obj = self.media_reg_dict[dbid]
+
+            temp_dir = os.path.abspath(
+                os.path.join(
+                    self.temp_redo_dir,
+                    str(video_obj.dbid),
+                ),
+            )
+
+            new_dir = video_obj.parent_obj.get_default_dir(self)
+
+        elif dbid in self.main_win_obj.classic_media_dict:
+
+            # Dummy media.Video object downloaded in the Classic Mode tab
+            video_obj = self.main_win_obj.classic_media_dict[dbid]
+
+            temp_dir = os.path.abspath(
+                os.path.join(
+                    self.temp_redo_dir,
+                    str(video_obj.dbid),
+                ),
+            )
+
+            new_dir = video_obj.dummy_dir
+
+        else:
+
+            # Failsafe
+            return
+
+        # Mark the file as downloaded, if it had been marked as downloaded
+        #   before the re-check/re-download started
+        if self.redownload_recovery_dict[dbid] is True:
+            if not video_obj.dummy_flag:
+                self.mark_video_downloaded(video_obj, True)
+            else:
+                video_obj.set_dl_flag(True)
+
+        # Recover files
+        file_list = os.listdir(path = temp_dir)
+        for temp_filename in file_list:
+
+            temp_path = os.path.abspath(
+                os.path.join(
+                    temp_dir,
+                    temp_filename,
+                ),
+            )
+
+            # There shouldn't be any folders, but we'll check anyway...
+            if os.path.isfile(temp_path):
+
+                new_path = os.path.abspath(
+                    os.path.join(
+                        new_dir,
+                        temp_filename,
+                    ),
+                )
+
+                # On MS Windows, a file name new_path must not exist, or an
+                #   exception will be raised
+                if not os.path.isfile(new_path) \
+                or self.remove_file(new_path):
+                    utils.rename_file(self, temp_path, new_path)
+
+
     # (Convert channels to playlists, and vice-versa)
 
 
@@ -16244,10 +16440,9 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.results_list_update_row_on_delete(video_obj.dbid)
 
 
-    def delete_video_files(self, video_obj, retain_media_flag=False):
+    def delete_video_files(self, video_obj, ignore_media_flag=False):
 
-        """Called by self.delete_video(), .on_button_classic_redownload() and
-        mainwin.MainWin.on_video_catalogue_re_download().
+        """Called by self.delete_video().
 
         Deletes the files associated with a media.Video object, including not
         just the original video/audio file, but its metadata files too.
@@ -16259,8 +16454,8 @@ class TartubeApp(Gtk.Application):
 
         Optional args:
 
-            retain_media_flag (bool): If True, all associated files are
-                deleted, but the video/audio files themselves
+            ignore_media_flag (bool): If True, all associated files are
+                deleted, but the video/audio files themselves are not
 
         """
 
@@ -16271,58 +16466,12 @@ class TartubeApp(Gtk.Application):
         if video_obj.file_name is None and not video_obj.dummy_flag:
             return
 
-        # There might be thousands of files in the directory, so using
-        #   os.walk() or something like that might be too expensive
-        # Also, post-processing might create various artefacts, all of which
-        #   must be deleted
-        ext_list = [
-            'description',
-            'info.json',
-            'annotations.xml',
-        ]
-        if not retain_media_flag:
-            ext_list.extend(formats.VIDEO_FORMAT_LIST)
-            ext_list.extend(formats.AUDIO_FORMAT_LIST)
-
-        for ext in ext_list:
-
-            if video_obj.dummy_flag:
-
-                if video_obj.dummy_path is None:
-
-                    # Nothing to delete
-                    continue
-
-                else:
-
-                    dummy_file, dummy_ext \
-                    = os.path.splitext(video_obj.dummy_path)
-                    main_path = dummy_file + '.' + ext
-                    if os.path.isfile(main_path):
-                        self.remove_file(main_path)
-
-            else:
-
-                main_path = video_obj.get_default_path_by_ext(self, ext)
-                if os.path.isfile(main_path):
-                    self.remove_file(main_path)
-
-                else:
-
-                    subdir_path \
-                    = video_obj.get_default_path_in_subdirectory_by_ext(
-                        self,
-                        ext,
-                    )
-
-                    if os.path.isfile(subdir_path):
-                        self.remove_file(subdir_path)
-
-        # (Thumbnails might be in one of two locations, so are handled
-        #   separately)
-        thumb_path = utils.find_thumbnail(self, video_obj)
-        if thumb_path and os.path.isfile(thumb_path):
-            self.remove_file(thumb_path)
+        for path in utils.compile_list_of_video_files(
+            self,
+            video_obj,
+            ignore_media_flag,
+        ):
+            self.remove_file(path)
 
 
     def delete_container(self, media_data_obj, empty_flag=False):
@@ -24357,10 +24506,12 @@ class TartubeApp(Gtk.Application):
                 video_obj = self.main_win_obj.classic_media_dict[dbid]
                 video_list.append(video_obj)
 
-                # Mark the video as not downloaded
-                video_obj.set_dl_flag(False)
-                # Delete the files associated with the video
-                self.delete_video_files(video_obj)
+                # Move files associated with the video to a temporary
+                #   directory, so they can be recovered if the re-download
+                #   fails
+                # Also mark the media.Video object as not downloaded (the
+                #   download operation will not start otherwise)
+                self.move_video_files_before_redownload(video_obj)
 
             # Start the download operation
             if not self.classic_custom_dl_flag:
@@ -24400,7 +24551,15 @@ class TartubeApp(Gtk.Application):
             list_obj = self.download_manager_obj.download_list_obj
             for dbid in dbid_dict.keys():
 
+                # Retrieve the media.Video
                 dummy_obj = self.main_win_obj.classic_media_dict[dbid]
+
+                # (Move files associated with the video to a temporary
+                #   directory, so they can be recovered if the re-download
+                #   fails)
+                self.move_video_files_before_redownload(dummy_obj)
+
+                # Re-add the video to the download list
                 download_item_obj = list_obj.create_dummy_item(dummy_obj)
                 if download_item_obj:
 
@@ -28227,6 +28386,14 @@ class TartubeApp(Gtk.Application):
             self.graph_ink_colour = value
 
 
+    def set_hide_obsolete_formats_flag(self, flag):
+
+        if not flag:
+            self.hide_obsolete_formats_flag = False
+        else:
+            self.hide_obsolete_formats_flag = True
+
+
     def set_ignore_child_process_exit_flag(self, flag):
 
         if not flag:
@@ -28687,6 +28854,14 @@ class TartubeApp(Gtk.Application):
             self.operation_limit_flag = False
         else:
             self.operation_limit_flag = True
+
+
+    def set_operation_limit_include_out_of_range_flag(self, flag):
+
+        if not flag:
+            self.operation_limit_include_out_of_range_flag = False
+        else:
+            self.operation_limit_include_out_of_range_flag = True
 
 
     def set_operation_save_flag(self, flag):

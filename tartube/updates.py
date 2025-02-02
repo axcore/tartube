@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2024 A S Lewis
+# Copyright (C) 2019-2025 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -687,7 +687,10 @@ class UpdateManager(threading.Thread):
 
         # Operation complete. self.success_flag is checked by
         #   mainapp.TartubeApp.update_manager_finished()
-        if not self.stderr_list:
+        # We consider the operation successful if there were no errors, or if
+        #   intercept_version_from_stdout() detected a message like
+        #   'Successfully installed...'
+        if not self.success_flag and not self.stderr_list:
             self.success_flag = True
 
         # Show a confirmation in the the Output tab (or wizard window textview)
@@ -835,6 +838,7 @@ class UpdateManager(threading.Thread):
             substring = re.search(regex, stdout)
             if substring:
                 self.ytdl_version = substring.group(1)
+                self.success_flag = True
                 return
 
 
