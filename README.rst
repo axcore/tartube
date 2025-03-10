@@ -95,7 +95,7 @@ Tartube can store its videos in a database. If that's what you want, then do thi
 
 If you just want to download videos with a minimum of fuss, do this:
 
-- Go to a `video website <https://en.wikipedia.org/wiki/List_of_online_video_platforms/>`__, and find your favourite channel
+- Go to a `video website <https://en.wikipedia.org/wiki/List_of_online_video_platforms>`__, and find your favourite channel
 - In **Tartube**'s main window, click the **Classic Mode** tab
 - Copy the URL (link) to the channel into the box at the top of tab
 - Just below that, click the button to select a download destination and a video/audio format
