@@ -1509,7 +1509,7 @@ class OptionsParser(object):
                     if value == '':
                         value = '!is_live'
                     else:
-                        value += r' \& !is_live'
+                        value += r' & !is_live'
 
                 if value != '':
                     options_list.append(option_holder_obj.switch)

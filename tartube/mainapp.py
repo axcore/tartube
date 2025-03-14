@@ -939,14 +939,12 @@ class TartubeApp(Gtk.Application):
         #       Update using pip3 (use --no-dependencies option)
         # 'ytdl_update_pip3_omit_user'
         #       Update using pip3 (omit --user option)
-        # 'ytdl_update_pip3_recommend'
-        #       Update using pip3 (recommended)
         # 'ytdl_update_pipx'
-        #       Update using pipx
+        #       Update using pipx (recommended, force install)
         # 'ytdl_update_pipx_no_dependencies'
-        #       Update using pipx (use --no-dependencies option)
-        # 'ytdl_update_pipx_omit_user'
-        #       Update using pipx (omit --user option
+        #       Update using pipx (force install, use --no-dependencies option)
+        # 'ytdl_update_pipx_upgrade'
+        #       Update using pipx (upgrade existing install)
         # 'ytdl_update_pypi_path'
         #       Update using PyPI youtube-dl path
         # 'ytdl_update_win_32',
@@ -5757,6 +5755,103 @@ class TartubeApp(Gtk.Application):
 
             self.ytdl_update_list = ytdl_update_list
 
+        # (In version v2.5.107, self.ytdl_update_dict was modified yet again)
+        if version < 2005107:
+
+            # Replace pip3 with pipx as the recommended installation method;
+            #   also remove invalid pipx command line options
+            if os.name == 'nt':
+
+                if 'PROGRAMFILES(X86)' in os.environ:
+                    mode = '64'
+                else:
+                    mode = '32'
+
+                self.ytdl_update_dict['ytdl_update_win_' + mode] = [
+                    '..\\..\\..\\mingw' + mode + '\\bin\\pipx.exe',
+                    'install',
+                    '--force',
+                    '--include-deps',
+                    'youtube-dl',
+                ]
+
+                nodep = 'ytdl_update_win_' + mode + '_no_dependencies'
+                self.ytdl_update_dict[nodep] = [
+                    '..\\..\\..\\mingw' + mode + '\\bin\\pipx.exe',
+                    'install',
+                    '--force',
+                    'youtube-dl',
+                ]
+
+                self.ytdl_update_dict['ytdl_update_pipx'] = [
+                    'pipx', 'install', '--force', '--include-deps',
+                    'youtube-dl',
+                ]
+
+                self.ytdl_update_dict['ytdl_update_pipx_no_dependencies'] = [
+                    'pipx', 'install', '--force', 'youtube-dl',
+                ]
+
+                self.ytdl_update_dict['ytdl_update_pipx_upgrade'] = [
+                    'pipx', 'upgrade', 'youtube-dl',
+                ]
+
+                self.ytdl_update_list = [
+                    'ytdl_update_win_' + mode,
+                    'ytdl_update_win_' + mode + '_no_dependencies',
+                    'ytdl_update_default_path',
+                    'ytdl_update_local_path',
+                    'ytdl_update_custom_path',
+                    'ytdl_update_pipx',
+                    'ytdl_update_pipx_no_dependencies',
+                    'ytdl_update_pipx_upgrade',
+                    'ytdl_update_pip3',
+                    'ytdl_update_pip3_no_dependencies',
+                    'ytdl_update_pip',
+                    'ytdl_update_pip_no_dependencies',
+                ]
+
+            else:
+
+                # (Remove old)
+                for item in [
+                    'ytdl_update_pip3_recommend',
+                    'ytdl_update_pipx_omit_user',
+                ]:
+                    del self.ytdl_update_dict[item]
+                    if self.ytdl_update_current == item:
+                        self.ytdl_update_current = 'ytdl_update_pipx'
+
+                # (New)
+                self.ytdl_update_dict['ytdl_update_pipx'] = [
+                    'pipx', 'install', '--force', '--include-deps',
+                    'youtube-dl',
+                ]
+
+                self.ytdl_update_dict['ytdl_update_pipx_no_dependencies'] = [
+                    'pipx', 'install', '--force', 'youtube-dl',
+                ]
+
+                self.ytdl_update_dict['ytdl_update_pipx_upgrade'] = [
+                    'pipx', 'upgrade', 'youtube-dl',
+                ]
+
+                self.ytdl_update_list = [
+                    'ytdl_update_pipx',
+                    'ytdl_update_pipx_no_dependencies',
+                    'ytdl_update_pipx_upgrade',
+                    'ytdl_update_default_path',
+                    'ytdl_update_local_path',
+                    'ytdl_update_custom_path',
+                    'ytdl_update_pypi_path',
+                    'ytdl_update_pip3',
+                    'ytdl_update_pip3_omit_user',
+                    'ytdl_update_pip3_no_dependencies',
+                    'ytdl_update_pip',
+                    'ytdl_update_pip_omit_user',
+                    'ytdl_update_pip_no_dependencies',
+                ]
+
 
     def load_config_import_scheduled(self, version, json_dict):
 
@@ -9952,13 +10047,13 @@ class TartubeApp(Gtk.Application):
                 recommended = 'ytdl_update_win_64'
                 alt_recommended = 'ytdl_update_win_64_no_dependencies'
                 ytdl_path = '..\\..\\..\\mingw64\\bin\\youtube-dl.exe'
-                pip_path = '..\\..\\..\\mingw64\\bin\\pip3.exe'
+                pip_path = '..\\..\\..\\mingw64\\bin\\pipx.exe'
             else:
                 # 32-bit MS Windows
                 recommended = 'ytdl_update_win_32'
                 alt_recommended = 'ytdl_update_win_32_no_dependencies'
                 ytdl_path = '..\\..\\..\\mingw32\\bin\\youtube-dl.exe'
-                pip_path = '..\\..\\..\\mingw32\\bin\\pip3.exe'
+                pip_path = '..\\..\\..\\mingw32\\bin\\pipx.exe'
 
             self.ytdl_bin = 'youtube-dl'
             self.ytdl_path_default = ytdl_path
@@ -9967,15 +10062,34 @@ class TartubeApp(Gtk.Application):
                 recommended: [
                     pip_path,
                     'install',
-                    '--upgrade',
+                    '--force',
+                    '--include-deps',
                     'youtube-dl',
                 ],
                 alt_recommended: [
                     pip_path,
                     'install',
-                    '--upgrade',
-                    '--no-dependencies',
+                    '--force',
                     'youtube-dl',
+                ],
+                'ytdl_update_default_path': [
+                    self.ytdl_path_default, '-U',
+                ],
+                'ytdl_update_local_path': [
+                    self.ytdl_bin, '-U',
+                ],
+                'ytdl_update_custom_path': [
+                    'python3', self.ytdl_path, '-U',
+                ],
+                'ytdl_update_pipx': [
+                    'pipx', 'install', '--force', '--include-deps',
+                    'youtube-dl',
+                ],
+                'ytdl_update_pipx_no_dependencies': [
+                    'pipx', 'install', '--force', 'youtube-dl',
+                ],
+                'ytdl_update_pipx_upgrade': [
+                    'pipx', 'upgrade', 'youtube-dl',
                 ],
                 'ytdl_update_pip3': [
                     'pip3', 'install', '--upgrade', 'youtube-dl',
@@ -9991,26 +10105,20 @@ class TartubeApp(Gtk.Application):
                     'pip', 'install', '--upgrade', '--no-dependencies',
                     'youtube-dl',
                 ],
-                'ytdl_update_default_path': [
-                    self.ytdl_path_default, '-U',
-                ],
-                'ytdl_update_local_path': [
-                    self.ytdl_bin, '-U',
-                ],
-                'ytdl_update_custom_path': [
-                    'python3', self.ytdl_path, '-U',
-                ],
             }
             self.ytdl_update_list = [
                 recommended,
                 alt_recommended,
+                'ytdl_update_default_path',
+                'ytdl_update_local_path',
+                'ytdl_update_custom_path',
+                'ytdl_update_pipx',
+                'ytdl_update_pipx_no_dependencies',
+                'ytdl_update_pipx_upgrade',
                 'ytdl_update_pip3',
                 'ytdl_update_pip3_no_dependencies',
                 'ytdl_update_pip',
                 'ytdl_update_pip_no_dependencies',
-                'ytdl_update_default_path',
-                'ytdl_update_local_path',
-                'ytdl_update_custom_path',
             ]
             self.ytdl_update_current = recommended
 
@@ -10035,35 +10143,15 @@ class TartubeApp(Gtk.Application):
             else:
 
                 self.ytdl_update_dict = {
-                    'ytdl_update_pip3_recommend': [
-                        'pip3', 'install', '--upgrade', '--user', 'youtube-dl',
-                    ],
-                    'ytdl_update_pip3_omit_user': [
-                        'pip3', 'install', '--upgrade', 'youtube-dl',
-                    ],
-                    'ytdl_update_pip3_no_dependencies': [
-                        'pip3', 'install', '--upgrade', '--no-dependencies',
-                        'youtube-dl',
-                    ],
                     'ytdl_update_pipx': [
-                        'pipx', 'install', '--upgrade', '--user', 'youtube-dl',
-                    ],
-                    'ytdl_update_pipx_omit_user': [
-                        'pipx', 'install', '--upgrade', 'youtube-dl',
+                        'pipx', 'install', '--force', '--include-deps',
+                        'youtube-dl',
                     ],
                     'ytdl_update_pipx_no_dependencies': [
-                        'pipx', 'install', '--upgrade', '--no-dependencies',
-                        'youtube-dl',
+                        'pipx', 'install', '--force', 'youtube-dl',
                     ],
-                    'ytdl_update_pip': [
-                        'pip', 'install', '--upgrade', '--user', 'youtube-dl',
-                    ],
-                    'ytdl_update_pip_omit_user': [
-                        'pip', 'install', '--upgrade', 'youtube-dl',
-                    ],
-                    'ytdl_update_pip_no_dependencies': [
-                        'pip', 'install', '--upgrade', '--no-dependencies',
-                        'youtube-dl',
+                    'ytdl_update_pipx_upgrade': [
+                        'pipx', 'upgrade', 'youtube-dl',
                     ],
                     'ytdl_update_default_path': [
                         self.ytdl_path_default, '-U',
@@ -10077,21 +10165,41 @@ class TartubeApp(Gtk.Application):
                     'ytdl_update_pypi_path': [
                         self.ytdl_path_pypi, '-U',
                     ],
+                    'ytdl_update_pip3': [
+                        'pip3', 'install', '--upgrade', '--user', 'youtube-dl',
+                    ],
+                    'ytdl_update_pip3_omit_user': [
+                        'pip3', 'install', '--upgrade', 'youtube-dl',
+                    ],
+                    'ytdl_update_pip3_no_dependencies': [
+                        'pip3', 'install', '--upgrade', '--no-dependencies',
+                        'youtube-dl',
+                    ],
+                    'ytdl_update_pip': [
+                        'pip', 'install', '--upgrade', '--user', 'youtube-dl',
+                    ],
+                    'ytdl_update_pip_omit_user': [
+                        'pip', 'install', '--upgrade', 'youtube-dl',
+                    ],
+                    'ytdl_update_pip_no_dependencies': [
+                        'pip', 'install', '--upgrade', '--no-dependencies',
+                        'youtube-dl',
+                    ],
                 }
                 self.ytdl_update_list = [
-                    'ytdl_update_pip3_recommend',
-                    'ytdl_update_pip3_omit_user',
-                    'ytdl_update_pip3_no_dependencies',
                     'ytdl_update_pipx',
-                    'ytdl_update_pipx_omit_user',
                     'ytdl_update_pipx_no_dependencies',
-                    'ytdl_update_pip',
-                    'ytdl_update_pip_omit_user',
-                    'ytdl_update_pip_no_dependencies',
+                    'ytdl_update_pipx_upgrade',
                     'ytdl_update_default_path',
                     'ytdl_update_local_path',
                     'ytdl_update_custom_path',
                     'ytdl_update_pypi_path',
+                    'ytdl_update_pip3',
+                    'ytdl_update_pip3_omit_user',
+                    'ytdl_update_pip3_no_dependencies',
+                    'ytdl_update_pip',
+                    'ytdl_update_pip_omit_user',
+                    'ytdl_update_pip_no_dependencies',
                 ]
 
             # Auto-detect the location of youtube-dl, and set the perferred
@@ -10137,7 +10245,7 @@ class TartubeApp(Gtk.Application):
         if not __main__.__pkg_strict_install_flag__:
 
             if self.ytdl_path == self.ytdl_path_pypi:
-                self.ytdl_update_current = 'ytdl_update_pip3_recommend'
+                self.ytdl_update_current = 'ytdl_update_pipx'
             elif self.ytdl_path == self.ytdl_path_default:
                 self.ytdl_update_current = 'ytdl_update_default_path'
             else:

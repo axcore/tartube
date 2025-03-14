@@ -46,7 +46,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Stable release: **v2.5.100 (2 Feb 2025)**
 
-Development release: **v2.5.100 (2 Feb 2025)**
+Development release: **v2.5.108 (14 Mar 2025)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -85,7 +85,7 @@ Source code:
 
 Tartube can store its videos in a database. If that's what you want, then do this:
 
-- Go to a `video website <https://en.wikipedia.org/wiki/List_of_online_video_platforms/>`__, and find your favourite channel
+- Go to a `video website <https://en.wikipedia.org/wiki/List_of_online_video_platforms>`__, and find your favourite channel
 - In **Tartube**'s main window, click the **Add a new channel** button (or from the menu, click **Media > Add channel...** )
 - In the dialogue window, add the name of the channel and its URL (link)
 - Click the **OK** button to close the window

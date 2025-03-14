@@ -1196,14 +1196,12 @@ def do_translate(config_flag=False):
             _('Update using pip3 (use --no-dependencies option)'),
         'ytdl_update_pip3_omit_user':
             _('Update using pip3 (omit --user option)'),
-        'ytdl_update_pip3_recommend':
-            _('Update using pip3 (recommended)'),
         'ytdl_update_pipx':
-            _('Update using pipx'),
+            _('Update using pipx (recommended, force install)'),
         'ytdl_update_pipx_no_dependencies':
-            _('Update using pipx (use --no-dependencies option)'),
-        'ytdl_update_pipx_omit_user':
-            _('Update using pipx (omit --user option)'),
+            _('Update using pipx (force install, use --no-dependencies)'),
+        'ytdl_update_pipx_upgrade':
+            _('Update using pipx (upgrade existing install)'),
         'ytdl_update_pypi_path':
             _('Update using PyPI youtube-dl path'),
         'ytdl_update_win_32':
