@@ -33,7 +33,7 @@ import threading
 
 
 # Import our modules
-import utils
+import ttutils
 
 
 # Classes
@@ -127,7 +127,7 @@ class DialogueManager(threading.Thread):
         #   length per line
         mod_list = []
         for line in line_list:
-            mod_list.append(utils.tidy_up_long_string(line, 40))
+            mod_list.append(ttutils.tidy_up_long_string(line, 40))
 
         # Finally combine everything into a single string, as before
         double = '\n\n'

@@ -46,7 +46,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Stable release: **v2.5.100 (2 Feb 2025)**
 
-Development release: **v2.5.108 (14 Mar 2025)**
+Development release: **v2.5.113 (13 May 2025)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -2246,6 +2246,8 @@ This works well on sites like YouTube, which send information about videos in th
 A: **youtube-dl** can create an archive file. The archive file remembers which videos have been downloaded, so that **youtube-dl** can skip them (which saves a lot of time).
 
 To enable this functionality, click **Edit > System preferences... > Operations > Archive** and select **Allow downloader to create its own archive file**.
+
+(If the **Archive** tab is not visible, select the **General > Application** tab, and then click the **Show advanced preferences** button.)
 
 By default, the archive file is stored in the same folder as the video, but you can change this behaviour, if you like.
 

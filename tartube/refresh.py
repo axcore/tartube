@@ -34,7 +34,6 @@ import time
 # Import our modules
 import formats
 import media
-import utils
 # Use same gettext translations
 from mainapp import _
 

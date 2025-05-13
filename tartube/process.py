@@ -36,7 +36,7 @@ import time
 
 # Import our modules
 import media
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -238,7 +238,7 @@ class ProcessManager(threading.Thread):
         and self.app_obj.split_video_auto_open_flag:
 
             for dest_dir in dest_dir_list:
-                utils.open_file(self.app_obj, dest_dir)
+                ttutils.open_file(self.app_obj, dest_dir)
 
 
     def create_child_process(self, cmd_list):
@@ -262,7 +262,7 @@ class ProcessManager(threading.Thread):
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -529,7 +529,7 @@ class ProcessManager(threading.Thread):
             if rename_flag \
             and self.options_obj.options_dict['rename_both_flag']:
 
-                thumb_path = utils.find_thumbnail(
+                thumb_path = ttutils.find_thumbnail(
                     self.app_obj,
                     orig_video_obj,
                     True,           # Rename a temporary thumbnail too
@@ -602,7 +602,7 @@ class ProcessManager(threading.Thread):
 
             if self.app_obj.sblock_re_extract_flag \
             and not orig_video_obj.slice_list:
-                utils.fetch_slice_data(
+                ttutils.fetch_slice_data(
                     app_obj,
                     orig_video_obj,
                     self.download_worker_obj.worker_id,
@@ -644,7 +644,7 @@ class ProcessManager(threading.Thread):
         # ...where 'start_time' and 'stop_time' are floating-point values in
         #   seconds. 'stop_time' can be None to signify the end of the video,
         #   but 'start_time' is 0 to signify the start of the video
-        clip_list = utils.convert_slices_to_clips(
+        clip_list = ttutils.convert_slices_to_clips(
             self.app_obj,
             self.app_obj.general_custom_dl_obj,
             slice_list,
@@ -854,7 +854,7 @@ class ProcessManager(threading.Thread):
         # Set the containing folder, creating a media.Folder object and/or a
         #   sub-directory for the video clips, if required
         parent_obj, parent_dir, dest_obj, dest_dir \
-        = utils.clip_set_destination(self.app_obj, orig_video_obj)
+        = ttutils.clip_set_destination(self.app_obj, orig_video_obj)
 
         if parent_obj is None:
 
@@ -914,10 +914,10 @@ class ProcessManager(threading.Thread):
                 #   the next clip is used. If there are no more clips, then
                 #   this clip will end at the end of the video
                 start_stamp, stop_stamp, clip_title \
-                = utils.clip_extract_data(stamp_list, i)
+                = ttutils.clip_extract_data(stamp_list, i)
 
                 # Set a (hopefully unique) clip title
-                clip_title = utils.clip_prepare_title(
+                clip_title = ttutils.clip_prepare_title(
                     self.app_obj,
                     orig_video_obj,
                     self.clip_title_dict,
@@ -963,7 +963,7 @@ class ProcessManager(threading.Thread):
                 elif dest_obj \
                 and self.app_obj.split_video_add_db_flag:
 
-                    new_video_obj = utils.clip_add_to_db(
+                    new_video_obj = ttutils.clip_add_to_db(
                         self.app_obj,
                         dest_obj,
                         orig_video_obj,

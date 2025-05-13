@@ -33,7 +33,7 @@ import re
 import formats
 import mainapp
 import media
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -1477,7 +1477,7 @@ class OptionsParser(object):
                 and value != option_holder_obj.default_value:
                     options_list.append('-x')
                     options_list.append(option_holder_obj.switch)
-                    options_list.append(utils.to_string(value))
+                    options_list.append(ttutils.to_string(value))
 
                     # The '-x' / '--audio-quality' switch must precede the
                     #   '--audio-quality' switch, if both are used
@@ -1488,7 +1488,7 @@ class OptionsParser(object):
                     if copy_dict['audio_quality'] != '5':
                         options_list.append('--audio-quality')
                         options_list.append(
-                            utils.to_string(copy_dict['audio_quality']),
+                            ttutils.to_string(copy_dict['audio_quality']),
                         )
 
             elif option_holder_obj.name == 'audio_quality':
@@ -1500,10 +1500,10 @@ class OptionsParser(object):
 
                         if value != option_holder_obj.default_value:
                             options_list.append(option_holder_obj.switch)
-                            options_list.append(utils.to_string(value))
+                            options_list.append(ttutils.to_string(value))
 
             elif option_holder_obj.name == 'match_filter':
-                value = utils.to_string(copy_dict[option_holder_obj.name])
+                value = ttutils.to_string(copy_dict[option_holder_obj.name])
                 if self.app_obj.block_livestreams_flag:
 
                     if value == '':
@@ -1520,7 +1520,7 @@ class OptionsParser(object):
                 value = copy_dict[option_holder_obj.name]
                 if value != '':
                     options_list.append(option_holder_obj.switch)
-                    options_list.append('"' + utils.to_string(value) + '"')
+                    options_list.append('"' + ttutils.to_string(value) + '"')
 
             elif option_holder_obj.name == 'cookies_path':
                 cookies_path = copy_dict[option_holder_obj.name]
@@ -1558,7 +1558,7 @@ class OptionsParser(object):
                     options_list.append(option_holder_obj.switch)
 
                     if not option_holder_obj.is_boolean():
-                        options_list.append(utils.to_string(value))
+                        options_list.append(ttutils.to_string(value))
 
         # Parse the 'match_title_list' and 'reject_title_list'
         for item in copy_dict['match_title_list']:
@@ -1603,7 +1603,7 @@ class OptionsParser(object):
         # Parse the 'extra_cmd_string' option, so it overrules everything else.
         #   The option can contain arguments inside double quotes "..."
         #   (arguments that can therefore contain whitespace)
-        parsed_list = utils.parse_options(copy_dict['extra_cmd_string'])
+        parsed_list = ttutils.parse_options(copy_dict['extra_cmd_string'])
         for item in parsed_list:
             options_list.append(item)
 
@@ -1612,7 +1612,7 @@ class OptionsParser(object):
         if copy_dict['downloader_config']:
 
             options_list.append('--config-location')
-            options_list.append(utils.get_dl_config_path(self.app_obj))
+            options_list.append(ttutils.get_dl_config_path(self.app_obj))
 
         # Filter out yt-dlp options, if required. A list of them is specified
         #   in mainapp.TartubeApp.ytdlp_exclusive_options_dict
@@ -1655,12 +1655,12 @@ class OptionsParser(object):
 
         if copy_dict['min_filesize']:
             copy_dict['min_filesize'] = \
-            utils.to_string(copy_dict['min_filesize']) + \
+            ttutils.to_string(copy_dict['min_filesize']) + \
             copy_dict['min_filesize_unit']
 
         if copy_dict['max_filesize']:
             copy_dict['max_filesize'] = \
-            utils.to_string(copy_dict['max_filesize']) + \
+            ttutils.to_string(copy_dict['max_filesize']) + \
             copy_dict['max_filesize_unit']
 
 
@@ -1909,7 +1909,7 @@ class OptionsParser(object):
                 # Valid values are those specified by formats.VIDEO_FORMAT_LIST
                 #   formats.AUDIO_FORMAT_LIST and formats.VIDEO_RESOLUTION_LIST
                 convert_flag, this_format, this_res \
-                = utils.extract_dummy_format(media_data_obj.dummy_format)
+                = ttutils.extract_dummy_format(media_data_obj.dummy_format)
 
                 if not convert_flag:
 

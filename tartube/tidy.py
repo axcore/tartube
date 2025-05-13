@@ -41,7 +41,7 @@ import time
 # Import our modules
 import formats
 import media
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -1126,7 +1126,7 @@ class TidyManager(threading.Thread):
                 #   thumbnail has already been moved into /.thumbs, then of
                 #   course we don't move it again (and this function returns an
                 #   empty list)
-                path_list = utils.find_thumbnail_restricted(
+                path_list = ttutils.find_thumbnail_restricted(
                     self.app_obj,
                     video_obj,
                 )
@@ -1185,7 +1185,7 @@ class TidyManager(threading.Thread):
             if video_obj.file_name is not None:
 
                 # Thumbnails might be in one of four locations
-                thumb_path = utils.find_thumbnail(self.app_obj, video_obj)
+                thumb_path = ttutils.find_thumbnail(self.app_obj, video_obj)
 
                 # If the video's parent container has an alternative download
                 #   destination set, we must check the corresponding media
@@ -1226,7 +1226,7 @@ class TidyManager(threading.Thread):
             if video_obj.file_name is not None:
 
                 # Thumbnails might be in one of two locations
-                webp_path = utils.find_thumbnail_webp_strict(
+                webp_path = ttutils.find_thumbnail_webp_strict(
                     self.app_obj,
                     video_obj
                 )
@@ -1271,7 +1271,7 @@ class TidyManager(threading.Thread):
             if video_obj.file_name is not None:
 
                 # Thumbnails might be in one of four locations
-                thumb_path = utils.find_thumbnail_webp_intact_or_broken(
+                thumb_path = ttutils.find_thumbnail_webp_intact_or_broken(
                     self.app_obj,
                     video_obj,
                 )

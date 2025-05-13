@@ -36,7 +36,7 @@ import time
 # Import our modules
 import formats
 import mainapp
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -694,7 +694,7 @@ class GenericContainer(GenericMedia):
 
         # Apply a maximum line length, if required
         if max_length is not None:
-            text = utils.tidy_up_long_descrip(text, max_length)
+            text = ttutils.tidy_up_long_descrip(text, max_length)
 
         return text
 
@@ -1830,7 +1830,7 @@ class GenericRemoteContainer(GenericContainer):
     def set_source(self, source):
 
         self.source = source
-        self.enhanced = utils.is_enhanced(source)
+        self.enhanced = ttutils.is_enhanced(source)
         self.update_rss_from_url(source)
 
 
@@ -1982,8 +1982,8 @@ class Video(GenericMedia):
         # (For the benefit of the sorting functions, the default value is 0)
         self.live_time = 0
         # When YouTube provides a livestream message,
-        #   utils.extract_livestream_data() converts it into some text that can
-        #   be displayed in the Video Catalogue
+        #   ttutils.extract_livestream_data() converts it into some text that
+        #   can be displayed in the Video Catalogue
         # The text to display. If the video is not a livestream, or has already
         #   started, or has already finished, or no recognised message was
         #   provided, an empty string
@@ -2295,7 +2295,7 @@ class Video(GenericMedia):
 
         # Apply a maximum line length, if required
         if max_length is not None:
-            text = utils.tidy_up_long_descrip(text, max_length)
+            text = ttutils.tidy_up_long_descrip(text, max_length)
 
         return text
 
@@ -2354,13 +2354,13 @@ class Video(GenericMedia):
             return
 
         if override_descrip is not None and override_descrip != '':
-            self.stamp_list = utils.extract_timestamps_from_descrip(
+            self.stamp_list = ttutils.extract_timestamps_from_descrip(
                 app_obj,
                 override_descrip,
             )
 
         else:
-            self.stamp_list = utils.extract_timestamps_from_descrip(
+            self.stamp_list = ttutils.extract_timestamps_from_descrip(
                 app_obj,
                 self.descrip,
             )
@@ -2397,7 +2397,7 @@ class Video(GenericMedia):
             return
 
         # Extract each chapter in turn
-        self.stamp_list = utils.extract_timestamps_from_chapters(
+        self.stamp_list = ttutils.extract_timestamps_from_chapters(
             app_obj,
             chapter_list,
         )
@@ -2417,7 +2417,7 @@ class Video(GenericMedia):
     def convert_slices(self, slice_data_list):
 
         """Can be called by anything, but principally called by
-        utils.fetch_slice_data().
+        ttutils.fetch_slice_data().
 
         A modified form of self.set_slices().
 
@@ -2781,7 +2781,7 @@ class Video(GenericMedia):
     def set_live_data(self, live_data_dict):
 
         """Interprets the dictionary returned by
-        utils.extract_livestream_data().
+        ttutils.extract_livestream_data().
         """
 
         if 'live_msg' in live_data_dict:
@@ -2918,8 +2918,8 @@ class Video(GenericMedia):
 
         if descrip is not None and descrip != '':
 
-            self.descrip = utils.tidy_up_long_descrip(descrip, max_length)
-            self.short = utils.shorten_string(descrip, max_length)
+            self.descrip = ttutils.tidy_up_long_descrip(descrip, max_length)
+            self.short = ttutils.shorten_string(descrip, max_length)
 
             # Extract timestamps from the description, if allowed
             if app_obj.video_timestamps_extract_descrip_flag \
@@ -3288,7 +3288,7 @@ class Video(GenericMedia):
         """
 
         if self.file_size:
-            return utils.convert_bytes_to_string(self.file_size)
+            return ttutils.convert_bytes_to_string(self.file_size)
         else:
             return ""
 
@@ -3630,7 +3630,7 @@ class Channel(GenericRemoteContainer):
         if self.rss:
             return
 
-        self.rss = utils.convert_enhanced_template_from_json(
+        self.rss = ttutils.convert_enhanced_template_from_json(
             'rss_channel_list',
             self.enhanced,
             # Use a fake dictionary of JSON data, as if it had been extracted
@@ -3660,7 +3660,7 @@ class Channel(GenericRemoteContainer):
         if self.rss or not self.source or not self.enhanced:
             return
 
-        self.rss = utils.convert_enhanced_template_from_json(
+        self.rss = ttutils.convert_enhanced_template_from_json(
             'rss_channel_list',
             self.enhanced,
             json_dict,
@@ -3687,7 +3687,7 @@ class Channel(GenericRemoteContainer):
         if self.rss:
             return
 
-        self.rss = utils.convert_enhanced_template_from_json(
+        self.rss = ttutils.convert_enhanced_template_from_json(
             'rss_channel_list',
             self.enhanced,
             # Use a fake dictionary of JSON data, as if it had been extracted
@@ -3716,7 +3716,7 @@ class Channel(GenericRemoteContainer):
         if self.rss or not url or not self.enhanced:
             return
 
-        self.rss = utils.convert_enhanced_template_from_url(
+        self.rss = ttutils.convert_enhanced_template_from_url(
             'rss_channel_list',
             self.enhanced,
             url,
@@ -3978,7 +3978,7 @@ class Playlist(GenericRemoteContainer):
         if self.rss:
             return
 
-        self.rss = utils.convert_enhanced_template_from_json(
+        self.rss = ttutils.convert_enhanced_template_from_json(
             'rss_playlist_list',
             self.enhanced,
             # Use a fake dictionary of JSON data, as if it had been extracted
@@ -4008,7 +4008,7 @@ class Playlist(GenericRemoteContainer):
         if self.rss or not self.source or not self.enhanced:
             return
 
-        self.rss = utils.convert_enhanced_template_from_json(
+        self.rss = ttutils.convert_enhanced_template_from_json(
             'rss_playlist_list',
             self.enhanced,
             json_dict,
@@ -4035,7 +4035,7 @@ class Playlist(GenericRemoteContainer):
         if self.rss:
             return
 
-        self.rss = utils.convert_enhanced_template_from_json(
+        self.rss = ttutils.convert_enhanced_template_from_json(
             'rss_playlist_list',
             self.enhanced,
             # Use a fake dictionary of JSON data, as if it had been extracted
@@ -4064,7 +4064,7 @@ class Playlist(GenericRemoteContainer):
         if self.rss or not url or not self.enhanced:
             return
 
-        self.rss = utils.convert_enhanced_template_from_url(
+        self.rss = ttutils.convert_enhanced_template_from_url(
             'rss_playlist_list',
             self.enhanced,
             url,
@@ -4615,7 +4615,7 @@ class Scheduled(object):
 
         """
 
-        local = utils.get_local_time()
+        local = ttutils.get_local_time()
         current_day = local.today().weekday()
         current_hours = int(local.strftime('%H'))
         current_minutes = int(local.strftime('%M'))
@@ -4624,7 +4624,7 @@ class Scheduled(object):
         for mini_list in self.timetable_list:
 
             # Today?
-            if not utils.check_day(current_day, mini_list[0]):
+            if not ttutils.check_day(current_day, mini_list[0]):
                 continue
 
             # Between these two times (a window of 5 minutes, by default)?

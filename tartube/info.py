@@ -40,7 +40,7 @@ import time
 # Import our modules
 import __main__
 import downloads
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -251,7 +251,7 @@ class InfoManager(threading.Thread):
                 #   Gtk.TextView, so it can contain newline and/or multiple
                 #   whitepsace characters. Whitespace characters within
                 #   double quotes "..." must be preserved
-                option_list = utils.parse_options(self.options_string)
+                option_list = ttutils.parse_options(self.options_string)
                 for item in option_list:
                     cmd_list.append(item)
 
@@ -369,7 +369,7 @@ class InfoManager(threading.Thread):
                 timeout = self.app_obj.request_get_timeout,
             )
 
-            response = utils.strip_whitespace(request_obj.text)
+            response = ttutils.strip_whitespace(request_obj.text)
             if not re.search(r'^\d+\.\d+\.\d+\s*$', response):
 
                 self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -410,7 +410,7 @@ class InfoManager(threading.Thread):
                 timeout = self.app_obj.request_get_timeout,
             )
 
-            response = utils.strip_whitespace(request_obj.text)
+            response = ttutils.strip_whitespace(request_obj.text)
             if not re.search(r'^\d+\.\d+\.\d+\s*$', response):
 
                 self.app_obj.main_win_obj.output_tab_write_stdout(
@@ -470,7 +470,7 @@ class InfoManager(threading.Thread):
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -558,7 +558,7 @@ class InfoManager(threading.Thread):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':

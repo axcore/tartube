@@ -46,7 +46,7 @@ import mainapp
 import mainwin
 import media
 import platform
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -7943,7 +7943,7 @@ class OptionsEditWin(GenericEditWin):
 
         # (If the downloader's configuration file exists, load it and update
         #   the textview/entry)
-        dl_config_path = utils.get_dl_config_path(self.app_obj)
+        dl_config_path = ttutils.get_dl_config_path(self.app_obj)
         if os.path.isfile(dl_config_path):
 
             line_list = []
@@ -13092,7 +13092,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         """
 
-        if utils.find_thumbnail(self.app_obj, video_obj):
+        if ttutils.find_thumbnail(self.app_obj, video_obj):
             thumb_flag = True
         else:
             thumb_flag = True
@@ -13213,11 +13213,11 @@ class FFmpegOptionsEditWin(GenericEditWin):
             model2 = self.action_combo.get_model()
             action_type = model2[tree_iter2][0]
 
-            start_time = utils.strip_whitespace(
+            start_time = ttutils.strip_whitespace(
                 self.slice_start_entry.get_text(),
             )
 
-            stop_time = utils.strip_whitespace(
+            stop_time = ttutils.strip_whitespace(
                 self.slice_stop_entry.get_text(),
             )
 
@@ -13231,25 +13231,25 @@ class FFmpegOptionsEditWin(GenericEditWin):
             model2 = self.simple_action_combo.get_model()
             action_type = model2[tree_iter2][0]
 
-            start_time = utils.strip_whitespace(
+            start_time = ttutils.strip_whitespace(
                 self.simple_slice_start_entry.get_text(),
             )
 
-            stop_time = utils.strip_whitespace(
+            stop_time = ttutils.strip_whitespace(
                 self.simple_slice_stop_entry.get_text(),
             )
 
         # Do nothing if specified timestamps aren't valid ('stop_time' is NOT
         #   optional)
         start_time = float(
-            utils.timestamp_convert_to_seconds(self.app_obj, start_time),
+            ttutils.timestamp_convert_to_seconds(self.app_obj, start_time),
         )
 
         if stop_time == '':
             stop_time = None
         else:
             stop_time = float(
-                utils.timestamp_convert_to_seconds(self.app_obj, stop_time),
+                ttutils.timestamp_convert_to_seconds(self.app_obj, stop_time),
             )
 
         try:
@@ -13332,25 +13332,25 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
         if not self.app_obj.simple_ffmpeg_options_flag:
 
-            start_stamp = utils.strip_whitespace(
+            start_stamp = ttutils.strip_whitespace(
                 self.start_stamp_entry.get_text(),
             )
-            stop_stamp = utils.strip_whitespace(
+            stop_stamp = ttutils.strip_whitespace(
                 self.stop_stamp_entry.get_text(),
             )
-            clip_title = utils.strip_whitespace(
+            clip_title = ttutils.strip_whitespace(
                 self.clip_title_entry.get_text(),
             )
 
         else:
 
-            start_stamp = utils.strip_whitespace(
+            start_stamp = ttutils.strip_whitespace(
                 self.simple_start_stamp_entry.get_text(),
             )
-            stop_stamp = utils.strip_whitespace(
+            stop_stamp = ttutils.strip_whitespace(
                 self.simple_stop_stamp_entry.get_text(),
             )
-            clip_title = utils.strip_whitespace(
+            clip_title = ttutils.strip_whitespace(
                 self.simple_clip_title_entry.get_text(),
             )
 
@@ -13366,14 +13366,14 @@ class FFmpegOptionsEditWin(GenericEditWin):
         regex = '^' + self.app_obj.timestamp_regex + '$'
         if re.search(regex, start_stamp) \
         and (stop_stamp is None or re.search(regex, stop_stamp)) \
-        and utils.timestamp_compare(self.app_obj, start_stamp, stop_stamp):
+        and ttutils.timestamp_compare(self.app_obj, start_stamp, stop_stamp):
 
             # Add leading zeroes to the minutes and seconds components, so
             #   that .stamp_list gets sorted correctly (and doesn't look
             #   weird)
-            start_stamp = utils.timestamp_format(self.app_obj, start_stamp)
+            start_stamp = ttutils.timestamp_format(self.app_obj, start_stamp)
             if stop_stamp is not None:
-                stop_stamp = utils.timestamp_format(self.app_obj, stop_stamp)
+                stop_stamp = ttutils.timestamp_format(self.app_obj, stop_stamp)
 
             # Timestamps stored in groups of three, in the form
             #   (start_stamp, stop_stamp, clip_title)
@@ -13393,7 +13393,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
 
                 if stop_stamp is not None:
                     self.start_stamp_entry.set_text(
-                        utils.timestamp_add_second(self.app_obj, stop_stamp),
+                        ttutils.timestamp_add_second(self.app_obj, stop_stamp),
                     )
                 else:
                     self.start_stamp_entry.set_text('')
@@ -13406,7 +13406,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
                 self.setup_clips_tab_update_treeview()
                 if stop_stamp is not None:
                     self.simple_start_stamp_entry.set_text(
-                        utils.timestamp_add_second(self.app_obj, stop_stamp),
+                        ttutils.timestamp_add_second(self.app_obj, stop_stamp),
                     )
                 else:
                     self.simple_start_stamp_entry.set_text('')
@@ -14339,7 +14339,7 @@ class FFmpegOptionsEditWin(GenericEditWin):
             mod_list = []
 
             for line in line_list:
-                mod_line = utils.strip_whitespace(urllib.parse.unquote(line))
+                mod_line = ttutils.strip_whitespace(urllib.parse.unquote(line))
                 if mod_line != '':
 
                     # On Linux, URLs are received as expected, but paths to
@@ -15015,7 +15015,7 @@ class VideoEditWin(GenericEditWin):
         entry4.set_editable(False)
         if self.edit_obj.duration is not None:
             entry4.set_text(
-                utils.convert_seconds_to_string(self.edit_obj.duration),
+                ttutils.convert_seconds_to_string(self.edit_obj.duration),
             )
 
         label5 = self.add_label(grid4,
@@ -16060,8 +16060,8 @@ class VideoEditWin(GenericEditWin):
 
             self.comment_liststore.append([
                 time,
-                utils.shorten_string(author, shorter),
-                utils.tidy_up_long_string(mini_dict['text'], longer),
+                ttutils.shorten_string(author, shorter),
+                ttutils.tidy_up_long_string(mini_dict['text'], longer),
                 str(likes),
                 fav_flag,
                 ul_flag,
@@ -16150,7 +16150,7 @@ class VideoEditWin(GenericEditWin):
             if 'author' in mini_dict:
                 msg = '<b>' \
                 + html.escape(
-                    utils.shorten_string(mini_dict['author'], shorter),
+                    ttutils.shorten_string(mini_dict['author'], shorter),
                     quote=False,
                 ) + '</b>'
             else:
@@ -16200,7 +16200,7 @@ class VideoEditWin(GenericEditWin):
             hbox3.pack_start(label4, False, False, 0)
             label4.set_text(
                 html.escape(
-                    utils.tidy_up_long_string(mini_dict['text'], longer),
+                    ttutils.tidy_up_long_string(mini_dict['text'], longer),
                     quote=False
                     ,
                 ),
@@ -16373,18 +16373,18 @@ class VideoEditWin(GenericEditWin):
         model2 = combo2.get_model()
         action_type = model2[tree_iter2][0]
 
-        start_time = utils.strip_whitespace(entry.get_text())
-        stop_time = utils.strip_whitespace(entry2.get_text())
+        start_time = ttutils.strip_whitespace(entry.get_text())
+        stop_time = ttutils.strip_whitespace(entry2.get_text())
 
         start_time = float(
-            utils.timestamp_convert_to_seconds(self.app_obj, start_time),
+            ttutils.timestamp_convert_to_seconds(self.app_obj, start_time),
         )
 
         if stop_time == '':
             stop_time = None
         else:
             stop_time = float(
-                utils.timestamp_convert_to_seconds(self.app_obj, stop_time),
+                ttutils.timestamp_convert_to_seconds(self.app_obj, stop_time),
             )
 
         # Do nothing if specified timestamps aren't valid
@@ -16455,9 +16455,9 @@ class VideoEditWin(GenericEditWin):
             + ' Video properties > Timestamps'
         )
 
-        start_stamp = utils.strip_whitespace(entry.get_text())
-        stop_stamp = utils.strip_whitespace(entry2.get_text())
-        clip_title = utils.strip_whitespace(entry3.get_text())
+        start_stamp = ttutils.strip_whitespace(entry.get_text())
+        stop_stamp = ttutils.strip_whitespace(entry2.get_text())
+        clip_title = ttutils.strip_whitespace(entry3.get_text())
 
         # (Values are stored as None, rather than empty strings)
         if stop_stamp == '':
@@ -16471,14 +16471,14 @@ class VideoEditWin(GenericEditWin):
         regex = '^' + self.app_obj.timestamp_regex + '$'
         if re.search(regex, start_stamp) \
         and (stop_stamp is None or re.search(regex, stop_stamp)) \
-        and utils.timestamp_compare(self.app_obj, start_stamp, stop_stamp):
+        and ttutils.timestamp_compare(self.app_obj, start_stamp, stop_stamp):
 
             # Add leading zeroes to the minutes and seconds components, so
             #   that .stamp_list gets sorted correctly (and doesn't look
             #   weird)
-            start_stamp = utils.timestamp_format(self.app_obj, start_stamp)
+            start_stamp = ttutils.timestamp_format(self.app_obj, start_stamp)
             if stop_stamp is not None:
-                stop_stamp = utils.timestamp_format(self.app_obj, stop_stamp)
+                stop_stamp = ttutils.timestamp_format(self.app_obj, stop_stamp)
 
             # Timestamps stored in groups of three, in the form
             #   (start_stamp, stop_stamp, clip_title)
@@ -16499,7 +16499,7 @@ class VideoEditWin(GenericEditWin):
                 entry.set_text('')
             else:
                 entry.set_text(
-                    utils.timestamp_add_second(self.app_obj, stop_stamp),
+                    ttutils.timestamp_add_second(self.app_obj, stop_stamp),
                 )
 
             entry2.set_text('')
@@ -16667,7 +16667,7 @@ class VideoEditWin(GenericEditWin):
 
         """
 
-        utils.fetch_slice_data(
+        ttutils.fetch_slice_data(
             self.app_obj,
             self.edit_obj,
         )
@@ -17775,7 +17775,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
             return
 
-        url = utils.convert_enhanced_template_from_json(
+        url = ttutils.convert_enhanced_template_from_json(
             'convert_playlist_list',
             self.edit_obj.enhanced,
             {
@@ -17812,7 +17812,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
         # Name an unnamed playlist
         if playlist_title == '':
             playlist_title \
-            = utils.find_available_name(self, 'playlist', 1, -1)
+            = ttutils.find_available_name(self, 'playlist', 1, -1)
 
         # Create the new playlist, with the same parent as this window's
         #   channel/playlist
@@ -17894,7 +17894,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
                 fail_count += 1
                 continue
 
-            url = utils.convert_enhanced_template_from_json(
+            url = ttutils.convert_enhanced_template_from_json(
                 'convert_playlist_list',
                 self.edit_obj.enhanced,
                 {
@@ -17920,7 +17920,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
             # Name an unnamed playlist
             if playlist_title == '':
-                playlist_title = utils.find_available_name(
+                playlist_title = ttutils.find_available_name(
                     self,
                     'playlist',
                     1,
@@ -18023,7 +18023,7 @@ class ChannelPlaylistEditWin(GenericEditWin):
 
         rss = self.retrieve_val('rss')
         if rss:
-            utils.open_file(self.app_obj, rss)
+            ttutils.open_file(self.app_obj, rss)
 
 
     def on_reset_assoc_playlist_button_clicked(self, button):
@@ -21133,7 +21133,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         self.entry = self.add_entry(grid,
-            str(utils.disk_get_total_space(self.app_obj.data_dir)),
+            str(ttutils.disk_get_total_space(self.app_obj.data_dir)),
             False,
             1, 3, 1, 1,
         )
@@ -21150,7 +21150,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         self.entry2 = self.add_entry(grid,
-            str(utils.disk_get_free_space(self.app_obj.data_dir)),
+            str(ttutils.disk_get_free_space(self.app_obj.data_dir)),
             False,
             1, 4, 1, 1,
         )
@@ -25151,7 +25151,7 @@ class SystemPrefWin(GenericPrefWin):
 
         row_list.append(custom_dl_obj.uid)
         row_list.append(
-            utils.tidy_up_long_string(
+            ttutils.tidy_up_long_string(
                 custom_dl_obj.name,
                 self.app_obj.main_win_obj.short_string_max_len,
             ),
@@ -26728,7 +26728,7 @@ class SystemPrefWin(GenericPrefWin):
         grid2.set_border_width(self.spacing_size)
 
         self.add_label(grid2,
-            utils.tidy_up_long_string(
+            ttutils.tidy_up_long_string(
                 '<b>yt-dlp</b>: <i>' \
                 + self.app_obj.ytdl_fork_descrip_dict['yt-dlp'] \
                 + '</i>',
@@ -26766,7 +26766,7 @@ class SystemPrefWin(GenericPrefWin):
         grid3.set_border_width(self.spacing_size)
 
         self.add_label(grid3,
-            utils.tidy_up_long_string(
+            ttutils.tidy_up_long_string(
                 '<b>youtube-dl</b>: <i>' \
                 + self.app_obj.ytdl_fork_descrip_dict['youtube-dl'] \
                 + '</i>',
@@ -26796,7 +26796,7 @@ class SystemPrefWin(GenericPrefWin):
         grid4.set_row_spacing(self.spacing_size)
 
         self.add_label(grid4,
-            '<i>' + utils.tidy_up_long_string(
+            '<i>' + ttutils.tidy_up_long_string(
                 '<b>' + _('Other forks') + ':</b> ' \
                 + self.app_obj.ytdl_fork_descrip_dict['custom'],
             ) + '</i>',
@@ -27480,7 +27480,7 @@ class SystemPrefWin(GenericPrefWin):
 
         row_list.append(options_obj.uid)
         row_list.append(
-            utils.tidy_up_long_string(
+            ttutils.tidy_up_long_string(
                 options_obj.name,
                 self.app_obj.main_win_obj.short_string_max_len,
             ),
@@ -27759,7 +27759,7 @@ class SystemPrefWin(GenericPrefWin):
 
         row_list.append(options_obj.uid)
         row_list.append(
-            utils.tidy_up_long_string(
+            ttutils.tidy_up_long_string(
                 options_obj.name,
                 self.app_obj.main_win_obj.short_string_max_len,
             ),
@@ -29523,7 +29523,7 @@ class SystemPrefWin(GenericPrefWin):
         )
 
         # Check the entered text is a valid URL
-        if not utils.check_url(text):
+        if not ttutils.check_url(text):
             self.app_obj.dialogue_manager_obj.show_msg_dialogue(
                 _('That is not a valid URL'),
                 'error',
@@ -31212,7 +31212,7 @@ class SystemPrefWin(GenericPrefWin):
         # Prepare a dictionary in the same form exported by
         #   mainapp.TartubeApp.export_from_db()
         container_reg_dict = load_dict['container_reg_dict']
-        local = utils.get_local_time()
+        local = ttutils.get_local_time()
         db_dict = {}
         count = 0
 
@@ -31591,7 +31591,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_options_ffmpeg_list_tab().
 
-        Clones the selected offmpeg_tartube.FFmpegOptionsManager object .
+        Clones the selected ffmpeg_tartube.FFmpegOptionsManager object.
 
         Args:
 
@@ -31740,7 +31740,7 @@ class SystemPrefWin(GenericPrefWin):
 
         """Called from callback in self.setup_options_ffmpeg_list_tab().
 
-        Exports the selected offmpeg_tartube.FFmpegOptionsManager object to a
+        Exports the selected ffmpeg_tartube.FFmpegOptionsManager object to a
         JSON file.
 
         Args:
@@ -33029,7 +33029,7 @@ class SystemPrefWin(GenericPrefWin):
                     media_data_obj = self.app_obj.media_reg_dict[dbid]
                     if media_data_obj.source is not None:
 
-                        utils.open_file(self.app_obj, media_data_obj.source)
+                        ttutils.open_file(self.app_obj, media_data_obj.source)
 
 
     def on_operation_error_button_toggled(self, checkbutton):
@@ -35842,7 +35842,7 @@ class SystemPrefWin(GenericPrefWin):
 
         if self.forks_radiobutton3.get_active():
 
-            text = utils.strip_whitespace(entry.get_text())
+            text = ttutils.strip_whitespace(entry.get_text())
             if text == '':
 
                 self.app_obj.set_ytdl_fork(None)

@@ -33,7 +33,7 @@ import subprocess
 
 # Import our modules
 import mainapp
-import utils
+import ttutils
 
 
 # Classes
@@ -292,7 +292,7 @@ class FFmpegManager(object):
     def is_webp(self, path):
 
         """Called by self.convert_webp() and
-        utils.find_thumbnail_webp_intact_or_broken().
+        ttutils.find_thumbnail_webp_intact_or_broken().
 
         Adapted from youtube-dl/youtube-dl/postprocessor/embedthumbnail.py.
 
@@ -315,7 +315,7 @@ class FFmpegManager(object):
     def is_mislabelled_webp(self, path):
 
         """Called by self.convert_webp() and
-        utils.find_thumbnail_webp_intact_or_broken().
+        ttutils.find_thumbnail_webp_intact_or_broken().
 
         Adapted from self.is_webp().
 
@@ -469,7 +469,7 @@ class FFmpegManager(object):
 
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            stderr = stderr.decode(utils.get_encoding(), 'replace')
+            stderr = stderr.decode(ttutils.get_encoding(), 'replace')
             return [ False, stderr.strip().splitlines()[-1] ]
 
         else:
@@ -517,7 +517,7 @@ class FFmpegManager(object):
 
         stdout, stderr = p.communicate()
         if p.returncode != 0:
-            stderr = stderr.decode(utils.get_encoding(), 'replace')
+            stderr = stderr.decode(ttutils.get_encoding(), 'replace')
             return [ False, stderr.strip().splitlines()[-1] ]
 
         else:
@@ -879,7 +879,7 @@ class FFmpegOptionsManager(object):
         #   single item (just as we do for youtube-dl download options)
         extra_cmd_string = options_dict['extra_cmd_string']
         if extra_cmd_string != '':
-            extra_cmd_list = utils.parse_options(extra_cmd_string)
+            extra_cmd_list = ttutils.parse_options(extra_cmd_string)
         else:
             extra_cmd_list = []
 
@@ -934,7 +934,8 @@ class FFmpegOptionsManager(object):
                     return None, None, []
 
             # Find the video's thumbnail
-            source_thumb_path = utils.find_thumbnail(app_obj, video_obj, True)
+            source_thumb_path = \
+            ttutils.find_thumbnail(app_obj, video_obj, True)
             if source_thumb_path is None and input_mode == 'thumb':
                 # Return an empty list; there is nothing for FFmpeg to convert
                 return None, None, []

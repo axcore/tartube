@@ -37,7 +37,7 @@ import __main__
 import formats
 import mainapp
 import media
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -869,7 +869,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span style="italic">' \
-            + utils.tidy_up_long_string(edition, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(edition, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -878,7 +878,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Please take a few moments to set up the application.'),
                 self.text_len,
             ) + '</span>',
@@ -887,7 +887,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Click the <b>Next</b> button to get started.'),
                 self.text_len,
             ) + '</span>',
@@ -906,7 +906,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Tartube stores all of its downloads in one place.'),
                 self.text_len,
             ) + '</span>',
@@ -918,7 +918,7 @@ class SetupWizWin(GenericWizWin):
 
         if not self.mswin_flag:
 
-            msg = utils.tidy_up_long_string(
+            msg = ttutils.tidy_up_long_string(
                 _(
                     'If you don\'t want to use the default location, then' \
                     + ' click <b>Choose</b> to select a different one.',
@@ -926,7 +926,7 @@ class SetupWizWin(GenericWizWin):
                 self.text_len,
             )
 
-            msg2 = utils.tidy_up_long_string(
+            msg2 = ttutils.tidy_up_long_string(
                 _(
                     'If you have used Tartube before, you can select an' \
                     + ' existing directory, instead of creating a new one.',
@@ -937,7 +937,7 @@ class SetupWizWin(GenericWizWin):
         else:
 
             msg = _('Click <b>Choose</b> to create a new folder.')
-            msg2 = utils.tidy_up_long_string(
+            msg2 = ttutils.tidy_up_long_string(
                 _(
                     'If you have used Tartube before, you can select an' \
                     + ' existing folder, instead of creating a new one.',
@@ -1020,7 +1020,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'When saving the database, Tartube makes a backup' \
                     + ' copy of its database file (in case something goes' \
@@ -1106,7 +1106,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Choose which downloader to use.'),
                 self.text_len,
             ) + '</span>',
@@ -1246,7 +1246,7 @@ class SetupWizWin(GenericWizWin):
 
         label = Gtk.Label()
         grid.attach(label, 0, 0, grid_width, 1)
-        label.set_markup(utils.tidy_up_long_string(label_text))
+        label.set_markup(ttutils.tidy_up_long_string(label_text))
         label.set_hexpand(False)
         label.set_alignment(0, 0.5)
 
@@ -1306,7 +1306,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Click the button to install or update the downloader.'),
                 self.text_len,
             ) + '</span>',
@@ -1318,7 +1318,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'You should do this, even if you think it is already' \
                     + ' installed.',
@@ -1428,7 +1428,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'If the Tartube installer did not include a copy of' \
                     + ' FFmpeg, then click the button below to install it.' \
@@ -1446,7 +1446,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'The operation might take several minutes. If it fails,' \
                     + ' try clicking the <b>Install FFmpeg</b> button again.',
@@ -1505,7 +1505,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Tartube adds videos to a database.'),
                 self.text_len,
             ) + '</span>',
@@ -1514,7 +1514,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('If you don\'t need a database, you can use Classic Mode.'),
                 self.text_len,
             ) + '</span>',
@@ -1571,7 +1571,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'If you need to re-install or update the downloader or' \
                     + ' FFmpeg, you can do it from the main window\'s menu.',
@@ -1586,7 +1586,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'Click this button below to see a short tutorial, or' \
                     + ' click the OK button to start Tartube!',
@@ -1625,7 +1625,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'You must install the downloader on your system, before' \
                     + ' you can use Tartube.'
@@ -1640,7 +1640,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'It is strongly recommended that you install FFmpeg.' \
                     + ' Without it, Tartube cannot download video clips or' \
@@ -1657,7 +1657,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'Click this button below to see a short tutorial, or' \
                     + ' click the OK button to start Tartube!',
@@ -1696,7 +1696,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('It is strongly recommended that you install FFmpeg.'),
                 self.text_len,
             ) + '</span>',
@@ -1708,7 +1708,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'Without FFmpeg, Tartube cannot download video clips or' \
                     + ' high-resolution videos, and cannot display many' \
@@ -1724,7 +1724,7 @@ class SetupWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'Click this button below to see a short tutorial, or' \
                     + ' click the OK button to start Tartube!',
@@ -1811,7 +1811,7 @@ class SetupWizWin(GenericWizWin):
 
         self.downloader_textbuffer.insert(
             self.downloader_textbuffer.get_end_iter(),
-            utils.tidy_up_long_string(msg) + '\n',
+            ttutils.tidy_up_long_string(msg) + '\n',
         )
 
         adjust = self.downloader_scrolled.get_vadjustment()
@@ -1862,7 +1862,7 @@ class SetupWizWin(GenericWizWin):
 
         self.ffmpeg_textbuffer.insert(
             self.ffmpeg_textbuffer.get_end_iter(),
-            utils.tidy_up_long_string(msg) + '\n',
+            ttutils.tidy_up_long_string(msg) + '\n',
         )
 
         adjust = self.ffmpeg_scrolled.get_vadjustment()
@@ -2244,7 +2244,7 @@ class SetupWizWin(GenericWizWin):
 
         if radiobutton.get_active():
 
-            entry_text = utils.strip_whitespace(entry.get_text())
+            entry_text = ttutils.strip_whitespace(entry.get_text())
             # (As in the preference window, if the 'other fork' option is
             #   selected, but nothing is entered in the entry box, use
             #   youtube-dl as the system default)
@@ -2471,7 +2471,7 @@ class ImportYTWizWin(GenericWizWin):
             row += 1
             self.add_label(
                 '<span font_size="large" style="italic">* ' \
-                + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+                + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
                 0, row, 1, 1,
             )
 
@@ -3040,7 +3040,7 @@ class ImportYTWizWin(GenericWizWin):
         """
 
         # Check the entered text is a valid name
-        if not utils.check_url(text):
+        if not ttutils.check_url(text):
             return
 
         # Update the column text
@@ -3211,7 +3211,7 @@ class TutorialWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('This tutorial will take about five to ten minutes.'),
                 self.text_len,
             ) + '</span>',
@@ -3220,7 +3220,7 @@ class TutorialWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('Click the <b>Next</b> button to get started.'),
                 self.text_len,
             ) + '</span>',
@@ -3246,7 +3246,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('Click the \'Add a new channel\' button.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3272,7 +3272,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3295,7 +3295,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('Your new channel is added to Tartube\'s database.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3321,7 +3321,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3344,7 +3344,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('As well as adding channels, you can add playlists.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3371,7 +3371,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3397,7 +3397,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3423,7 +3423,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3449,7 +3449,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3472,7 +3472,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('Advanced users can see more detail in the \'Output\' tab.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3498,7 +3498,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3524,7 +3524,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3550,7 +3550,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3573,7 +3573,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('Set the download folder.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3596,7 +3596,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('Choose the video or audio format.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3619,7 +3619,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('Click the \'Add URLs\' button.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3645,7 +3645,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3668,7 +3668,7 @@ class TutorialWizWin(GenericWizWin):
         msg = _('When you\'re ready, click the \'Download all\' button.')
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3694,7 +3694,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3721,7 +3721,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3747,7 +3747,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3773,7 +3773,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3799,7 +3799,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3826,7 +3826,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3852,7 +3852,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3878,7 +3878,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3904,7 +3904,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3930,7 +3930,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3956,7 +3956,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -3982,7 +3982,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -4009,7 +4009,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -4035,7 +4035,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -4061,7 +4061,7 @@ class TutorialWizWin(GenericWizWin):
         )
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(msg, self.text_len) + '</span>',
+            + ttutils.tidy_up_long_string(msg, self.text_len) + '</span>',
             0, 2, 1, 1,
         )
 
@@ -4090,7 +4090,7 @@ class TutorialWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large" style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _('That\'s the end of the tutorial.'),
                 self.text_len,
             ) + '</span>',
@@ -4102,7 +4102,7 @@ class TutorialWizWin(GenericWizWin):
 
         self.add_label(
             '<span font_size="large"  style="italic">' \
-            + utils.tidy_up_long_string(
+            + ttutils.tidy_up_long_string(
                 _(
                     'You can read it again at any time by clicking' \
                     + ' \'Help > Show tutorial...\' in Tartube\'s menu.',

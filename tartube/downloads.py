@@ -48,7 +48,7 @@ import formats
 import mainapp
 import media
 import options
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -56,7 +56,7 @@ if mainapp.HAVE_FEEDPARSER_FLAG:
     import feedparser
 
 
-# Debugging flag (calls utils.debug_time at the start of every function)
+# Debugging flag (calls ttutils.debug_time() at the start of every function)
 DEBUG_FUNC_FLAG = False
 
 
@@ -136,7 +136,7 @@ class DownloadManager(threading.Thread):
     custom_dl_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 139 __init__')
+            ttutils.debug_time('dld 139 __init__')
 
         super(DownloadManager, self).__init__()
 
@@ -295,7 +295,7 @@ class DownloadManager(threading.Thread):
 
         # Set the time at which the first check for alternative limits is
         #   performed
-        local = utils.get_local_time()
+        local = ttutils.get_local_time()
         self.alt_limits_check_time \
         = (int(int(local.strftime('%M')) / 5) * 5) + 5
         if self.alt_limits_check_time > 55:
@@ -324,7 +324,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 319 run')
+            ttutils.debug_time('dld 319 run')
 
         manager_string = _('D/L Manager:') + '   '
 
@@ -390,7 +390,7 @@ class DownloadManager(threading.Thread):
 
             # Every five minutes, check whether the period of alternative
             #   performance limits has started (or stopped)
-            local = utils.get_local_time()
+            local = ttutils.get_local_time()
             if int(local.strftime('%M')) >= self.alt_limits_check_time:
 
                 self.alt_limits_check_time += 5
@@ -620,7 +620,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 631 apply_ignore_limits')
+            ttutils.debug_time('dld 631 apply_ignore_limits')
 
         for item_id in self.download_list_obj.download_item_list:
 
@@ -642,13 +642,13 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 653 check_alt_limits')
+            ttutils.debug_time('dld 653 check_alt_limits')
 
         if not self.app_obj.alt_num_worker_apply_flag:
             return False
 
         # Get the current time and day of the week
-        local = utils.get_local_time()
+        local = ttutils.get_local_time()
         current_hours = int(local.strftime('%H'))
         current_minutes = int(local.strftime('%M'))
         # 0=Monday, 6=Sunday
@@ -680,7 +680,7 @@ class DownloadManager(threading.Thread):
         if start_hours < stop_hours \
         or (start_hours == stop_hours and start_minutes < stop_minutes):
 
-            if not utils.check_day(current_day, target_day_str) \
+            if not ttutils.check_day(current_day, target_day_str) \
             or start_before_flag \
             or (not stop_before_flag):
                 return False
@@ -696,10 +696,10 @@ class DownloadManager(threading.Thread):
                 prev_day = 6
 
             if (
-                utils.check_day(current_day, target_day_str) \
+                ttutils.check_day(current_day, target_day_str) \
                 and (not start_before_flag)
             ) or (
-                utils.check_day(prev_day, target_day_str) \
+                ttutils.check_day(prev_day, target_day_str) \
                 and stop_before_flag
             ):
                 return True
@@ -728,7 +728,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 739 change_worker_count')
+            ttutils.debug_time('dld 739 change_worker_count')
 
         # How many workers do we have already?
         current = len(self.worker_list)
@@ -803,7 +803,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 814 check_master_slave')
+            ttutils.debug_time('dld 814 check_master_slave')
 
         for worker_obj in self.worker_list:
 
@@ -844,7 +844,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 855 check_workers_all_finished')
+            ttutils.debug_time('dld 855 check_workers_all_finished')
 
         for worker_obj in self.worker_list:
             if not worker_obj.available_flag:
@@ -863,7 +863,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 874 create_bypass_worker')
+            ttutils.debug_time('dld 874 create_bypass_worker')
 
         # How many workers do we have already?
         current = len(self.worker_list)
@@ -914,7 +914,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 922 get_available_worker')
+            ttutils.debug_time('dld 922 get_available_worker')
 
         # Some workers are only available when media_data_obj is media.Video
         #   that's a broadcasting livestream
@@ -955,7 +955,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 963 mark_video_as_doomed')
+            ttutils.debug_time('dld 963 mark_video_as_doomed')
 
         if isinstance(video_obj, media.Video) \
         and not video_obj in self.doomed_video_list:
@@ -975,7 +975,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 983 nudge_progress_bar')
+            ttutils.debug_time('dld 983 nudge_progress_bar')
 
         if self.current_item_obj:
 
@@ -1010,7 +1010,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1018 register_classic_url')
+            ttutils.debug_time('dld 1018 register_classic_url')
 
         self.classic_extract_list.append(parent_obj)
         self.classic_extract_list.append(json_dict)
@@ -1028,7 +1028,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1036 register_clip')
+            ttutils.debug_time('dld 1036 register_clip')
 
         self.total_clip_count += 1
 
@@ -1046,7 +1046,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1054 register_slice')
+            ttutils.debug_time('dld 1054 register_slice')
 
         self.total_slice_count += 1
 
@@ -1074,7 +1074,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1082 register_video')
+            ttutils.debug_time('dld 1082 register_video')
 
         if dl_type == 'other':
             # Special count for already checked/downloaded media.Videos, in
@@ -1115,7 +1115,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1123 register_video_size')
+            ttutils.debug_time('dld 1123 register_video_size')
 
         # (In case the filesystem didn't detect the file size, for whatever
         #   reason, we'll check for a None value)
@@ -1159,7 +1159,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1167 remove_worker')
+            ttutils.debug_time('dld 1167 remove_worker')
 
         new_list = []
 
@@ -1186,7 +1186,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1194 stop_download_operation')
+            ttutils.debug_time('dld 1194 stop_download_operation')
 
         self.running_flag = False
         self.manual_stop_flag = True
@@ -1207,7 +1207,7 @@ class DownloadManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1215 stop_download_operation_soon')
+            ttutils.debug_time('dld 1215 stop_download_operation_soon')
 
         self.manual_stop_flag = True
 
@@ -1258,7 +1258,7 @@ class DownloadWorker(threading.Thread):
     def __init__(self, download_manager_obj, broadcast_flag=False):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1266 __init__')
+            ttutils.debug_time('dld 1266 __init__')
 
         super(DownloadWorker, self).__init__()
 
@@ -1330,7 +1330,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1338 run')
+            ttutils.debug_time('dld 1338 run')
 
         # Import the main application and custom download manager (for
         #   convenience)
@@ -1476,7 +1476,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1484 run_video_downloader')
+            ttutils.debug_time('dld 1484 run_video_downloader')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1614,7 +1614,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1622 run_clip_slice_downloader')
+            ttutils.debug_time('dld 1622 run_clip_slice_downloader')
 
         # Import the main application and custom download manager (for
         #   convenience)
@@ -1690,7 +1690,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1698 run_stream_downloader')
+            ttutils.debug_time('dld 1698 run_stream_downloader')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -1822,7 +1822,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1830 close')
+            ttutils.debug_time('dld 1830 close')
 
         self.running_flag = False
 
@@ -1865,7 +1865,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1873 check_rss')
+            ttutils.debug_time('dld 1873 check_rss')
 
         app_obj = self.download_manager_obj.app_obj
 
@@ -1990,7 +1990,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 1998 prepare_download')
+            ttutils.debug_time('dld 1998 prepare_download')
 
         self.download_item_obj = download_item_obj
         self.options_manager_obj = download_item_obj.options_manager_obj
@@ -2010,7 +2010,7 @@ class DownloadWorker(threading.Thread):
         """Called by downloads.DownloadManager.change_worker_count()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2018 set_doomed_flag')
+            ttutils.debug_time('dld 2018 set_doomed_flag')
 
         self.doomed_flag = flag
 
@@ -2042,7 +2042,7 @@ class DownloadWorker(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2050 data_callback')
+            ttutils.debug_time('dld 2050 data_callback')
 
         main_win_obj = self.download_manager_obj.app_obj.main_win_obj
 
@@ -2145,7 +2145,7 @@ class DownloadList(object):
     custom_dl_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2153 __init__')
+            ttutils.debug_time('dld 2153 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -2430,7 +2430,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2439 abandon_remaining_items')
+            ttutils.debug_time('dld 2439 abandon_remaining_items')
 
         main_win_obj = self.app_obj.main_win_obj
         download_manager_obj = self.app_obj.download_manager_obj
@@ -2496,7 +2496,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2505 change_item_stage')
+            ttutils.debug_time('dld 2505 change_item_stage')
 
         self.download_item_dict[item_id].stage = new_stage
 
@@ -2582,7 +2582,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2592 create_item')
+            ttutils.debug_time('dld 2592 create_item')
 
         # (Use two lists for code clarity)
         return_list = []
@@ -2629,7 +2629,7 @@ class DownloadList(object):
         #   options.OptionsManager)
         if not self.operation_classic_flag:
 
-            options_manager_obj = utils.get_options_manager(
+            options_manager_obj = ttutils.get_options_manager(
                 self.app_obj,
                 media_data_obj,
             )
@@ -2695,7 +2695,7 @@ class DownloadList(object):
             and recursion_flag \
             and media_data_obj.file_name \
             and not media_data_obj.live_mode \
-            and utils.find_thumbnail(self.app_obj, media_data_obj):
+            and ttutils.find_thumbnail(self.app_obj, media_data_obj):
                 return empty_list
 
             if custom_flag \
@@ -2708,7 +2708,7 @@ class DownloadList(object):
                     not media_data_obj.subs_list \
                     or (
                         self.custom_dl_obj.dl_if_subs_list \
-                        and not utils.match_subs(
+                        and not ttutils.match_subs(
                             self.custom_dl_obj,
                             media_data_obj.subs_list,
                         )
@@ -2892,7 +2892,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2896 create_dummy_item')
+            ttutils.debug_time('dld 2896 create_dummy_item')
 
         if media_data_obj.options_obj is not None:
             # (Download options specified by the Drag and Drop tab)
@@ -2937,7 +2937,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2941 fetch_next_item')
+            ttutils.debug_time('dld 2941 fetch_next_item')
 
         if not self.prevent_fetch_flag:
 
@@ -2975,7 +2975,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 2979 is_queuing')
+            ttutils.debug_time('dld 2979 is_queuing')
 
         if item_id in self.download_item_dict:
             item_obj = self.download_item_dict[item_id]
@@ -3002,7 +3002,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3006 move_item_to_bottom')
+            ttutils.debug_time('dld 3006 move_item_to_bottom')
 
         # Move the item to the bottom (end) of the list
         if download_item_obj is None \
@@ -3033,7 +3033,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3037 move_item_to_top')
+            ttutils.debug_time('dld 3037 move_item_to_top')
 
         # Move the item to the top (beginning) of the list
         if download_item_obj is None \
@@ -3059,7 +3059,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3063 prevent_fetch_new_items')
+            ttutils.debug_time('dld 3063 prevent_fetch_new_items')
 
         self.prevent_fetch_flag = True
 
@@ -3075,7 +3075,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3079 set_final_item')
+            ttutils.debug_time('dld 3079 set_final_item')
 
         if item_id in self.download_item_dict:
             self.final_item_id = item_id
@@ -3109,7 +3109,7 @@ class DownloadList(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3113 reorder_master_slave')
+            ttutils.debug_time('dld 3113 reorder_master_slave')
 
         master_list = []
         other_list = []
@@ -3172,7 +3172,7 @@ class DownloadItem(object):
     options_manager_obj, operation_type, ignore_limits_flag):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3176 __init__')
+            ttutils.debug_time('dld 3176 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -3223,7 +3223,7 @@ class DownloadItem(object):
         from mainapp>TartubeApp.script_slow_timer_callback()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3227 set_ignore_limits_flag')
+            ttutils.debug_time('dld 3227 set_ignore_limits_flag')
 
         self.ignore_limits_flag = True
 
@@ -3310,7 +3310,7 @@ class VideoDownloader(object):
     download_item_obj, force_sim_flag=False):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3314 __init__')
+            ttutils.debug_time('dld 3314 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -3590,7 +3590,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3578 do_download')
+            ttutils.debug_time('dld 3578 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -3626,7 +3626,7 @@ class VideoDownloader(object):
         options_obj = self.download_worker_obj.options_manager_obj
         if options_obj.options_dict['direct_cmd_flag']:
 
-            cmd_list = utils.generate_direct_system_cmd(
+            cmd_list = ttutils.generate_direct_system_cmd(
                 app_obj,
                 self.download_item_obj.media_data_obj,
                 options_obj,
@@ -3645,7 +3645,7 @@ class VideoDownloader(object):
                 divert_mode \
                 = self.download_manager_obj.custom_dl_obj.divert_mode
 
-            cmd_list = utils.generate_ytdl_system_cmd(
+            cmd_list = ttutils.generate_ytdl_system_cmd(
                 app_obj,
                 self.download_item_obj.media_data_obj,
                 self.download_worker_obj.options_list,
@@ -3657,7 +3657,7 @@ class VideoDownloader(object):
             )
 
         # ...display it in the Output tab (if required)...
-        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
+        display_cmd = ttutils.prepare_system_cmd_for_display(cmd_list)
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
@@ -3859,7 +3859,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3847 check_dl_is_correct_type')
+            ttutils.debug_time('dld 3847 check_dl_is_correct_type')
 
         # Special case: if the download operation was launched from the
         #   Classic Mode tab, there is no need to do anything
@@ -3929,7 +3929,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3917 close')
+            ttutils.debug_time('dld 3917 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -3955,7 +3955,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3943 confirm_archived_video')
+            ttutils.debug_time('dld 3943 confirm_archived_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -3978,7 +3978,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3944 confirm_filtered_video')
+            ttutils.debug_time('dld 3944 confirm_filtered_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -4033,7 +4033,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 3983 confirm_new_video')
+            ttutils.debug_time('dld 3983 confirm_new_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -4105,7 +4105,7 @@ class VideoDownloader(object):
             and app_obj.sblock_fetch_flag \
             and video_obj.vid != None \
             and (not video_obj.slice_list or app_obj.sblock_replace_flag):
-                utils.fetch_slice_data(
+                ttutils.fetch_slice_data(
                     app_obj,
                     video_obj,
                     self.download_worker_obj.worker_id,
@@ -4118,7 +4118,7 @@ class VideoDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
-                utils.compile_mini_options_dict(
+                ttutils.compile_mini_options_dict(
                     self.download_worker_obj.options_manager_obj,
                 ),
             )
@@ -4184,7 +4184,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 4135 confirm_new_video_classic_mode')
+            ttutils.debug_time('dld 4135 confirm_new_video_classic_mode')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -4202,7 +4202,7 @@ class VideoDownloader(object):
         and app_obj.sblock_fetch_flag \
         and dummy_obj.vid != None \
         and (not dummy_obj.slice_list or app_obj.sblock_replace_flag):
-            utils.fetch_slice_data(
+            ttutils.fetch_slice_data(
                 app_obj,
                 dummy_obj,
                 self.download_worker_obj.worker_id,
@@ -4246,7 +4246,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 4197 confirm_old_video')
+            ttutils.debug_time('dld 4197 confirm_old_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -4380,7 +4380,7 @@ class VideoDownloader(object):
                         app_obj.announce_video_download,
                         self.download_item_obj,
                         video_obj,
-                        utils.compile_mini_options_dict(
+                        ttutils.compile_mini_options_dict(
                             self.download_worker_obj.options_manager_obj,
                         ),
                     )
@@ -4424,7 +4424,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 4368 confirm_sim_video')
+            ttutils.debug_time('dld 4368 confirm_sim_video')
 
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -4616,7 +4616,7 @@ class VideoDownloader(object):
                 not subs_flag \
                 or (
                     dl_list_obj.custom_dl_obj.dl_if_subs_list \
-                    and not utils.match_subs(
+                    and not ttutils.match_subs(
                         dl_list_obj.custom_dl_obj,
                         list(json_dict['subtitles'].keys),
                     )
@@ -4891,7 +4891,7 @@ class VideoDownloader(object):
 
             if not options_dict['sim_keep_description']:
 
-                descrip_path = utils.convert_path_to_temp_dl_dir(
+                descrip_path = ttutils.convert_path_to_temp_dl_dir(
                     app_obj,
                     descrip_path,
                 )
@@ -4907,7 +4907,7 @@ class VideoDownloader(object):
                     fh.close()
 
                     if options_dict['move_description']:
-                        utils.move_metadata_to_subdir(
+                        ttutils.move_metadata_to_subdir(
                             app_obj,
                             video_obj,
                             '.description',
@@ -4923,7 +4923,7 @@ class VideoDownloader(object):
             )
 
             if not options_dict['sim_keep_info']:
-                json_path = utils.convert_path_to_temp_dl_dir(
+                json_path = ttutils.convert_path_to_temp_dl_dir(
                     app_obj,
                     json_path,
                 )
@@ -4935,7 +4935,7 @@ class VideoDownloader(object):
                         json.dump(json_dict, outfile, indent=4)
 
                     if options_dict['move_info']:
-                        utils.move_metadata_to_subdir(
+                        ttutils.move_metadata_to_subdir(
                             app_obj,
                             video_obj,
                             '.info.json',
@@ -4955,7 +4955,7 @@ class VideoDownloader(object):
 #
 #            if not options_dict['sim_keep_annotations']:
 #                xml_path \
-#                = utils.convert_path_to_temp_dl_dir(app_obj, xml_path)
+#                = ttutils.convert_path_to_temp_dl_dir(app_obj, xml_path)
 
         if thumbnail and options_dict['write_thumbnail']:
 
@@ -4976,7 +4976,7 @@ class VideoDownloader(object):
             thumb_path = video_obj.get_actual_path_by_ext(app_obj, remote_ext)
 
             if not options_dict['sim_keep_thumbnail']:
-                thumb_path = utils.convert_path_to_temp_dl_dir(
+                thumb_path = ttutils.convert_path_to_temp_dl_dir(
                     app_obj,
                     thumb_path,
                 )
@@ -5000,7 +5000,7 @@ class VideoDownloader(object):
                     pass
 
             # Convert .webp thumbnails to .jpg, if required
-            thumb_path = utils.find_thumbnail_webp_intact_or_broken(
+            thumb_path = ttutils.find_thumbnail_webp_intact_or_broken(
                 app_obj,
                 video_obj,
             )
@@ -5020,14 +5020,14 @@ class VideoDownloader(object):
             # Move to the sub-directory, if required
             if options_dict['move_thumbnail']:
 
-                utils.move_thumbnail_to_subdir(app_obj, video_obj)
+                ttutils.move_thumbnail_to_subdir(app_obj, video_obj)
 
         # Contact SponsorBlock server to fetch video slice data
         if app_obj.custom_sblock_mirror != '' \
         and app_obj.sblock_fetch_flag \
         and video_obj.vid != None \
         and (not video_obj.slice_list or app_obj.sblock_replace_flag):
-            utils.fetch_slice_data(
+            ttutils.fetch_slice_data(
                 app_obj,
                 video_obj,
                 self.download_worker_obj.worker_id,
@@ -5046,7 +5046,7 @@ class VideoDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 video_obj,
-                # No call to utils.compile_mini_options_dict(), because this
+                # No call to ttutils.compile_mini_options_dict(), because this
                 #   function deals with download options like
                 #   'move_description' by itself
                 {},
@@ -5077,7 +5077,7 @@ class VideoDownloader(object):
             # v2.2.039 Partial fix for Git #106, #115 and #175, for which we
             #   get a Python error when print() receives unicode characters
             filename = filename.encode().decode(
-                utils.get_encoding(),
+                ttutils.get_encoding(),
                 'replace',
             )
 
@@ -5146,7 +5146,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5079 convert_video_to_container')
+            ttutils.debug_time('dld 5079 convert_video_to_container')
 
         app_obj = self.download_manager_obj.app_obj
         old_video_obj = self.download_item_obj.media_data_obj
@@ -5163,7 +5163,7 @@ class VideoDownloader(object):
         # Decide on a name for the new channel/playlist, e.g. 'channel_1' or
         #   'playlist_4'. The name must not already be in use. The user can
         #   customise the name when they're ready
-        name = utils.find_available_name(
+        name = ttutils.find_available_name(
             app_obj,
             # e.g. 'channel'
             app_obj.operation_convert_mode,
@@ -5260,7 +5260,7 @@ class VideoDownloader(object):
     def create_child_process(self, cmd_list):
 
         """Called by self.do_download() immediately after the call to
-        utils.generate_ytdl_system_cmd().
+        ttutils.generate_ytdl_system_cmd().
 
         Based on YoutubeDLDownloader._create_process().
 
@@ -5276,13 +5276,13 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5200 create_child_process')
+            ttutils.debug_time('dld 5200 create_child_process')
 
         # Strip double quotes from arguments
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -5335,7 +5335,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5259 extract_filename')
+            ttutils.debug_time('dld 5259 extract_filename')
 
         path, fullname = os.path.split(input_data.strip("\""))
         filename, extension = os.path.splitext(fullname)
@@ -5385,7 +5385,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5309 extract_stdout_data')
+            ttutils.debug_time('dld 5309 extract_stdout_data')
 
         # Import the main application and media data object (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -5822,7 +5822,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5714 extract_stdout_status')
+            ttutils.debug_time('dld 5714 extract_stdout_status')
 
         if 'status' in dl_stat_dict:
             if dl_stat_dict['status'] == formats.COMPLETED_STAGE_ALREADY:
@@ -5852,7 +5852,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5744 is_blocked')
+            ttutils.debug_time('dld 5744 is_blocked')
 
         # N.B. These strings also appear in self.is_ignorable()
         regex_list = [
@@ -5889,7 +5889,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5781 is_child_process_alive')
+            ttutils.debug_time('dld 5781 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -5919,7 +5919,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5811 is_debug')
+            ttutils.debug_time('dld 5811 is_debug')
 
         return stderr.split(' ')[0] == '[debug]'
 
@@ -5943,7 +5943,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5835 is_ignorable')
+            ttutils.debug_time('dld 5835 is_ignorable')
 
         app_obj = self.download_manager_obj.app_obj
         media_data_obj = self.download_item_obj.media_data_obj
@@ -6090,7 +6090,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 5982 is_network_error')
+            ttutils.debug_time('dld 5982 is_network_error')
 
         if re.search(r'[Uu]nable to download video data', stderr) \
         or re.search(r'[Uu]nable to download webpage', stderr) \
@@ -6122,7 +6122,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6014 is_warning')
+            ttutils.debug_time('dld 6014 is_warning')
 
         return stderr.split(':')[0] == 'WARNING'
 
@@ -6144,7 +6144,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6036 last_data_callback')
+            ttutils.debug_time('dld 6036 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -6208,7 +6208,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6100 match_vid_or_url')
+            ttutils.debug_time('dld 6100 match_vid_or_url')
 
         if (
             media_data_obj.vid is not None \
@@ -6242,7 +6242,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6134 process_error_warning')
+            ttutils.debug_time('dld 6134 process_error_warning')
 
         if not vid in self.video_msg_buffer_dict:
 
@@ -6337,7 +6337,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6227 read_child_process')
+            ttutils.debug_time('dld 6227 read_child_process')
 
         # mini_list is in the form [time, pipe_type, data]
         try:
@@ -6366,7 +6366,7 @@ class VideoDownloader(object):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # youtube-dl livestream downloads are normally handles by
         #   downloads.StreamDownloader, but in certain circumstances this
@@ -6375,7 +6375,7 @@ class VideoDownloader(object):
         #   .m3u), it produces a lot of output in STDERR, most of which can be
         #   ignored, but some of which should be converted to STDOUT
         if mini_list[1] == 'stderr':
-            mod_data = utils.stream_output_is_ignorable(data)
+            mod_data = ttutils.stream_output_is_ignorable(data)
             if mod_data is None:
                 # Ignore whole line
                 self.queue.task_done()
@@ -6450,7 +6450,7 @@ class VideoDownloader(object):
                 #   despite the .decode() call above
                 try:
                     print(
-                        data.encode(utils.get_encoding(), 'replace'),
+                        data.encode(ttutils.get_encoding(), 'replace'),
                     )
                 except:
                     print('STDOUT text with unprintable characters')
@@ -6500,7 +6500,7 @@ class VideoDownloader(object):
                 # Git #175, Japanese text may produce a codec error here,
                 #   despite the .decode() call above
                 try:
-                    print(data.encode(utils.get_encoding(), 'replace'))
+                    print(data.encode(ttutils.get_encoding(), 'replace'))
                 except:
                     print('STDERR text with unprintable characters')
 
@@ -6540,7 +6540,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6418 register_error_warning')
+            ttutils.debug_time('dld 6418 register_error_warning')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -6596,7 +6596,7 @@ class VideoDownloader(object):
             # Check this video is not already in the parent channel/playlist/
             #   folder
             media_data_obj = self.download_item_obj.media_data_obj
-            url = utils.convert_enhanced_template_from_json(
+            url = ttutils.convert_enhanced_template_from_json(
                 'convert_video_list',
                 site_name,
                 { 'video_id': vid },
@@ -6633,13 +6633,13 @@ class VideoDownloader(object):
         and app_obj.enable_livestreams_flag \
         and vid is not None:
 
-            live_data_dict = utils.extract_livestream_data(data)
+            live_data_dict = ttutils.extract_livestream_data(data)
             if live_data_dict:
 
                 # Check this video is not already in the parent channel/
                 #   playlist/folder
                 media_data_obj = self.download_item_obj.media_data_obj
-                url = utils.convert_enhanced_template_from_json(
+                url = ttutils.convert_enhanced_template_from_json(
                     'convert_video_list',
                     site_name,
                     { 'video_id': vid },
@@ -6802,7 +6802,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6678 set_error')
+            ttutils.debug_time('dld 6678 set_error')
 
         if isinstance(media_data_obj, media.Video):
 
@@ -6833,7 +6833,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6709 set_warning')
+            ttutils.debug_time('dld 6709 set_warning')
 
         if isinstance(media_data_obj, media.Video):
 
@@ -6867,7 +6867,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6743 set_return_code')
+            ttutils.debug_time('dld 6743 set_return_code')
 
         # (The code -1, STALLED, overrules everything else)
         if code == -1 or code >= self.return_code:
@@ -6879,7 +6879,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6755 set_temp_destination')
+            ttutils.debug_time('dld 6755 set_temp_destination')
 
         self.temp_path = path
         self.temp_filename = filename
@@ -6891,7 +6891,7 @@ class VideoDownloader(object):
         """Called by self.extract_stdout_data()."""
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6767 reset_temp_destination')
+            ttutils.debug_time('dld 6767 reset_temp_destination')
 
         self.temp_path = None
         self.temp_filename = None
@@ -6908,7 +6908,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6784 stop')
+            ttutils.debug_time('dld 6784 stop')
 
         if self.is_child_process_alive():
 
@@ -6938,7 +6938,7 @@ class VideoDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6814 stop_soon')
+            ttutils.debug_time('dld 6814 stop_soon')
 
         self.stop_soon_flag = True
 
@@ -7022,7 +7022,7 @@ class ClipDownloader(object):
     download_item_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 6898 __init__')
+            ttutils.debug_time('dld 6898 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -7140,7 +7140,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 7016 do_download_clips')
+            ttutils.debug_time('dld 7016 do_download_clips')
 
         # Import the main application and video object (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -7207,7 +7207,7 @@ class ClipDownloader(object):
         # Set the containing folder, creating a media.Folder object and/or a
         #   sub-directory for the video clips, if required
         parent_obj, parent_dir, dest_obj, dest_dir \
-        = utils.clip_set_destination(app_obj, orig_video_obj)
+        = ttutils.clip_set_destination(app_obj, orig_video_obj)
 
         if parent_obj is None:
 
@@ -7290,7 +7290,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 7166 do_download_clips_with_chapters')
+            ttutils.debug_time('dld 7166 do_download_clips_with_chapters')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -7303,14 +7303,14 @@ class ClipDownloader(object):
 
         # Get an output template for these clip(s)
         if self.dl_classic_flag:
-            output_template = utils.clip_prepare_chapter_output_template(
+            output_template = ttutils.clip_prepare_chapter_output_template(
                 app_obj,
                 orig_video_obj,
                 orig_video_obj.dummy_dir,
             )
 
         else:
-            output_template = utils.clip_prepare_chapter_output_template(
+            output_template = ttutils.clip_prepare_chapter_output_template(
                 app_obj,
                 orig_video_obj,
                 dest_dir,
@@ -7333,7 +7333,7 @@ class ClipDownloader(object):
         else:
             divert_mode = None
 
-        cmd_list = utils.generate_chapters_split_system_cmd(
+        cmd_list = ttutils.generate_chapters_split_system_cmd(
             app_obj,
             orig_video_obj,
             self.download_worker_obj.options_list.copy(),
@@ -7346,7 +7346,7 @@ class ClipDownloader(object):
         )
 
         # ...display it in the Output tab (if required)...
-        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
+        display_cmd = ttutils.prepare_system_cmd_for_display(cmd_list)
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
@@ -7458,7 +7458,7 @@ class ClipDownloader(object):
             # Open the destination directory, if required to do so
             if dest_dir is not None \
             and app_obj.split_video_auto_open_flag:
-                utils.open_file(app_obj, dest_dir)
+                ttutils.open_file(app_obj, dest_dir)
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main
@@ -7503,7 +7503,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 7379 do_download_clips_with_downloader')
+            ttutils.debug_time('dld 7379 do_download_clips_with_downloader')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -7528,7 +7528,7 @@ class ClipDownloader(object):
         else:
             divert_mode = None
 
-        cmd_list = utils.generate_downloader_split_system_cmd(
+        cmd_list = ttutils.generate_downloader_split_system_cmd(
             app_obj,
             orig_video_obj,
             self.download_worker_obj.options_list.copy(),
@@ -7541,7 +7541,7 @@ class ClipDownloader(object):
         )
 
         # ...display it in the Output tab (if required)...
-        display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
+        display_cmd = ttutils.prepare_system_cmd_for_display(cmd_list)
         if app_obj.ytdl_output_system_cmd_flag:
             app_obj.main_win_obj.output_tab_write_system_cmd(
                 self.download_worker_obj.worker_id,
@@ -7652,9 +7652,9 @@ class ClipDownloader(object):
                 # Rename the clip, ready for it to be added to the Tartube
                 #   database
                 directory, filename, extension \
-                = utils.extract_path_components(old_path)
+                = ttutils.extract_path_components(old_path)
                 # (This is a scaled-down version of code in
-                #   utils.clip_prepare_title() )
+                #   ttutils.clip_prepare_title() )
                 orig_name = orig_video_obj.file_name
                 if orig_name is None \
                 and orig_video_obj.dummy_flag \
@@ -7715,7 +7715,7 @@ class ClipDownloader(object):
                     os.path.join(dest_dir, mod_title + extension),
                 )
 
-                utils.rename_file(app_obj, old_path, new_path)
+                ttutils.rename_file(app_obj, old_path, new_path)
 
                 if os.path.isfile(new_path):
                     self.confirm_video_clip(
@@ -7751,7 +7751,7 @@ class ClipDownloader(object):
             # Open the destination directory, if required to do so
             if dest_dir is not None \
             and app_obj.split_video_auto_open_flag:
-                utils.open_file(app_obj, dest_dir)
+                ttutils.open_file(app_obj, dest_dir)
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main
@@ -7795,7 +7795,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 7671 do_download_clips_with_ffmpeg')
+            ttutils.debug_time('dld 7671 do_download_clips_with_ffmpeg')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -7816,10 +7816,10 @@ class ClipDownloader(object):
             #   clip is used. If there are no more clips, then this clip will
             #   end at the end of the video
             start_stamp, stop_stamp, clip_title \
-            = utils.clip_extract_data(stamp_list, i)
+            = ttutils.clip_extract_data(stamp_list, i)
 
             # Set a (hopefully unique) clip title
-            clip_title = utils.clip_prepare_title(
+            clip_title = ttutils.clip_prepare_title(
                 app_obj,
                 orig_video_obj,
                 self.clip_title_dict,
@@ -7837,7 +7837,7 @@ class ClipDownloader(object):
             else:
                 divert_mode = None
 
-            cmd_list = utils.generate_ffmpeg_split_system_cmd(
+            cmd_list = ttutils.generate_ffmpeg_split_system_cmd(
                 app_obj,
                 orig_video_obj,
                 self.download_worker_obj.options_list.copy(),
@@ -7851,7 +7851,7 @@ class ClipDownloader(object):
             )
 
             # ...display it in the Output tab (if required)...
-            display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
+            display_cmd = ttutils.prepare_system_cmd_for_display(cmd_list)
             if app_obj.ytdl_output_system_cmd_flag:
                 app_obj.main_win_obj.output_tab_write_system_cmd(
                     self.download_worker_obj.worker_id,
@@ -7977,7 +7977,7 @@ class ClipDownloader(object):
             # Open the destination directory, if required to do so
             if dest_dir is not None \
             and app_obj.split_video_auto_open_flag:
-                utils.open_file(app_obj, dest_dir)
+                ttutils.open_file(app_obj, dest_dir)
 
         # Pass a dictionary of values to downloads.DownloadWorker, confirming
         #   the result of the job. The values are passed on to the main
@@ -8009,7 +8009,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 7885 do_download_remove_slices')
+            ttutils.debug_time('dld 7885 do_download_remove_slices')
 
         # Import the main application and video object (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -8035,7 +8035,7 @@ class ClipDownloader(object):
 
             if app_obj.sblock_re_extract_flag \
             and not orig_video_obj.slice_list:
-                utils.fetch_slice_data(
+                ttutils.fetch_slice_data(
                     app_obj,
                     orig_video_obj,
                     self.download_worker_obj.worker_id,
@@ -8081,7 +8081,7 @@ class ClipDownloader(object):
         # ...where 'start_time' and 'stop_time' are floating-point values in
         #   seconds. 'stop_time' can be None to signify the end of the video,
         #   but 'start_time' is 0 to signify the start of the video
-        clip_list = utils.convert_slices_to_clips(
+        clip_list = ttutils.convert_slices_to_clips(
             app_obj,
             self.download_manager_obj.custom_dl_obj,
             slice_list,
@@ -8109,7 +8109,7 @@ class ClipDownloader(object):
             else:
                 divert_mode = None
 
-            cmd_list = utils.generate_slice_system_cmd(
+            cmd_list = ttutils.generate_slice_system_cmd(
                 app_obj,
                 orig_video_obj,
                 self.download_worker_obj.options_list.copy(),
@@ -8123,7 +8123,7 @@ class ClipDownloader(object):
             )
 
             # ...display it in the Output tab (if required)...
-            display_cmd = utils.prepare_system_cmd_for_display(cmd_list)
+            display_cmd = ttutils.prepare_system_cmd_for_display(cmd_list)
             if app_obj.ytdl_output_system_cmd_flag:
                 app_obj.main_win_obj.output_tab_write_system_cmd(
                     self.download_worker_obj.worker_id,
@@ -8398,7 +8398,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8274 close')
+            ttutils.debug_time('dld 8274 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -8431,7 +8431,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8307 confirm_video_clip')
+            ttutils.debug_time('dld 8307 confirm_video_clip')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -8448,7 +8448,7 @@ class ClipDownloader(object):
             # Add the clip to Tartube's database
             if self.dl_type == 'ffmpeg':
 
-                clip_video_obj = utils.clip_add_to_db(
+                clip_video_obj = ttutils.clip_add_to_db(
                     app_obj,
                     dest_obj,
                     orig_video_obj,
@@ -8458,7 +8458,7 @@ class ClipDownloader(object):
 
             elif self.dl_type == 'chapters' or self.dl_type == 'downloader':
 
-                clip_video_obj = utils.clip_add_to_db(
+                clip_video_obj = ttutils.clip_add_to_db(
                     app_obj,
                     dest_obj,
                     orig_video_obj,
@@ -8481,10 +8481,10 @@ class ClipDownloader(object):
         elif app_obj.split_video_copy_thumb_flag \
         and not self.thumb_copy_fail_flag:
 
-            # The call to utils.clip_add_to_db() copies the original thumbnail,
-            #   when required
+            # The call to ttutils.clip_add_to_db() copies the original
+            #   thumbnail, when required
             # Since we're not going to call that, copy the thumbnail here
-            thumb_path = utils.find_thumbnail(app_obj, orig_video_obj)
+            thumb_path = ttutils.find_thumbnail(app_obj, orig_video_obj)
             if thumb_path is not None:
 
                 _, thumb_ext = os.path.splitext(thumb_path)
@@ -8535,7 +8535,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8409 confirm_video_remove_slices')
+            ttutils.debug_time('dld 8409 confirm_video_remove_slices')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -8571,7 +8571,7 @@ class ClipDownloader(object):
                 app_obj.announce_video_download,
                 self.download_item_obj,
                 orig_video_obj,
-                # No call to utils.compile_mini_options_dict(), because this
+                # No call to ttutils.compile_mini_options_dict(), because this
                 #   function deals with download options like
                 #   'move_description' by itself
                 {},
@@ -8599,7 +8599,7 @@ class ClipDownloader(object):
     def create_child_process(self, cmd_list):
 
         """Called by self.do_download_clips() shortly after the call to
-        utils.generate_ffmpeg_split_system_cmd(), etc.
+        ttutils.generate_ffmpeg_split_system_cmd(), etc.
 
         Based on YoutubeDLDownloader._create_process().
 
@@ -8615,13 +8615,13 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8489 create_child_process')
+            ttutils.debug_time('dld 8489 create_child_process')
 
         # Strip double quotes from arguments
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -8670,7 +8670,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8544 create_temp_dir_for_chapters')
+            ttutils.debug_time('dld 8544 create_temp_dir_for_chapters')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -8722,7 +8722,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8596 create_temp_dir_for_slices')
+            ttutils.debug_time('dld 8596 create_temp_dir_for_slices')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -8774,7 +8774,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8648 extract_stdout_data')
+            ttutils.debug_time('dld 8648 extract_stdout_data')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -8830,7 +8830,7 @@ class ClipDownloader(object):
             )
             if match:
 
-                _, name, _ = utils.extract_path_components(match.group(1))
+                _, name, _ = ttutils.extract_path_components(match.group(1))
 
                 self.confirm_video_clip(
                     self.chapter_dest_obj,
@@ -8870,7 +8870,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8744 is_child_process_alive')
+            ttutils.debug_time('dld 8744 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -8900,7 +8900,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8774 is_network_error')
+            ttutils.debug_time('dld 8774 is_network_error')
 
         # v2.3.012, this error is seen on MS Windows:
         #   unable to download video data: <urlopen error [WinError 10060] A
@@ -8934,7 +8934,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8808 last_data_callback')
+            ttutils.debug_time('dld 8808 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -8988,7 +8988,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 8862 move_metadata_files')
+            ttutils.debug_time('dld 8862 move_metadata_files')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -9029,7 +9029,7 @@ class ClipDownloader(object):
                     #   required, first creating that sub-directory if it
                     #   doesn't exist
                     if options_obj.options_dict['move_description']:
-                        utils.move_metadata_to_subdir(
+                        ttutils.move_metadata_to_subdir(
                             app_obj,
                             orig_video_obj,
                             '.description',
@@ -9067,7 +9067,7 @@ class ClipDownloader(object):
                     app_obj.move_file_or_directory(json_path, moved_path)
 
                     if options_obj.options_dict['move_info']:
-                        utils.move_metadata_to_subdir(
+                        ttutils.move_metadata_to_subdir(
                             app_obj,
                             orig_video_obj,
                             '.info.json',
@@ -9107,7 +9107,7 @@ class ClipDownloader(object):
 #                   app_obj.move_file_or_directory(xml_path, moved_path)
 #
 #                   if options_obj.options_dict['move_annotations']:
-#                       utils.move_metadata_to_subdir(
+#                       ttutils.move_metadata_to_subdir(
 #                           app_obj,
 #                           orig_video_obj,
 #                           '.annotations.xml',
@@ -9116,7 +9116,7 @@ class ClipDownloader(object):
         # Handle the thumbnail
         if options_obj.options_dict['keep_thumbnail']:
 
-            thumb_path = utils.find_thumbnail_from_filename(
+            thumb_path = ttutils.find_thumbnail_from_filename(
                 app_obj,
                 temp_dir,
                 'clip_1',
@@ -9137,7 +9137,8 @@ class ClipDownloader(object):
                     app_obj.move_file_or_directory(thumb_path, moved_path)
 
                     # Convert .webp thumbnails to .jpg, if required
-                    convert_path = utils.find_thumbnail_webp_intact_or_broken(
+                    convert_path \
+                    = ttutils.find_thumbnail_webp_intact_or_broken(
                         app_obj,
                         orig_video_obj,
                     )
@@ -9157,7 +9158,7 @@ class ClipDownloader(object):
 
                     # Move to the sub-directory, if required
                     if options_obj.options_dict['move_thumbnail']:
-                        utils.move_thumbnail_to_subdir(
+                        ttutils.move_thumbnail_to_subdir(
                             app_obj,
                             orig_video_obj,
                         )
@@ -9178,7 +9179,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9052 read_child_process')
+            ttutils.debug_time('dld 9052 read_child_process')
 
         # mini_list is in the form [time, pipe_type, data]
         try:
@@ -9207,7 +9208,7 @@ class ClipDownloader(object):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -9235,7 +9236,7 @@ class ClipDownloader(object):
                 try:
                     print(
                         data.encode(
-                            utils.get_encoding(),
+                            ttutils.get_encoding(),
                             'replace',
                         ),
                     )
@@ -9277,7 +9278,7 @@ class ClipDownloader(object):
                 # Git #175, Japanese text may produce a codec error here,
                 #   despite the .decode() call above
                 try:
-                    print(data.encode(utils.get_encoding(), 'replace'))
+                    print(data.encode(ttutils.get_encoding(), 'replace'))
                 except:
                     print('STDERR text with unprintable characters')
 
@@ -9308,7 +9309,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9182 set_return_code')
+            ttutils.debug_time('dld 9182 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -9324,7 +9325,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9198 stop')
+            ttutils.debug_time('dld 9198 stop')
 
         if self.is_child_process_alive():
 
@@ -9354,7 +9355,7 @@ class ClipDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9228 stop_soon')
+            ttutils.debug_time('dld 9228 stop_soon')
 
         self.stop_soon_flag = True
 
@@ -9419,7 +9420,7 @@ class StreamDownloader(object):
     download_item_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9293 __init__')
+            ttutils.debug_time('dld 9293 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -9522,7 +9523,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9396 do_download')
+            ttutils.debug_time('dld 9396 do_download')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -9697,7 +9698,7 @@ class StreamDownloader(object):
                     app_obj.announce_video_download,
                     self.download_item_obj,
                     video_obj,
-                    utils.compile_mini_options_dict(
+                    ttutils.compile_mini_options_dict(
                         self.download_worker_obj.options_manager_obj,
                     ),
                 )
@@ -9728,7 +9729,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9602 do_download_basic')
+            ttutils.debug_time('dld 9602 do_download_basic')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -9737,7 +9738,7 @@ class StreamDownloader(object):
         options_obj = self.download_worker_obj.options_manager_obj
         if options_obj.options_dict['direct_cmd_flag']:
 
-            cmd_list = utils.generate_direct_system_cmd(
+            cmd_list = ttutils.generate_direct_system_cmd(
                 app_obj,
                 self.download_item_obj.media_data_obj,
                 options_obj,
@@ -9745,7 +9746,7 @@ class StreamDownloader(object):
 
         else:
 
-            cmd_list = utils.generate_ytdl_system_cmd(
+            cmd_list = ttutils.generate_ytdl_system_cmd(
                 app_obj,
                 self.download_item_obj.media_data_obj,
                 self.download_worker_obj.options_list,
@@ -9754,7 +9755,7 @@ class StreamDownloader(object):
         # Display the (modified) command in the Output tab and/or terminal (if
         #   required)...
         if app_obj.ytdl_output_system_cmd_flag:
-            self.show_cmd(utils.prepare_system_cmd_for_display(cmd_list))
+            self.show_cmd(ttutils.prepare_system_cmd_for_display(cmd_list))
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
@@ -9830,19 +9831,19 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9704 do_download_m3u')
+            ttutils.debug_time('dld 9704 do_download_m3u')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
         # Prepare a system command to fetch the .m3u manifest...
-        cmd_list = utils.generate_m3u_system_cmd(
+        cmd_list = ttutils.generate_m3u_system_cmd(
             app_obj,
             self.download_item_obj.media_data_obj,
         )
 
         # ...and display it in the Output tab and/or terminal, if required
-        self.show_cmd(utils.prepare_system_cmd_for_display(cmd_list))
+        self.show_cmd(ttutils.prepare_system_cmd_for_display(cmd_list))
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
@@ -9942,7 +9943,7 @@ class StreamDownloader(object):
                     self.segment_count += 1
 
                     # (Convert to, e.g. '27.5 MiB')
-                    converted_size = utils.convert_bytes_to_string(
+                    converted_size = ttutils.convert_bytes_to_string(
                         current_size,
                     )
 
@@ -9975,20 +9976,20 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9849 do_download_streamlink')
+            ttutils.debug_time('dld 9849 do_download_streamlink')
 
         # Import the main application (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
         # Prepare a system command to download the livestream...
-        cmd_list = utils.generate_streamlink_system_cmd(
+        cmd_list = ttutils.generate_streamlink_system_cmd(
             app_obj,
             self.download_item_obj.media_data_obj,
             self.expect_output_path,
         )
 
         # ...and display it in the Output tab and/or terminal, if required
-        self.show_cmd(utils.prepare_system_cmd_for_display(cmd_list))
+        self.show_cmd(ttutils.prepare_system_cmd_for_display(cmd_list))
 
         # Create a new child process using that command...
         self.create_child_process(cmd_list)
@@ -10025,7 +10026,7 @@ class StreamDownloader(object):
                     self.segment_count += 1
 
                     # (Convert to, e.g. '27.5 MiB')
-                    converted_size = utils.convert_bytes_to_string(
+                    converted_size = ttutils.convert_bytes_to_string(
                         current_size,
                     )
 
@@ -10069,7 +10070,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9943 choose_path')
+            ttutils.debug_time('dld 9943 choose_path')
 
         video_obj = self.download_item_obj.media_data_obj
         if not video_obj.dummy_flag:
@@ -10081,7 +10082,7 @@ class StreamDownloader(object):
             file_ext = None
             if video_obj.dummy_format is not None:
                 convert_flag, file_ext, resolution \
-                = utils.extract_dummy_format(video_obj.dummy_format)
+                = ttutils.extract_dummy_format(video_obj.dummy_format)
 
             if file_ext is None:
                 file_ext = 'mp4'
@@ -10109,7 +10110,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 9982 close')
+            ttutils.debug_time('dld 9982 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -10137,13 +10138,13 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10010 create_child_process')
+            ttutils.debug_time('dld 10010 create_child_process')
 
         # Strip double quotes from arguments
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -10189,7 +10190,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10062 download_data_callback')
+            ttutils.debug_time('dld 10062 download_data_callback')
 
         if self.segment_count == 0:
             percent = '?'
@@ -10228,7 +10229,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10101 is_child_process_alive')
+            ttutils.debug_time('dld 10101 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -10254,7 +10255,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10127 last_data_callback')
+            ttutils.debug_time('dld 10127 last_data_callback')
 
         dl_stat_dict = {}
 
@@ -10296,7 +10297,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10169 read_child_process')
+            ttutils.debug_time('dld 10169 read_child_process')
 
         # mini_list is in the form [time, pipe_type, data]
         try:
@@ -10325,7 +10326,7 @@ class StreamDownloader(object):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -10408,7 +10409,7 @@ class StreamDownloader(object):
         #   any empty error messages)
         elif data != '' and self.dl_mode != 'streamlink':
 
-            mod_data = utils.stream_output_is_ignorable(data)
+            mod_data = ttutils.stream_output_is_ignorable(data)
             if mod_data is not None:
 
                 # Treat this as if it were a STDOUT message
@@ -10469,7 +10470,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10342 reset')
+            ttutils.debug_time('dld 10342 reset')
 
         if self.child_process:
 
@@ -10500,10 +10501,10 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10373 set_actual_output_path')
+            ttutils.debug_time('dld 10373 set_actual_output_path')
 
         # Update IVs
-        directory, filename, ext = utils.extract_path_components(output_path)
+        directory, filename, ext = ttutils.extract_path_components(output_path)
 
         self.actual_output_path = output_path
         self.actual_output_dir = directory
@@ -10529,7 +10530,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10402 set_error')
+            ttutils.debug_time('dld 10402 set_error')
 
         if not self.first_error_flag:
 
@@ -10560,7 +10561,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10433 set_return_code')
+            ttutils.debug_time('dld 10433 set_return_code')
 
         if code >= self.return_code:
             self.return_code = code
@@ -10580,7 +10581,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10453 show_cmd')
+            ttutils.debug_time('dld 10453 show_cmd')
 
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -10617,7 +10618,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10490 show_msg')
+            ttutils.debug_time('dld 10490 show_msg')
 
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -10635,7 +10636,7 @@ class StreamDownloader(object):
             #   despite the .decode() call above
             try:
                 print(
-                    msg.encode(utils.get_encoding(), 'replace'),
+                    msg.encode(ttutils.get_encoding(), 'replace'),
                 )
             except:
                 print('Message echoed in STDOUT with unprintable characters')
@@ -10659,7 +10660,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10532 show_error')
+            ttutils.debug_time('dld 10532 show_error')
 
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
@@ -10677,7 +10678,7 @@ class StreamDownloader(object):
             #   despite the .decode() call above
             try:
                 print(
-                    msg.encode(utils.get_encoding(), 'replace'),
+                    msg.encode(ttutils.get_encoding(), 'replace'),
                 )
             except:
                 print('Message echoed in STDERR with unprintable characters')
@@ -10696,7 +10697,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10569 stop')
+            ttutils.debug_time('dld 10569 stop')
 
         if self.is_child_process_alive():
 
@@ -10726,7 +10727,7 @@ class StreamDownloader(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10599 stop_soon')
+            ttutils.debug_time('dld 10599 stop_soon')
 
         pass
 
@@ -10795,7 +10796,7 @@ class JSONFetcher(object):
     container_obj, entry_dict):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10668 __init__')
+            ttutils.debug_time('dld 10668 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -10887,13 +10888,13 @@ class JSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10760 do_fetch')
+            ttutils.debug_time('dld 10760 do_fetch')
 
         # Import the main app (for convenience)
         app_obj = self.download_manager_obj.app_obj
 
         # Convert a youtube-dl path beginning with ~ (not on MS Windows)
-        #   (code copied from utils.generate_ytdl_system_cmd() )
+        #   (code copied from ttutils.generate_ytdl_system_cmd() )
         ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
         if os.name != 'nt':
             ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
@@ -10943,7 +10944,7 @@ class JSONFetcher(object):
 
                 options_obj = self.download_worker_obj.options_manager_obj
                 if not options_obj.options_dict['sim_keep_thumbnail']:
-                    local_thumb_path = utils.convert_path_to_temp_dl_dir(
+                    local_thumb_path = ttutils.convert_path_to_temp_dl_dir(
                         app_obj,
                         local_thumb_path,
                     )
@@ -10994,7 +10995,7 @@ class JSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10876 close')
+            ttutils.debug_time('dld 10876 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -11021,13 +11022,13 @@ class JSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10894 create_child_process')
+            ttutils.debug_time('dld 10894 create_child_process')
 
         # Strip double quotes from arguments
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -11074,7 +11075,7 @@ class JSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10947 is_child_process_alive')
+            ttutils.debug_time('dld 10947 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -11099,7 +11100,7 @@ class JSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 10972 read_child_process')
+            ttutils.debug_time('dld 10972 read_child_process')
 
         # mini_list is in the form [time, pipe_type, data]
         try:
@@ -11127,7 +11128,7 @@ class JSONFetcher(object):
         # STDOUT or STDERR has been read
         data = mini_list[2].rstrip()
         # Convert bytes to string
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -11150,7 +11151,7 @@ class JSONFetcher(object):
         # STDERR (ignoring any empty error messages)
         elif data != '':
 
-            live_data_dict = utils.extract_livestream_data(data)
+            live_data_dict = ttutils.extract_livestream_data(data)
             if live_data_dict:
 
                 # Waiting livestream detected; create a new media.Video object
@@ -11179,7 +11180,7 @@ class JSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11052 stop')
+            ttutils.debug_time('dld 11052 stop')
 
         if self.is_child_process_alive():
 
@@ -11221,7 +11222,7 @@ class StreamManager(threading.Thread):
     def __init__(self, app_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11094 __init__')
+            ttutils.debug_time('dld 11094 __init__')
 
         super(StreamManager, self).__init__()
 
@@ -11266,7 +11267,7 @@ class StreamManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11139 run')
+            ttutils.debug_time('dld 11139 run')
 
         # Generate a local list of media.Video objects marked as livestreams
         #   (in case the mainapp.TartubeApp IV changes during the course of
@@ -11315,7 +11316,7 @@ class StreamManager(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11185 stop_livestream_operation')
+            ttutils.debug_time('dld 11185 stop_livestream_operation')
 
         self.running_flag = False
 
@@ -11367,7 +11368,7 @@ class MiniJSONFetcher(object):
     def __init__(self, livestream_manager_obj, video_obj):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11234 __init__')
+            ttutils.debug_time('dld 11234 __init__')
 
         # IV list - class objects
         # -----------------------
@@ -11412,13 +11413,13 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11279 do_fetch')
+            ttutils.debug_time('dld 11279 do_fetch')
 
         # Import the main app (for convenience)
         app_obj = self.livestream_manager_obj.app_obj
 
         # Convert a youtube-dl path beginning with ~ (not on MS Windows)
-        #   (code copied from utils.generate_ytdl_system_cmd() )
+        #   (code copied from ttutils.generate_ytdl_system_cmd() )
         ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
         if os.name != 'nt':
             ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
@@ -11459,7 +11460,7 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11326 close')
+            ttutils.debug_time('dld 11326 close')
 
         # Tell the PipeReader objects to shut down, thus joining their threads
         self.stdout_reader.join()
@@ -11486,13 +11487,13 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11353 create_child_process')
+            ttutils.debug_time('dld 11353 create_child_process')
 
         # Strip double quotes from arguments
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -11539,7 +11540,7 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11406 is_child_process_alive')
+            ttutils.debug_time('dld 11406 is_child_process_alive')
 
         if self.child_process is None:
             return False
@@ -11568,7 +11569,7 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11435 parse_json')
+            ttutils.debug_time('dld 11435 parse_json')
 
         # (Try/except to check for invalid JSON)
         try:
@@ -11599,7 +11600,7 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11466 read_child_process')
+            ttutils.debug_time('dld 11466 read_child_process')
 
         # mini_list is in the form [time, pipe_type, data]
         try:
@@ -11627,7 +11628,7 @@ class MiniJSONFetcher(object):
         # STDOUT or STDERR has been read
         data = mini_list[2].rstrip()
         # Convert bytes to string
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -11686,7 +11687,7 @@ class MiniJSONFetcher(object):
             #   new error message for livestreams waiting to start)
             if self.video_obj.live_mode == 1:
 
-                live_data_dict = utils.extract_livestream_data(data)
+                live_data_dict = ttutils.extract_livestream_data(data)
                 if live_data_dict:
                     self.video_obj.set_live_data(live_data_dict)
 
@@ -11710,7 +11711,7 @@ class MiniJSONFetcher(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11577 stop')
+            ttutils.debug_time('dld 11577 stop')
 
         if self.is_child_process_alive():
 
@@ -11752,7 +11753,7 @@ class CustomDLManager(object):
     def __init__(self, uid, name):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11619 __init__')
+            ttutils.debug_time('dld 11619 __init__')
 
         # IV list - other
         # ---------------
@@ -11875,7 +11876,7 @@ class CustomDLManager(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11742 clone_settings')
+            ttutils.debug_time('dld 11742 clone_settings')
 
         self.dl_by_video_flag = other_obj.dl_by_video_flag
         self.dl_if_subs_flag = other_obj.dl_if_subs_flag
@@ -11899,7 +11900,7 @@ class CustomDLManager(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11766 reset_settings')
+            ttutils.debug_time('dld 11766 reset_settings')
 
         self.dl_by_video_flag = False
         self.dl_if_subs_flag = False
@@ -11937,7 +11938,7 @@ class CustomDLManager(object):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11804 set_dl_precede_flag')
+            ttutils.debug_time('dld 11804 set_dl_precede_flag')
 
         if not flag:
             self.dl_precede_flag = False
@@ -11981,7 +11982,7 @@ class PipeReader(threading.Thread):
     def __init__(self, queue, pipe_type):
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11848 __init__')
+            ttutils.debug_time('dld 11848 __init__')
 
         super(PipeReader, self).__init__()
 
@@ -12023,7 +12024,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11890 run')
+            ttutils.debug_time('dld 11890 run')
 
         # Use this flag so that the loop can ignore FFmpeg error messsages
         #   (because the parent VideoDownloader object shouldn't use that as a
@@ -12078,7 +12079,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11945 attach_fh')
+            ttutils.debug_time('dld 11945 attach_fh')
 
         self.fh = fh
 
@@ -12097,7 +12098,7 @@ class PipeReader(threading.Thread):
         """
 
         if DEBUG_FUNC_FLAG:
-            utils.debug_time('dld 11964 join')
+            ttutils.debug_time('dld 11964 join')
 
         self.running_flag = False
         super(PipeReader, self).join(timeout)

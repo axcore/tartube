@@ -42,7 +42,7 @@ class ModTextWrapper(textwrap.TextWrapper):
 
     If 'break_on_hyphens' is specified, wrap the text on both hyphens and
     forward slashes. In that way, we can break up long URLs in calls to
-    utils.tidy_up_long_descrip() and utils.tidy_up_long_string().
+    ttutils.tidy_up_long_descrip() and ttutils.tidy_up_long_string().
 
     v2.3.606: Modified the '_whitespace' field to allow wrapping after an
     underline.

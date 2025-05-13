@@ -134,7 +134,7 @@ mark_end=None, drag_drop_text=None):
     """Called by mainwin.AddVideoDialogue.__init__(),
     .on_window_drag_data_received() and .clipboard_timer_callback().
 
-    Also called by utils.add_links_to_textview_from_clipboard().
+    Also called by ttutils.add_links_to_textview_from_clipboard().
 
     Function to add valid URLs from the clipboard to a Gtk.TextView, ignoring
     anything that is not a valid URL, and ignoring duplicate URLs.
@@ -715,9 +715,9 @@ def clip_prepare_chapter_output_template(app_obj, video_obj, dest_dir):
 
     """Called by downloads.ClipDownloader.do_download_clips_with_chapters().
 
-    A slimmed-down version of utils.clip_prepare_title(), used when downloading
-    all clips from a video at the same time (in which case, each clip is named
-    using a youtube-dl output template).
+    A slimmed-down version of ttutils.clip_prepare_title(), used when
+    downloading all clips from a video at the same time (in which case, each
+    clip is named using a youtube-dl output template).
 
     Args:
 
@@ -730,7 +730,7 @@ def clip_prepare_chapter_output_template(app_obj, video_obj, dest_dir):
     Return values:
 
         The output template (including a full file path, unlike the return
-            value of utils.clip_prepare_title() )
+            value of ttutils.clip_prepare_title() )
 
     """
 
@@ -1343,17 +1343,17 @@ def convert_string_to_bytes(text):
 
     """Can be called by anything.
 
-    The opposite of utils.convert_bytes_to_string(), converting a stringified
+    The opposite of ttutils.convert_bytes_to_string(), converting a stringified
     value (e.g. '25.2KiB/s' or '25.2 KiB/s') into a value in bytes.
 
     Because of rounding errors (e.g. the value above has been rounded to 1
     decimal place), the value in bytes will only approximate the
-    original argument passed to utils.convert_bytes_to_string().
+    original argument passed to ttutils.convert_bytes_to_string().
 
     Args:
 
         text (str): The text to convert, the output of
-            utils.convert_bytes_to_string()
+            ttutils.convert_bytes_to_string()
 
     Return values:
 
@@ -1758,7 +1758,7 @@ def extract_enhanced_template_components(enhanced_name, url):
 
     """Can be called by anything.
 
-    Typically called by utils.convert_enhanced_template_from_url().
+    Typically called by ttutils.convert_enhanced_template_from_url().
 
     formats.ENHANCED_SITE_DICT provides a set of regexes which can be used to
     extract video/channel/playlist names and IDs from a recognised URL.
@@ -2543,7 +2543,7 @@ def find_thumbnail_from_filename(app_obj, dir_path, filename):
 
     """Can be called by anything.
 
-    A modified version of utils.find_thumbnail(), used when there is no
+    A modified version of ttutils.find_thumbnail(), used when there is no
     media.Video object, but instead the directory and filename for a video
     (and its thumbnail).
 
@@ -2583,7 +2583,7 @@ def find_thumbnail_restricted(app_obj, video_obj):
 
     """Called by mainapp.TartubeApp.update_video_when_file_found().
 
-    Modified version of utils.find_thumbnail().
+    Modified version of ttutils.find_thumbnail().
 
     Returns the path of the thumbnail in the same directory as its video. The
     path is returned as a list, so the calling code can convert it into the
@@ -2627,7 +2627,7 @@ def find_thumbnail_webp_intact_or_broken(app_obj, video_obj):
     In June 2020, YouTube started serving .webp thumbnails. Gtk cannot display
     them, so Tartube typically converts themto .jpg.
 
-    This is a modified version of utils.find_thumbnail(), which looks for
+    This is a modified version of ttutils.find_thumbnail(), which looks for
     thumbnails in the .webp or malformed .jpg format, and return the path to
     the thumbnail file if one is found.
 
@@ -2693,7 +2693,7 @@ def find_thumbnail_webp_strict(app_obj, video_obj):
 
     """Can be called by anything.
 
-    A modified version of utils.find_thumbnail_webp_intact_or_broken(), to be
+    A modified version of ttutils.find_thumbnail_webp_intact_or_broken(), to be
     called by any code which wants a path to a .webp thumbnail, not caring
     whether it is a valid .webp image or not.
 
@@ -2906,7 +2906,7 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
 
     """Called by downloads.VideoDownloader.do_download() (only).
 
-    A simplified version of utils.generate_ytdl_system_cmd().
+    A simplified version of ttutils.generate_ytdl_system_cmd().
 
     Prepare the system command that instructs youtube-dl to download the
     specified media data object, when the options.OptionsManager object wants
@@ -2967,7 +2967,7 @@ classic_flag):
 
     """Called by downloads.ClipDownloader.do_download_remove_slices() (only).
 
-    A modified version of utils.generate_ffmpeg_split_system_cmd().
+    A modified version of ttutils.generate_ffmpeg_split_system_cmd().
 
     Prepares the system command that instructs youtube-dl to download a video
     clip (instead of downloading the whole video). The downloaded clips are
@@ -3013,7 +3013,7 @@ classic_flag):
     # Filter out download options that get in the way. A list of them is
     #   specified in mainapp.TartubeApp.split_ignore_option_dict
     # Unlike the corresponding code in
-    #   utils.generate_ffmpeg_split_system_cmd() (etc), we do write the
+    #   ttutils.generate_ffmpeg_split_system_cmd() (etc), we do write the
     #   metadata files (if required), but only for the first clip
     # Exception: if the parent container's .dl_no_db_flag is set, don't write
     #   the metadata files at all
@@ -3144,7 +3144,7 @@ dest_dir, temp_dir, output_template, custom_dl_obj, divert_mode, classic_flag):
     """Called by downloads.ClipDownloader.do_download_clips_with_chapters()
     (only).
 
-    A simplified version of utils.generate_ytdl_system_cmd().
+    A simplified version of ttutils.generate_ytdl_system_cmd().
 
     Prepares the system command that instructs yt-dlp to download chapters as
     video clips (instead of downloading the whole video).
@@ -3273,7 +3273,7 @@ dest_dir, temp_dir, stamp_list, custom_dl_obj, divert_mode, classic_flag):
     """Called by downloads.ClipDownloader.do_download_clips_with_downloader()
     (only).
 
-    A simplified version of utils.generate_ytdl_system_cmd().
+    A simplified version of ttutils.generate_ytdl_system_cmd().
 
     Prepares the system command that instructs yt-dlp to download sections as
     video clips (instead of downloading the whole video).
@@ -3422,7 +3422,7 @@ classic_flag):
     """Called by downloads.ClipDownloader.do_download_clips_with_ffmpeg()
     (only).
 
-    A simplified version of utils.generate_ytdl_system_cmd().
+    A simplified version of ttutils.generate_ytdl_system_cmd().
 
     Prepares the system command that instructs youtube-dl to download a video
     clip (instead of downloading the whole video).
@@ -3675,7 +3675,7 @@ def generate_streamlink_system_cmd(app_obj, media_data_obj, path):
 
 def get_encoding():
 
-    """Called by utils.convert_item().
+    """Called by ttutils.convert_item().
 
     Based on the get_encoding() function in youtube-dl-gui.
 
@@ -3889,7 +3889,7 @@ def match_subs(custom_dl_obj, subs_list):
 
 def move_files_to_temp_redo_dir(app_obj, video_obj, path_list):
 
-    """Modified version of utils.convert_path_to_temp_dl_dir(), called by
+    """Modified version of ttutils.convert_path_to_temp_dl_dir(), called by
     mainapp.TartubeApp.move_video_files_before_redownload().
 
     Moves a list of files associated with a media.Video (including the media
@@ -4117,8 +4117,8 @@ def prepare_system_cmd_for_display(cmd_list):
     """Can be called by anything.
 
     Adapts a system command (for example, the output of a call to
-    utils.generate_ytdl_system_cmd() ) for display, typically in the Output tab
-    or terminal window.
+    ttutils.generate_ytdl_system_cmd() ) for display, typically in the Output
+    tab or terminal window.
 
     The command is expressed as a list of items, the first of which is the
     binary (e.g. 'yt-dlp'), and the rest of which are switches and their
@@ -4394,7 +4394,7 @@ def strip_whitespace_multiline(string):
 
     """Can be called by anything.
 
-    An extended version of utils.strip_whitespace().
+    An extended version of ttutils.strip_whitespace().
 
     Divides a string into lines, removes empty lines, removes any leading/
     trailing whitespace from each line, then combines the lines back into a
@@ -4493,7 +4493,7 @@ def tidy_up_long_descrip(string, max_length=80):
 
     """Can be called by anything.
 
-    A modified version of utils.tidy_up_long_string. In this case, the
+    A modified version of ttutils.tidy_up_long_string(). In this case, the
     specified string can contain any number of newline characters. We begin
     by splitting that string into a list of lines.
 
@@ -4835,9 +4835,9 @@ def timestamp_quick_format(app_obj, hours, minutes, seconds,
 
     """Can be called by anything.
 
-    A shorter version of utils.timestamp_format(), used when the hours, minutes
-    and seconds components have already been extracted. (It would be wasteful
-    to use the same regex to extract them again).
+    A shorter version of ttutils.timestamp_format(), used when the hours,
+    minutes and seconds components have already been extracted. (It would be
+    wasteful to use the same regex to extract them again).
 
     The original timestamp was in the form 'mm:ss' or 'h:mm:ss'. Leading zeroes
     are optional for all components, and the 'h' component can contain any

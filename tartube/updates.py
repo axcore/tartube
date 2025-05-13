@@ -40,7 +40,7 @@ import time
 
 # Import our modules
 import downloads
-import utils
+import ttutils
 # Use same gettext translations
 from mainapp import _
 
@@ -178,7 +178,7 @@ class UpdateManager(threading.Thread):
         # (Since we're sending the system command one argument at a time, we
         #   don't need to retain the double quotes around any single argument
         #   and, in fact, doing so would cause an error)
-        cmd_list = utils.strip_double_quotes(cmd_list)
+        cmd_list = ttutils.strip_double_quotes(cmd_list)
 
         # Create the child process
         info = preexec = None
@@ -900,7 +900,7 @@ class UpdateManager(threading.Thread):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -964,7 +964,7 @@ class UpdateManager(threading.Thread):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -1028,7 +1028,7 @@ class UpdateManager(threading.Thread):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
@@ -1096,7 +1096,7 @@ class UpdateManager(threading.Thread):
         data = mini_list[2].rstrip()
         # On MS Windows we use cp1252, so that Tartube can communicate with the
         #   Windows console
-        data = data.decode(utils.get_encoding(), 'replace')
+        data = data.decode(ttutils.get_encoding(), 'replace')
 
         # STDOUT
         if mini_list[1] == 'stdout':
