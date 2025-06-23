@@ -46,7 +46,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Stable release: **v2.5.100 (2 Feb 2025)**
 
-Development release: **v2.5.113 (13 May 2025)**
+Development release: **v2.5.120 (23 Jun 2025)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -257,7 +257,7 @@ With thanks to JeremyShih:
 5.2.3 Troubleshooting on MacOS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you can't start Tartube from a terminal window (the final step in the procedures above), try these commands (with thanks to inkhalistan):
+If you can't start **Tartube** from a terminal window (the final step in the procedures above), try these commands (with thanks to inkhalistan):
 
         **echo "export PATH="python3 -m site --user-base/bin:$PATH"" >> ~/.zprofile**
 
@@ -288,6 +288,14 @@ If that does not work, try the following procedure.
 - Add that location to the PYTHONPATH variable, for example by adding this line to your **~/.zshrc** file
 
         **export PYTHONPATH=/opt/homebrew/lib/python3.9/site-packages:$PYTHONPATH**
+
+You may need to tell **Tartube**, where to find **FFmpeg**. Once you have finished the setup process, do this:
+
+- Click **Edit > System preferences...**
+- If the **Show advanced preferences** button is visible, click it
+- Now click the **Downloaders > FFmpeg / AVConv** tab
+- Next to **Path to the FFmpeg executable**, click the **Set** button
+- Select the FFmpeg executable. Some MacOS users report that the correct path is **/opt/homebrew/bin/ffmpeg**
 
 5.3 Installation - Linux/BSD
 ----------------------------
@@ -2109,6 +2117,7 @@ On MS Windows, this is how to run **Tartube** from inside a terminal window:
 - In Tartube's main menu, select **System > Show Tartube install folder**
 - After the folder window opens, shut down Tartube
 - In the folder window, click the **msys64** folder to open it
+- (For users of Tartube's portable edition, the corresponding folder is called **tartube**)
 - Open the terminal by double-clicking **mingw64.exe**
 - In this window, type these commands to start **Tartube** (paying attention to the *forward* slashes):
 

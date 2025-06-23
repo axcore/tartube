@@ -8379,6 +8379,7 @@ class OptionsEditWin(GenericEditWin):
             None,
             1, 3, 1, 1
         )
+        spinbutton.set_value(self.edit_obj.options_dict['min_sleep_interval'])
         # (Signal connect appears below)
         self.add_tooltip('--sleep-interval SECONDS', label3, spinbutton)
 
@@ -8445,12 +8446,12 @@ class OptionsEditWin(GenericEditWin):
             0, 9, 1, 1
         )
 
-        spinbutton = self.add_spinbutton(grid,
+        spinbutton3 = self.add_spinbutton(grid,
             0, None, 1,
             'sleep_requests',
             1, 9, 1, 1
         )
-        self.add_tooltip('--sleep-requests SECONDS', label, spinbutton)
+        self.add_tooltip('--sleep-requests SECONDS', label, spinbutton3)
 
         label2 = self.add_label(grid,
             _(
@@ -8460,12 +8461,12 @@ class OptionsEditWin(GenericEditWin):
             0, 10, 1, 1
         )
 
-        spinbutton2 = self.add_spinbutton(grid,
+        spinbutton4 = self.add_spinbutton(grid,
             0, None, 1,
             'sleep_subtitles',
             1, 10, 1, 1
         )
-        self.add_tooltip('--sleep-subtitles SECONDS', label2, spinbutton2)
+        self.add_tooltip('--sleep-subtitles SECONDS', label2, spinbutton4)
 
 
     # (Tab support functions - general)
