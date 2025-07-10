@@ -15109,6 +15109,15 @@ class MainWin(Gtk.ApplicationWindow):
         context = textview.get_style_context()
         context.add_provider(style_provider, 600)
 
+        # Create a monospace text tag, so that we can force a monospace font
+        #   when we need it (for example, when displaying a list of video
+        #   formats/subtitles)
+        buffer = textview.get_buffer()
+        tag_table = buffer.get_tag_table()
+        monospace_tag = Gtk.TextTag.new("monospace_tag")
+        monospace_tag.set_property("font", "Monospace 10")
+        tag_table.add(monospace_tag)
+
         # Reset css properties for the next Gtk.TextView created (for example,
         #   by AddVideoDialogue) so it uses default values, rather than the
         #   white text on black background used above
@@ -15177,7 +15186,8 @@ class MainWin(Gtk.ApplicationWindow):
         return style_provider
 
 
-    def output_tab_write_stdout(self, page_num, msg):
+    def output_tab_write_stdout(self, page_num, msg, \
+    force_monospace_flag=False):
 
         """Called by various functions in downloads.py, info.py, refresh.py,
         tidy.py and updates.py.
@@ -15192,7 +15202,12 @@ class MainWin(Gtk.ApplicationWindow):
                 displayed. Matches a key in self.output_textview_dict
 
             msg (str): The message to display. A newline character will be
-                added by self.output_tab_write().
+                added by self.output_tab_write()
+
+        Optional args:
+
+            force_monospace_flag (bool): If True, force the use of a monospace
+                font (just for this text)
 
         """
 
@@ -15205,10 +15220,12 @@ class MainWin(Gtk.ApplicationWindow):
             page_num,
             msg,
             'default',
+            force_monospace_flag,
         )
 
 
-    def output_tab_write_stderr(self, page_num, msg):
+    def output_tab_write_stderr(self, page_num, msg, \
+    force_monospace_flag=False):
 
         """Called by various functions in downloads.py and info.py.
 
@@ -15222,7 +15239,12 @@ class MainWin(Gtk.ApplicationWindow):
                 displayed. Matches a key in self.output_textview_dict
 
             msg (str): The message to display. A newline character will be
-                added by self.output_tab_write().
+                added by self.output_tab_write()
+
+        Optional args:
+
+            force_monospace_flag (bool): If True, force the use of a monospace
+                font (just for this text)
 
         """
 
@@ -15235,10 +15257,12 @@ class MainWin(Gtk.ApplicationWindow):
             page_num,
             msg,
             'error_warning',
+            force_monospace_flag,
         )
 
 
-    def output_tab_write_system_cmd(self, page_num, msg):
+    def output_tab_write_system_cmd(self, page_num, msg, \
+    force_monospace_flag=False):
 
         """Called by various functions in downloads.py, info.py and updates.py.
 
@@ -15252,7 +15276,12 @@ class MainWin(Gtk.ApplicationWindow):
                 displayed. Matches a key in self.output_textview_dict
 
             msg (str): The message to display. A newline character will be
-                added by self.output_tab_write().
+                added by self.output_tab_write()
+
+        Optional args:
+
+            force_monospace_flag (bool): If True, force the use of a monospace
+                font (just for this text)
 
         """
 
@@ -15265,10 +15294,12 @@ class MainWin(Gtk.ApplicationWindow):
             page_num,
             msg,
             'system_cmd',
+            force_monospace_flag,
         )
 
 
-    def output_tab_write(self, page_num, msg, msg_type):
+    def output_tab_write(self, page_num, msg, msg_type, \
+    force_monospace_flag=False):
 
         """Called by self.output_tab_write_stdout(), .output_tab_write_stderr()
         and .output_tab_write_system_cmd().
@@ -15287,6 +15318,11 @@ class MainWin(Gtk.ApplicationWindow):
                 added by this function
 
             msg_type (str): 'default', 'error_warning' or 'system_cmd'
+
+        Optional args:
+
+            force_monospace_flag (bool): If True, force the use of a monospace
+                font (just for this text)
 
         """
 
@@ -15317,8 +15353,13 @@ class MainWin(Gtk.ApplicationWindow):
                 msg = re.sub('{', '(', msg)
                 msg = re.sub('}', ')', msg)
 
-                string = '<span color="{:s}">' \
-                + GObject.markup_escape_text(msg) + '</span>\n'
+                if not force_monospace_flag:
+                    string = '<span color="{:s}">' \
+                    + GObject.markup_escape_text(msg) + '</span>\n'
+
+                else:
+                    string = '<span font_family=\'monospace\' color="{:s}">' \
+                    + GObject.markup_escape_text(msg) + '</span>\n'
 
                 if msg_type == 'system_cmd':
 
@@ -15340,10 +15381,18 @@ class MainWin(Gtk.ApplicationWindow):
             else:
 
                 # STDOUT
-                textbuffer.insert(
-                    textbuffer.get_end_iter(),
-                    msg + '\n',
-                )
+                if not force_monospace_flag:
+                    textbuffer.insert(
+                        textbuffer.get_end_iter(),
+                        msg + '\n',
+                    )
+
+                else:
+                    textbuffer.insert_with_tags_by_name(
+                        textbuffer.get_end_iter(),
+                        msg + '\n',
+                        "monospace_tag",
+                    )
 
         # Make the new output visible, and scroll to the bottom of every
         #   updated page

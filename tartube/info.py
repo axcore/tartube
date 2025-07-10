@@ -143,11 +143,15 @@ class InfoManager(threading.Thread):
         #   string, if no download options are required. For 'formats' and
         #   'subs', set to None
         self.options_string = options_string
+
         # For 'version', the version numbers (e.g. 1.2.003) retrieved from the
         #   main website (representing a stable release), and from github
         #   (representing a development release)
         self.stable_version = None
         self.dev_version = None
+        # Flag set to True when a monospace font must be used in the Output tab
+        #   (set below)
+        self.force_monospace_flag = False
 
         # Flag set to True if the info operation succeeds, False if it fails
         self.success_flag = False
@@ -164,6 +168,13 @@ class InfoManager(threading.Thread):
 
         # Code
         # ----
+
+        # On MS Windows, must use monospace when display a list of video
+        #   formats/subtitles
+        # (On other operating systems, Tartube already uses a monospace font by
+        #   default)
+        if os.name == 'nt' and (info_type == 'formats' or info_type == 'subs'):
+            self.force_monospace_flag = True
 
         # Let's get this party started!
         self.start()
@@ -213,7 +224,11 @@ class InfoManager(threading.Thread):
                     + ' for \'{0}\'',
                 ).format(self.video_obj.name)
 
-        self.app_obj.main_win_obj.output_tab_write_stdout(1, msg)
+        self.app_obj.main_win_obj.output_tab_write_stdout(
+            1,
+            msg,
+            self.force_monospace_flag,
+        )
 
         # Convert a path beginning with ~ (not on MS Windows)
         ytdl_path = self.app_obj.check_downloader(self.app_obj.ytdl_path)
@@ -223,19 +238,23 @@ class InfoManager(threading.Thread):
         # Prepare the system command...
         if self.info_type == 'formats':
 
-            cmd_list = [
-                ytdl_path,
-                '--list-formats',
-                self.video_obj.source,
-            ]
+            options_obj = self.app_obj.general_options_obj
+            options_list = ttutils.parse_options(
+                options_obj.options_dict['fetch_formats_cmd_string'],
+            )
+
+            cmd_list = [ytdl_path] + options_list + ['--list-formats'] \
+            + [self.video_obj.source]
 
         elif self.info_type == 'subs':
 
-            cmd_list = [
-                ytdl_path,
-                '--list-subs',
-                self.video_obj.source,
-            ]
+            options_obj = self.app_obj.general_options_obj
+            options_list = ttutils.parse_options(
+                options_obj.options_dict['fetch_subtitles_cmd_string'],
+            )
+
+            cmd_list = [ytdl_path] + options_list + ['--list-subs'] \
+            + [self.video_obj.source]
 
         else:
 
@@ -273,6 +292,7 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_system_cmd(
             1,
             space.join(cmd_list),
+            self.force_monospace_flag,
         )
 
         # Create a new child process using that command...
@@ -303,6 +323,7 @@ class InfoManager(threading.Thread):
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 msg,
+                self.force_monospace_flag,
             )
 
         elif self.child_process.returncode > 0:
@@ -313,6 +334,7 @@ class InfoManager(threading.Thread):
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 msg,
+                self.force_monospace_flag,
             )
 
         # Operation complete. self.success_flag is checked by
@@ -324,6 +346,7 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Info operation finished'),
+            self.force_monospace_flag,
         )
 
         # Let the timer run for a few more seconds to prevent Gtk errors
@@ -351,6 +374,7 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Starting info operation, checking for new releases of Tartube'),
+            self.force_monospace_flag,
         )
 
         # Check the stable version, http://tartube.sourceforge.io/VERSION
@@ -359,9 +383,14 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Checking stable release...'),
+            self.force_monospace_flag,
         )
 
-        self.app_obj.main_win_obj.output_tab_write_system_cmd(1, stable_path)
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(
+            1,
+            stable_path,
+            self.force_monospace_flag,
+        )
 
         try:
             request_obj = requests.get(
@@ -375,6 +404,7 @@ class InfoManager(threading.Thread):
                 self.app_obj.main_win_obj.output_tab_write_stdout(
                     1,
                     _('Ignoring invalid version'),
+                    self.force_monospace_flag,
                 )
 
             else:
@@ -384,6 +414,7 @@ class InfoManager(threading.Thread):
                 self.app_obj.main_win_obj.output_tab_write_stdout(
                     1,
                     _('Retrieved version:') + ' ' + str(response),
+                    self.force_monospace_flag,
                 )
 
         except:
@@ -391,6 +422,7 @@ class InfoManager(threading.Thread):
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 _('Connection failed'),
+                self.force_monospace_flag,
             )
 
         # Check the development version,
@@ -400,9 +432,14 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Checking development release...'),
+            self.force_monospace_flag,
         )
 
-        self.app_obj.main_win_obj.output_tab_write_system_cmd(1, dev_path)
+        self.app_obj.main_win_obj.output_tab_write_system_cmd(
+            1,
+            dev_path,
+            self.force_monospace_flag,
+        )
 
         try:
             request_obj = requests.get(
@@ -416,6 +453,7 @@ class InfoManager(threading.Thread):
                 self.app_obj.main_win_obj.output_tab_write_stdout(
                     1,
                     _('Ignoring invalid version'),
+                    self.force_monospace_flag,
                 )
 
             else:
@@ -425,6 +463,7 @@ class InfoManager(threading.Thread):
                 self.app_obj.main_win_obj.output_tab_write_stdout(
                     1,
                     _('Retrieved version:') + ' ' + str(response),
+                    self.force_monospace_flag,
                 )
 
         except:
@@ -432,6 +471,7 @@ class InfoManager(threading.Thread):
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 _('Connection failed'),
+                self.force_monospace_flag,
             )
 
         # Operation complete. self.success_flag is checked by
@@ -442,6 +482,7 @@ class InfoManager(threading.Thread):
         self.app_obj.main_win_obj.output_tab_write_stdout(
             1,
             _('Info operation finished'),
+            self.force_monospace_flag,
         )
 
         # Let the timer run for a few more seconds to prevent Gtk errors
@@ -570,6 +611,7 @@ class InfoManager(threading.Thread):
             self.app_obj.main_win_obj.output_tab_write_stdout(
                 1,
                 data,
+                self.force_monospace_flag,
             )
 
         # STDERR (ignoring any empty error messages)
@@ -595,6 +637,7 @@ class InfoManager(threading.Thread):
             self.app_obj.main_win_obj.output_tab_write_stderr(
                 1,
                 data,
+                self.force_monospace_flag,
             )
 
         # Either (or both) of STDOUT and STDERR were non-empty

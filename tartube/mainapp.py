@@ -126,6 +126,12 @@ DEBUG_FUNC_FLAG = False
 DEBUG_NO_TIMER_FUNC_FLAG = False
 
 
+# Path to the python executable in the virtual environment created for the
+#       MS Windows installer
+VENV_DIR = os.environ['HOME'] + '/ytdl-venv'
+VENV_PYTHON_PATH = f'{VENV_DIR}/bin/python3'
+
+
 # Classes
 
 
@@ -5852,6 +5858,74 @@ class TartubeApp(Gtk.Application):
                     'ytdl_update_pip_no_dependencies',
                 ]
 
+        # (In version v2.5.145,revert changes from v2.4.448 and v2.5.107 to
+        #   work with a virtual environment on MS Windows)
+        if version < 2005145 and os.name == 'nt':
+
+            if 'PROGRAMFILES(X86)' in os.environ:
+                # 64-bit MS Windows
+                recommended = 'ytdl_update_win_64'
+                alt_recommended = 'ytdl_update_win_64_no_dependencies'
+                ytdl_path = 'youtube-dl.exe'
+                python_path = '..\\ytdl-venv\\bin\\python3.exe'
+            else:
+                # 32-bit MS Windows
+                recommended = 'ytdl_update_win_32'
+                alt_recommended = 'ytdl_update_win_32_no_dependencies'
+                ytdl_path = 'youtube-dl.exe'
+                python_path = '..\\ytdl-venv\\bin\\python3.exe'
+
+            self.ytdl_bin = 'youtube-dl'
+            self.ytdl_path_default = ytdl_path
+            self.ytdl_path = ytdl_path
+            self.ytdl_update_dict = {
+                recommended: [
+                    python_path,
+                    '-m',
+                    'pip',
+                    'install',
+                    'youtube-dl',
+                ],
+                alt_recommended: [
+                    python_path,
+                    '-m',
+                    'pip',
+                    'install',
+                    'youtube-dl',
+                    '--no-deps',
+                ],
+                'ytdl_update_default_path': [
+                    self.ytdl_path_default, '-U',
+                ],
+                'ytdl_update_local_path': [
+                    self.ytdl_bin, '-U',
+                ],
+                'ytdl_update_custom_path': [
+                    'python3', self.ytdl_path, '-U',
+                ],
+                'ytdl_update_pip': [
+                    'pip', 'install', '--upgrade', 'youtube-dl',
+                ],
+                'ytdl_update_pip_no_dependencies': [
+                    'pip', 'install', '--upgrade', '--no-dependencies',
+                    'youtube-dl',
+                ],
+                'ytdl_update_pip_omit_user': [
+                        'pip', 'install', '--upgrade', 'youtube-dl',
+                ],
+            }
+            self.ytdl_update_list = [
+                recommended,
+                alt_recommended,
+                'ytdl_update_default_path',
+                'ytdl_update_local_path',
+                'ytdl_update_custom_path',
+                'ytdl_update_pip',
+                'ytdl_update_pip_no_dependencies',
+                'ytdl_update_pip_omit_user',
+            ]
+            self.ytdl_update_current = recommended
+
 
     def load_config_import_scheduled(self, version, json_dict):
 
@@ -8514,6 +8588,13 @@ class TartubeApp(Gtk.Application):
                 == 'single_agree':
                     options_obj.options_dict['video_format_mode'] = 'single'
 
+        if version < 2005122:       # v2.5.122
+
+            # This version adds new options to options.OptionsManager
+            for options_obj in options_obj_list:
+                options_obj.options_dict['fetch_formats_cmd_string'] = ''
+                options_obj.options_dict['fetch_subtitles_cmd_string'] = ''
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -10046,31 +10127,33 @@ class TartubeApp(Gtk.Application):
                 # 64-bit MS Windows
                 recommended = 'ytdl_update_win_64'
                 alt_recommended = 'ytdl_update_win_64_no_dependencies'
-                ytdl_path = '..\\..\\..\\mingw64\\bin\\youtube-dl.exe'
-                pip_path = '..\\..\\..\\mingw64\\bin\\pipx.exe'
+                ytdl_path = 'youtube-dl.exe'
+                python_path = '..\\ytdl-venv\\bin\\python3.exe'
             else:
                 # 32-bit MS Windows
                 recommended = 'ytdl_update_win_32'
                 alt_recommended = 'ytdl_update_win_32_no_dependencies'
-                ytdl_path = '..\\..\\..\\mingw32\\bin\\youtube-dl.exe'
-                pip_path = '..\\..\\..\\mingw32\\bin\\pipx.exe'
+                ytdl_path = 'youtube-dl.exe'
+                python_path = '..\\ytdl-venv\\bin\\python3.exe'
 
             self.ytdl_bin = 'youtube-dl'
             self.ytdl_path_default = ytdl_path
             self.ytdl_path = ytdl_path
             self.ytdl_update_dict = {
                 recommended: [
-                    pip_path,
+                    python_path,
+                    '-m',
+                    'pip',
                     'install',
-                    '--force',
-                    '--include-deps',
                     'youtube-dl',
                 ],
                 alt_recommended: [
-                    pip_path,
+                    python_path,
+                    '-m',
+                    'pip',
                     'install',
-                    '--force',
                     'youtube-dl',
+                    '--no-deps',
                 ],
                 'ytdl_update_default_path': [
                     self.ytdl_path_default, '-U',
@@ -10081,29 +10164,15 @@ class TartubeApp(Gtk.Application):
                 'ytdl_update_custom_path': [
                     'python3', self.ytdl_path, '-U',
                 ],
-                'ytdl_update_pipx': [
-                    'pipx', 'install', '--force', '--include-deps',
-                    'youtube-dl',
-                ],
-                'ytdl_update_pipx_no_dependencies': [
-                    'pipx', 'install', '--force', 'youtube-dl',
-                ],
-                'ytdl_update_pipx_upgrade': [
-                    'pipx', 'upgrade', 'youtube-dl',
-                ],
-                'ytdl_update_pip3': [
-                    'pip3', 'install', '--upgrade', 'youtube-dl',
-                ],
-                'ytdl_update_pip3_no_dependencies': [
-                    'pip3', 'install', '--upgrade', '--no-dependencies',
-                    'youtube-dl',
-                ],
                 'ytdl_update_pip': [
                     'pip', 'install', '--upgrade', 'youtube-dl',
                 ],
                 'ytdl_update_pip_no_dependencies': [
                     'pip', 'install', '--upgrade', '--no-dependencies',
                     'youtube-dl',
+                ],
+                'ytdl_update_pip_omit_user': [
+                    'pip', 'install', '--upgrade', 'youtube-dl',
                 ],
             }
             self.ytdl_update_list = [
@@ -10112,13 +10181,9 @@ class TartubeApp(Gtk.Application):
                 'ytdl_update_default_path',
                 'ytdl_update_local_path',
                 'ytdl_update_custom_path',
-                'ytdl_update_pipx',
-                'ytdl_update_pipx_no_dependencies',
-                'ytdl_update_pipx_upgrade',
-                'ytdl_update_pip3',
-                'ytdl_update_pip3_no_dependencies',
                 'ytdl_update_pip',
                 'ytdl_update_pip_no_dependencies',
+                'ytdl_update_pip_omit_user',
             ]
             self.ytdl_update_current = recommended
 

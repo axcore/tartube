@@ -1,3 +1,39 @@
+v2.5.145 (10 Jul 2025)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Added new Japanese and Tamil translation; thanks to 福居那祐太 and தமிழ்நேரம்!
+- On MS Windows, Tartube installations have been updated to use virtual
+    environments. As a result, if you are re-installing Tartube, you will need
+    to re-install yt-dlp before you can use it. Note that the procedure for
+    performing a manual installation has changed; see the updated notes in the
+    README
+    
+MINOR NEW FEATURES
+- When fetching a list of videos formats or subtitles (for example, by right-
+    clicking and selecting Fetch > Available formats), you can now specify
+    additional options to pass to yt-dlp. See Edit > General download options >
+    Advanced > Fetch (Git #712)
+
+MAJOR FIXES
+- Updated code to replace use of pip3 with pipx (Git #684)
+- Fixed issues with the yt-dlp download option "--match-filter" (Git #687,
+    #586)
+- Renamed tartube's utils.py file to avoid a reported filename clash on MS
+    Windows (Git #693)
+- In the download options window, some buttons in the the Advanced > Workaround
+    tab were broken; fixed them (Git #707)
+- Tartube did not detect the download of a remuxed video, instead adding the
+    video in its original format to the Tartube database. Fixed (Git #714)
+    
+MINOR FIXES
+- Tweaked text in the README in a few places (Git #689, #700, #702, #703)
+- When fetching a list of videos formats or subtitles (for example, by right-
+    clicking and selecting Fetch > Available formats), MS Windows users saw a
+    non-monospace font, which messed up the formatting of the text returned by
+    yt-dlp. Tartube now enforces a monospace font in these situations
+    (Git #712)
+
 v2.5.100 (2 Feb 2025)
 -------------------------------------------------------------------------------
 

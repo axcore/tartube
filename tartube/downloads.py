@@ -5665,6 +5665,20 @@ class VideoDownloader(object):
 
                     self.confirm_new_video(path, filename, extension)
 
+            elif stdout_list[0] == '[VideoRemuxer]':
+
+                # Get final file extension after the remuxing process
+                path, filename, extension = self.extract_filename(
+                    ' '.join(stdout_with_spaces_list[8:]),
+                )
+
+                dl_stat_dict['path'] = path
+                dl_stat_dict['filename'] = filename
+                dl_stat_dict['extension'] = extension
+                self.reset_temp_destination()
+
+                self.confirm_new_video(path, filename, extension)
+
             elif (
                 isinstance(media_data_obj, media.Channel)
                 and not media_data_obj.rss \

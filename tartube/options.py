@@ -541,6 +541,18 @@ class OptionsManager(object):
             the source URL of each affected media data object(s) is used, as
             normal. Ignored if 'direct_cmd_flag' is False
 
+        [ fetch options ]
+
+        fetch_formats_cmd_string (str): String that contains extra youtube-dl
+            options separated by spaces, used only during an info operation to
+            fetch a list of formats for a video. Components containing
+            whitespace can be enclosed within double quotes "..."
+
+        fetch_subtitles_cmd_string (str): String that contains extra youtube-dl
+            options separated by spaces, used only during an info operation to
+            fetch a list of subtitles for a video. Components containing
+            whitespace can be enclosed within double quotes "..."
+
     TARTUBE OPTIONS (not passed to youtube-dl directly)
 
         move_description (bool):
@@ -901,6 +913,8 @@ class OptionsManager(object):
             'extra_cmd_string': '',
             'direct_cmd_flag': False,
             'direct_url_flag': False,
+            'fetch_formats_cmd_string': '',
+            'fetch_subtitles_cmd_string': '',
             # TARTUBE OPTIONS
             'move_description': False,
             'move_info': False,
@@ -1378,6 +1392,8 @@ class OptionsParser(object):
 #           OptionHolder('extra_cmd_string', '', ''),
 #           OptionHolder('direct_cmd_flag', '', False),
 #           OptionHolder('direct_url_flag', '', False),
+#           OptionHolder('fetch_formats_cmd_string', '', ''),
+#           OptionHolder('fetch_subtitles_cmd_string', '', ''),
             # TARTUBE OPTIONS (not given an options.OptionHolder object)
 #           OptionHolder('move_description', '', False),
 #           OptionHolder('move_info', '', False),

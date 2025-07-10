@@ -1075,6 +1075,36 @@ def convert_bytes_to_string(num_bytes):
     return '{:.1f} {}'.format(num_bytes, unit)
 
 
+def convert_downloader_path_to_module(path):
+
+    """Called by ttutils.generate_ytdl_system_cmd() and several similar
+    functions.
+
+    The (official) installer for MS Windows now uses pip, not pip3/pipx, to
+    install yt-dlp. The system command requires the argument 'yt_dlp', not
+    'yt-dlp'.
+
+    Convert the specified path, remove the folder and file extension (if
+    present), and converting hyhpens to underlines. This will convert 'yt-dlp'
+    to 'yt_dlp'; it's assume (without having been tested) that converting
+    'youtube-dl' to 'youtube_dl' is also correct.
+
+    Args:
+
+        path (str): The path to the downloader to convert
+
+    Return values:
+
+        The converted string
+
+    """
+
+    path, fullname = os.path.split(path.strip("\""))
+    filename, extension = os.path.splitext(fullname)
+
+    return filename.replace('-', '_')
+
+
 def convert_enhanced_template_from_json(convert_type, enhanced_name, \
 json_dict):
 
@@ -2880,17 +2910,20 @@ custom_dl_obj=None, divert_mode=None):
         and len(custom_dl_obj.divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + options_list + [source]
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + options_list + [source]
 
     else:
 
@@ -2930,9 +2963,12 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
 
     """
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Parse the command line options specified by the 'extra_cmd_string' option
@@ -2943,8 +2979,8 @@ def generate_direct_system_cmd(app_obj, media_data_obj, options_obj):
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + options_list
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + options_list
 
     else:
 
@@ -3116,17 +3152,20 @@ classic_flag):
         and len(custom_dl_obj.divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + mod_options_list + [source]
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + mod_options_list + [source]
 
     else:
 
@@ -3245,17 +3284,20 @@ dest_dir, temp_dir, output_template, custom_dl_obj, divert_mode, classic_flag):
         and len(custom_dl_obj.divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + mod_options_list + [source]
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + mod_options_list + [source]
 
     else:
 
@@ -3393,17 +3435,20 @@ dest_dir, temp_dir, stamp_list, custom_dl_obj, divert_mode, classic_flag):
         and len(custom_dl_obj.divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + mod_options_list + [source]
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + mod_options_list + [source]
 
     else:
 
@@ -3567,17 +3612,20 @@ classic_flag):
         and len(custom_dl_obj.divert_website) > 2:
             source = convert_youtube_to_other(app_obj, source, custom_dl_obj)
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + mod_options_list + [source]
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + mod_options_list + [source]
 
     else:
 
@@ -3609,17 +3657,20 @@ def generate_m3u_system_cmd(app_obj, media_data_obj):
 
     """
 
-    # Convert a downloader path beginning with ~ (not on MS Windows)
     ytdl_path = app_obj.check_downloader(app_obj.ytdl_path)
-    if os.name != 'nt':
+    if os.name == 'nt':
+        # Convert 'yt-dlp.exe' to 'yt_dlp', etc
+        ytdl_path = convert_downloader_path_to_module(ytdl_path)
+    else:
+        # Convert a downloader path beginning with ~
         ytdl_path = re.sub(r'^\~', os.path.expanduser('~'), ytdl_path)
 
     # Set the list. On MS Windows, we enforce utf-8 output, otherwise videos
     #   with (for example) Japanese and Korean characters are undetectable,
     #   once downloaded (Git #320)
     if os.name == 'nt':
-        cmd_list = ['python3'] + ['-X'] + ['utf8'] + [ytdl_path] \
-        + ['-g'] + [media_data_obj.source]
+        cmd_list = [mainapp.VENV_PYTHON_PATH] + ['-X'] + ['utf8'] + ['-m'] \
+        + [ytdl_path] + ['-g'] + [media_data_obj.source]
 
     else:
 

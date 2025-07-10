@@ -1,4 +1,4 @@
-# Tartube v2.5.120 installer script for MS Windows
+# Tartube v2.5.145 installer script for MS Windows
 #
 # Copyright (C) 2019-2025 A S Lewis
 #
@@ -18,7 +18,7 @@
 #
 # Build instructions:
 #   - These instructions describe how to create an installer for Tartube on a
-#       64-bit MS Windows machine, Windows Vista or higher
+#       64-bit MS Windows machine (minimum version: Windows 10, 64bit)
 #
 #   - Download and install NSIS from
 #
@@ -33,7 +33,7 @@
 #       folder. Here, we call it C:\testme. Let MSYS2 install itself inside
 #       that directory, i.e. C:\testme\msys64
 #
-#   - Run the mingw64 terminal, i.e.
+#   - Run the MINGW64 terminal, i.e.
 #
 #       C:\testme\msys64\mingw64.exe
 #
@@ -43,22 +43,73 @@
 #       pacman -Syu
 #
 #   - Usually, the terminal window tells you to close it. Do that, and then
-#       open a new mingw64 terminal window
+#       open a new MINGW64 terminal window
 #
 #   - In the new window, type these commands
 #
 #       pacman -Su
 #       pacman -S mingw-w64-x86_64-python3
-#       pacman -S mingw-w64-x86_64-python3-pip
-#       pacman -S mingw-w64-x86_64-python3-gobject
-#       pacman -S mingw-w64-x86_64-python3-requests
+#       pacman -S mingw-w64-x86_64-python-pip
+#       pacman -S mingw-w64-x86_64-python-gobject
+#       pacman -S mingw-w64-x86_64-python-requests
 #       pacman -S mingw-w64-x86_64-gtk3
 #       pacman -S mingw-w64-x86_64-gsettings-desktop-schemas
 #
+#   - (Don't close the MINGW64 terminal until you have finished the
+#       installation)
+
 #   - Optional step: you can check that the dependencies are working by typing
 #       this command (if you like):
 #
 #       gtk3-demo
+#
+#   - Install Microsoft Visual C++ (a free download from the Microsoft website)
+#
+#   - Navigate to the folder C:\Windows\System32
+#
+#   - Copy all the files whose name starts with 'msvcr' (e.g.
+#       'msvcr1230_clr0400.dll') into the folder C:\testme\msys64\mingw64\bin
+#
+#   - In the MINGW64 terminal, type the following commands:
+#
+#       /mingw64/bin/python3 -m venv ~/ytdl-venv
+#       source ~/ytdl-venv/bin/activate
+#
+#   - In a suitable text editor, open the file
+#       C:\testme\msys64\home\YOURNAME\.bashrc
+#
+#   - Note that YOURNAME should be substituted for your actual Windows
+#       username. For example, the file might be
+#
+#       C:\testme\msys64\home\alice\.bashrc
+#
+#   - At the top of the file, add the following lines, then save it
+#
+#       export PIP_HOME="$HOME/.local/pip"
+#       export PIP_BIN_DIR="$HOME/.local/bin"
+#       export PATH="$PIP_BIN_DIR:$PATH"
+#
+#   - Nagivate to C:\testme\msys64\mingw64\lib\python3.12\site-packages
+#
+#   - Copy the following folders to
+#       C:\testme\msys64\home\YOURNAME\ytdl-venv\lib\python3.12\site-packages
+#
+#       certifi
+#       charset_normalizer
+#       gi
+#       idna
+#       requests
+#       urllib3
+#
+#   - If you want to install Atomic Parsley (from
+#       https://github.com/wez/atomicparsley), copy the MS Windows executable
+#       into the C:\testme\msys64\usr\bin folder
+#
+#   - In the MINGW64 terminal, type the following commands:
+#
+#       pip install feedparser
+#       pip install playsound
+#       pacman -S mingw-w64-x86_64-aria2
 #
 #   - The C:\testme folder now contains about 2GB of data. If you like, you can
 #       use all of it (which would create an installer of about 600MB). In most
@@ -66,7 +117,7 @@
 #       necessary
 #
 #   - This table shows which files and folders are in the official Tartube
-#       installer (which is about 120MB). Files/folders ending in * represent
+#       installer (which is about 140MB). Files/folders ending in * represent
 #       multiple files/folders which must be retained. Everything else can be
 #       deleted
 #
@@ -80,10 +131,14 @@
 #       C:\testme\msys64\home
 #       C:\testme\msys64\installerResources
 #       C:\testme\msys64\mingw64.exe
+#
 #       C:\testme\msys64\mingw64\bin
 #       C:\testme\msys64\mingw64\bin\gdbus*
 #       C:\testme\msys64\mingw64\bin\gdk*
 #       C:\testme\msys64\mingw64\bin\gettext*
+#       C:\testme\msys64\mingw64\bin\gi-compile_repository
+#       C:\testme\msys64\mingw64\bin\gi-decompile_typelib
+#       C:\testme\msys64\mingw64\bin\gi-inspect_typelib
 #       C:\testme\msys64\mingw64\bin\gio*
 #       C:\testme\msys64\mingw64\bin\glib*
 #       C:\testme\msys64\mingw64\bin\gobject*
@@ -99,6 +154,7 @@
 #       C:\testme\msys64\mingw64\bin\sqlite*
 #       C:\testme\msys64\mingw64\bin\xml*
 #       C:\testme\msys64\mingw64\bin\zlib1.dll
+#
 #       C:\testme\msys64\mingw64\include\gdk-pixbuf-2.0
 #       C:\testme\msys64\mingw64\include\gio-win32-2.0
 #       C:\testme\msys64\mingw64\include\glib-2.0
@@ -111,11 +167,13 @@
 #       C:\testme\msys64\mingw64\include\openssl
 #       C:\testme\msys64\mingw64\include\pycairo
 #       C:\testme\msys64\mingw64\include\pygobject-3.0
-#       C:\testme\msys64\mingw64\include\python3.9
+#       C:\testme\msys64\mingw64\include\python3.12
 #       C:\testme\msys64\mingw64\include\readline
 #       C:\testme\msys64\mingw64\include\tk8.6
+#
 #       C:\testme\msys64\mingw64\lib\gdk-pixbuf-2.0
 #       C:\testme\msys64\mingw64\lib\gettext
+#       C:\testme\msys64\mingw64\lib\gio
 #       C:\testme\msys64\mingw64\lib\girepository-1.0
 #       C:\testme\msys64\mingw64\lib\glib-2.0
 #       C:\testme\msys64\mingw64\lib\gtk-3.0
@@ -123,7 +181,6 @@
 #       C:\testme\msys64\mingw64\lib\python3.9\collections
 #       C:\testme\msys64\mingw64\lib\python3.9\concurrent
 #       C:\testme\msys64\mingw64\lib\python3.9\ctypes
-#       C:\testme\msys64\mingw64\lib\python3.9\distutils
 #       C:\testme\msys64\mingw64\lib\python3.9\email
 #       C:\testme\msys64\mingw64\lib\python3.9\encodings
 #       C:\testme\msys64\mingw64\lib\python3.9\ensurepip
@@ -136,32 +193,38 @@
 #       C:\testme\msys64\mingw64\lib\python3.9\logging
 #       C:\testme\msys64\mingw64\lib\python3.9\msilib
 #       C:\testme\msys64\mingw64\lib\python3.9\multiprocessing
+#       C:\testme\msys64\mingw64\lib\python3.9\re
 #       C:\testme\msys64\mingw64\lib\python3.9\site-packages
 #       C:\testme\msys64\mingw64\lib\python3.9\sqlite3
+#       C:\testme\msys64\mingw64\lib\python3.9\tomllib
 #       C:\testme\msys64\mingw64\lib\python3.9\urllib
+#       C:\testme\msys64\mingw64\lib\python3.9\venv
 #       C:\testme\msys64\mingw64\lib\python3.9\xml
 #       C:\testme\msys64\mingw64\lib\python3.9\xmlrpc
+#       C:\testme\msys64\mingw64\lib\python3.9\zipfile
 #       C:\testme\msys64\mingw64\lib\python3.9\*.py
-#       C:\testme\msys64\mingw64\lib\thread2.8.4
 #       C:\testme\msys64\mingw64\lib\sqlite3.36.0
 #       C:\testme\msys64\mingw64\lib\terminfo
 #       C:\testme\msys64\mingw64\lib\thread2.8.4
 #       C:\testme\msys64\mingw64\lib\tk8.6
+#
 #       C:\testme\msys64\mingw64\share\gettext*
 #       C:\testme\msys64\mingw64\share\gir-1.0
 #       C:\testme\msys64\mingw64\share\glib-2.0
 #       C:\testme\msys64\mingw64\share\gtk-3.0
 #       C:\testme\msys64\mingw64\share\icons
 #       C:\testme\msys64\mingw64\share\locale\en*
-#       C:\testme\msys64\mingw64\share\locale\locale.alias
 #       C:\testme\msys64\mingw64\share\sqlite
 #       C:\testme\msys64\mingw64\share\terminfo
 #       C:\testme\msys64\mingw64\share\themes
 #       C:\testme\msys64\mingw64\share\thumbnailers
 #       C:\testme\msys64\mingw64\share\xml
+#
 #       C:\testme\msys64\mingw64\ssl
+#
 #       C:\testme\msys64\tmp
 #       C:\testme\msys64\ucrt64
+#
 #       C:\testme\msys64\usr\bin\core_perl
 #       C:\testme\msys64\usr\bin\site_perl
 #       C:\testme\msys64\usr\bin\vendor_perl
@@ -172,14 +235,12 @@
 #       C:\testme\msys64\usr\bin\cygpath
 #       C:\testme\msys64\usr\bin\cygwin-console-helper
 #       C:\testme\msys64\usr\bin\dir
+#       C:\testme\msys64\usr\bin\dirname
 #       C:\testme\msys64\usr\bin\env
 #       C:\testme\msys64\usr\bin\find
 #       C:\testme\msys64\usr\bin\findfs
 #       C:\testme\msys64\usr\bin\getent
 #       C:\testme\msys64\usr\bin\gettext*
-#       C:\testme\msys64\usr\bin\gio-querymodules
-#       C:\testme\msys64\usr\bin\glib-compile-schemas
-#       C:\testme\msys64\usr\bin\gobject-query
 #       C:\testme\msys64\usr\bin\gpg*
 #       C:\testme\msys64\usr\bin\grep
 #       C:\testme\msys64\usr\bin\hostid
@@ -194,21 +255,17 @@
 #       C:\testme\msys64\usr\bin\msys-2.0.dll
 #       C:\testme\msys64\usr\bin\msys-argp-0.dll
 #       C:\testme\msys64\usr\bin\msys-assuan-0.dll
+#       C:\testme\msys64\usr\bin\msys-assuan-9.dll
 #       C:\testme\msys64\usr\bin\msys-atomic-1.dll
 #       C:\testme\msys64\usr\bin\msys-bz2-1.dll
 #       C:\testme\msys64\usr\bin\msys-gcc_s-1.dll
 #       C:\testme\msys64\usr\bin\msys-gcrypt-20.dll
-#       C:\testme\msys64\usr\bin\msys-gio-2.0-0.dll
-#       C:\testme\msys64\usr\bin\msys-glib-2.0-0.dll
-#       C:\testme\msys64\usr\bin\msys-gobject-2.0-0.dll
 #       C:\testme\msys64\usr\bin\msys-gpg-error-0.dll
-#       C:\testme\msys64\usr\bin\msys-gpgme-11.dll
-#       C:\testme\msys64\usr\bin\msys-gpgmepp-6.dll
-#       C:\testme\msys64\usr\bin\msys-gthread-2.0-0.dll
 #       C:\testme\msys64\usr\bin\msys-iconv-2.dll
 #       C:\testme\msys64\usr\bin\msys-intl-8.dll
 #       C:\testme\msys64\usr\bin\msys-ncurses++w6.dll
 #       C:\testme\msys64\usr\bin\msys-ncursesw6.dll
+#       C:\testme\msys64\usr\bin\msys-npth-0.dll
 #       C:\testme\msys64\usr\bin\msys-pcre-1.dll
 #       C:\testme\msys64\usr\bin\msys-pcre2-8-0.dll
 #       C:\testme\msys64\usr\bin\msys-readline8.dll
@@ -226,40 +283,34 @@
 #       C:\testme\msys64\usr\bin\vercmp
 #       C:\testme\msys64\usr\bin\which
 #       C:\testme\msys64\usr\bin\xml*
+#
 #       C:\testme\msys64\usr\lib\gettext
-#       C:\testme\msys64\usr\lib\gio
 #       C:\testme\msys64\usr\lib\openssl
-#       C:\testme\msys64\usr\lib\python3.9
+#       C:\testme\msys64\usr\lib\python3.12
 #       C:\testme\msys64\usr\lib\terminfo
 #       C:\testme\msys64\usr\lib\thread2.8.5
+#
 #       C:\testme\msys64\usr\share\cygwin
-#       C:\testme\msys64\usr\share\glib-2.0
+#       C:\testme\msys64\usr\share\makepkg
 #       C:\testme\msys64\usr\share\mintty
 #       C:\testme\msys64\usr\share\Msys
 #       C:\testme\msys64\usr\share\pacman
 #       C:\testme\msys64\usr\share\terminfo
+#
 #       C:\testme\msys64\usr\ssl
+#
 #       C:\testme\msys64\var\lib\pacman
 #
 #   - The following optional dependencies are required for fetching livestreams.
-#       If you decide to install them (it's recommended that you do), run the
-#       mingw64 terminal again, if it's not still open
+#       If you decide to install them (it's recommended that you do), then type
+#       these commands in the MINGW64 terminal
 #
-#       C:\testme\msys64\mingw64.exe
-#
-#   - In the terminal window, type
-#
-#       pip3 install wheel
 #       pip3 install feedparser
 #       pip3 install playsound
 #
 #   - In the terminal window, you could add the following optional package:
 #
 #       pacman -S mingw-w64-x86_64-aria2
-#
-#   - AtomicParsley, if you want it, can be copied to this location:
-#
-#       C:\testme\msys64\usr\bin
 #
 #   - Now download the Tartube source code from
 #
@@ -268,11 +319,6 @@
 #   - Extract it, and copy the whole 'tartube' folder to
 #
 #       C:\testme\msys64\home\YOURNAME
-#
-#   - Note that YOURNAME should be substituted for your actual Windows
-#       username. For example, the copied folder might be
-#
-#       C:\testme\msys64\home\alice\tartube
 #
 #   - Next, copy all of the files in
 #       C:\testme\msys64\home\YOURNAME\tartube\nsis to C:\testme
@@ -294,7 +340,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.5.120-64bit.exe"
+    OutFile "install-tartube-2.5.145-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -384,7 +430,7 @@ Section "Tartube" SecClient
         "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
 
     # Store installation folder
-    # Commented out from v1.5.0; these instructions don't work, and probably
+    # Commented out since v1.5.0; these instructions don't work, and probably
     #   aren't necessary anyway
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
@@ -397,7 +443,7 @@ Section "Tartube" SecClient
 #        "Publisher" "A S Lewis"
 #    WriteRegStr HKLM \
 #        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.5.120"
+#        "DisplayVersion" "2.5.145"
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"

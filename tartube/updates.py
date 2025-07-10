@@ -723,14 +723,13 @@ class UpdateManager(threading.Thread):
 
         # Prepare a system command...
         cmd_list = [
-            '..\\..\\..\\mingw64\\bin\\pipx.exe',
+            '..\\ytdl-venv\\bin\\python3.exe',
+            '-m',
+            'pip',
             'uninstall',
             '--yes',
             downloader,
         ]
-
-        if not 'PROGRAMFILES(X86)' in os.environ:
-            cmd_list[0] = '..\\..\\..\\mingw32\\bin\\pipx.exe'
 
         # ...and display it in the Output tab (if required)
         self.install_ytdl_write_output(

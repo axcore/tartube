@@ -44,16 +44,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.5.100 (2 Feb 2025)**
+Stable release: **v2.5.145 (10 Jul 2025)**
 
-Development release: **v2.5.120 (23 Jun 2025)**
+Development release: **v2.5.145 (10 Jul 2025)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.100/install-tartube-2.5.100-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.100/install-tartube-with-ffmpeg-2.5.100-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.100/tartube-2.5.100-64bit-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.145/install-tartube-2.5.145-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.145/install-tartube-with-ffmpeg-2.5.145-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.145/tartube-2.5.145-64bit-mswin-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.100/python3-tartube_2.5.100.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.100/tartube-2.5.100.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.145/python3-tartube_2.5.145.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.145/tartube-2.5.145.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -70,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.100/tartube_v2.5.100.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.145/tartube_v2.5.145.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -108,7 +108,7 @@ If you just want to download videos with a minimum of fuss, do this:
 5.1 Installation - MS Windows
 -----------------------------
 
-MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**. 
+MS Windows users should use the installer `available at the Tartube website <https://tartube.sourceforge.io/>`__. The installer contains everything you need to run **Tartube**.
 
 There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat**.
 
@@ -135,31 +135,76 @@ If you want to perform a manual installation, you can follow this procedure, whi
 
         **pacman -S mingw-w64-x86_64-python3**
 
-        **pacman -S mingw-w64-x86_64-python3-pip**
+        **pacman -S mingw-w64-x86_64-python-pip**
 
-        **pacman -S mingw-w64-x86_64-python3-gobject**
+        **pacman -S mingw-w64-x86_64-python-gobject**
 
-        **pacman -S mingw-w64-x86_64-python3-requests**
+        **pacman -S mingw-w64-x86_64-python-requests**
 
         **pacman -S mingw-w64-x86_64-gtk3**
 
         **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**
 
-        **pip3 install feedparser**
+- (Don't close the MINGW64 terminal until you have finished the manual installation)
+- Install Microsoft Visual C++ (a free download from the Microsoft website)
+- Navigate to the folder **C:\\Windows\\System32**
+- Copy all the files whose name starts with **msvcr** (e.g. **msvcr1230_clr0400.dll**) into the folder **C:\\msys64\\mingw64\\bin**
 
-        **pip3 install playsound**
+- In the MINGW64 terminal, type the following commands:
+
+        **/mingw64/bin/python3 -m venv ~/ytdl-venv**
+
+        **source ~/ytdl-venv/bin/activate**
+
+- In a suitable text editor, open the file **C:\\msys64\\home\\YOURNAME\\.bashrc**
+- At the top of the file, add the following lines, then save it
+
+        **export PIP_HOME="$HOME/.local/pip"**
+
+        **export PIP_BIN_DIR="$HOME/.local/bin"**
+
+        **export PATH="$PIP_BIN_DIR:$PATH"**
+
+- Nagivate to **C:\\msys64\\mingw64\\lib\\python3.12\\site-packages**
+- Copy the following folders to **C:\\msys64\\home\\YOURNAME\\ytdl-venv\\lib\\python3.12\\site-packages**
+
+        **certifi**
+
+        **charset_normalizer**
+
+        **gi**
+
+        **idna**
+
+        **requests**
+
+        **urllib3**
+
+- If you want to install `Atomic Parsley <https://github.com/wez/atomicparsley>`__, copy the MS Windows executable into the **C:\\msys64\\usr\\bin** folder
+
+- In the MINGW64 terminal, type the following commands:
+
+        **pip install feedparser**
+
+        **pip install playsound**
 
         **pacman -S mingw-w64-x86_64-aria2**
 
-- Download the **Tartube** source code from Sourceforge, using the links above
+- Download the **Tartube** source code from **Sourceforge**, using the links above
 - Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
-- Now, to run **Tartube**, type these commands in the MINGW64 terminal (don't forget to use *forward* slashes):
+- You're now ready to start **Tartube**
+- The simplest way to start **Tartube** is to double-click the **tartube_64bit.bat** file
+- Otherwise, you can start **Tartube** from the MINGW64 terminal. If you have closed the terminal at any time since you started the manual installation, you first need to open it, and type this again:
+
+        **source ~/ytdl-venv/bin/activate**
+
+- Then type these commands in the MINGW64 terminal (don't forget to use *forward* slashes):
 
         **cd /home/YOURNAME/tartube**
 
         **python3 -X utf8 tartube/tartube**
 
-- The **-X utf8** part enables **Tartube** to handle non-European alphabets (such as Japanese and Korean) correctly. If this is not a concern, then **Tartube** can be started like this:
+- The **-X utf8** part enables **Tartube** to handle non-European alphabets (such as Japanese and Korean) correctly. If that is not a concern, then **Tartube** could be started like this:
 
         **python3 tartube/tartube**
 
@@ -972,7 +1017,7 @@ If you want to set the download options manually - typing them, rather than clic
 .. image:: screenshots/example36.png
   :alt: Customising download options
 
-Download options added here **override everything else in the window**. (However, they don't override the format selector in the **Classic Mode** tab.)  
+Download options added here **override everything else in the window**. (However, they don't override the format selector in the **Classic Mode** tab.)
 
 You can find a complete list of download options for youtude-dl `here <https://github.com/ytdl-org/youtube-dl>`__, and a complete list for yt-dlp `here <https://github.com/yt-dlp/yt-dlp>`__.
 

@@ -7882,6 +7882,7 @@ class OptionsEditWin(GenericEditWin):
         self.setup_advanced_network_tab(inner_notebook)
         self.setup_advanced_georestrict_tab(inner_notebook)
         self.setup_advanced_workaround_tab(inner_notebook)
+        self.setup_advanced_fetch_tab(inner_notebook)
 
 
     def setup_advanced_configuration_tab(self, inner_notebook):
@@ -8467,6 +8468,75 @@ class OptionsEditWin(GenericEditWin):
             1, 10, 1, 1
         )
         self.add_tooltip('--sleep-subtitles SECONDS', label2, spinbutton4)
+
+
+    def setup_advanced_fetch_tab(self, inner_notebook):
+
+        """Called by self.setup_advanced_tab().
+
+        Sets up the 'Fetcg' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Download options > Advanced > Fetch'
+        )
+
+        tab, grid = self.add_inner_notebook_tab('_Fetch', inner_notebook)
+
+        # Fetch options
+        self.add_label(grid,
+            '<u>' + _('Fetch options') + '</u>',
+            0, 0, 1, 1,
+        )
+
+        label = self.add_label(grid,
+            _(
+                'Additional download options when fetching list of video' \
+                + ' formats',
+            ),
+            0, 1, 1, 1,
+        )
+
+        label2 = self.add_label(grid,
+            '<i>' + _('e.g. --cookies COOKIEPATH') + '</i>',
+            0, 2, 1, 1,
+        )
+
+        textview, textbuffer = self.add_textview(grid,
+            'fetch_formats_cmd_string',
+            0, 3, 1, 1,
+        )
+
+        label3 = self.add_label(grid,
+            _(
+                'Additional download options when fetching list of video' \
+                + ' subtitles',
+            ),
+            0, 4, 1, 1,
+        )
+
+        label4 = self.add_label(grid,
+            '<i>' + _('e.g. --cookies COOKIEPATH') + '</i>',
+            0, 5, 1, 1,
+        )
+
+        textview2, textbuffe2r = self.add_textview(grid,
+            'fetch_subtitles_cmd_string',
+            0, 6, 1, 1,
+        )
+
+        tooltip = _(
+            'Arguments containing special shell characters' \
+            + '(+ - & < > = ? * ! : ; \\ / and brackets) should be' \
+            + ' enclosed within quotes, e.g. -f "(137/136)"',
+        )
+        self.add_tooltip(tooltip, label, label2, textview)
+        self.add_tooltip(tooltip, label3, label4, textview2)
 
 
     # (Tab support functions - general)
