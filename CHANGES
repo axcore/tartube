@@ -1,3 +1,19 @@
+v2.5.156 (17 Jul 2025)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Fixed broken virtual environment configuration on some MS Windows systems
+- Also added a 'repair' shell script which will repair the configuration, in
+    case you tweak the settings yourself. The existing shell scripts will also
+    'repair' the configuration, every time Tartube starts, but they do that
+    silently; the 'repair' script displays output in the terminal window, and
+    does not actually start Tartube (Git #715, #716)
+
+MINOR NEW FEATURES
+- The settings to download comments, when videos are downloaded, have been
+    moved. You can now find them in Edit > General download options... >
+    Downloads > Comments (Git #703)
+    
 v2.5.145 (10 Jul 2025)
 -------------------------------------------------------------------------------
 

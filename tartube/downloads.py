@@ -4429,6 +4429,7 @@ class VideoDownloader(object):
         # Create shortcut variables (for convenience)
         app_obj = self.download_manager_obj.app_obj
         dl_list_obj = self.download_manager_obj.download_list_obj
+        options_obj = self.download_worker_obj.options_manager_obj
         # Call self.stop(), if the limit described in the comments for
         #   self.__init__() have been reached
         stop_flag = False
@@ -4437,8 +4438,13 @@ class VideoDownloader(object):
         #   calls to this function have been made
         if app_obj.apply_json_timeout_flag:
 
-            if (self.dl_sim_flag and app_obj.check_comment_fetch_flag) \
-            or (not self.dl_sim_flag and app_obj.dl_comment_fetch_flag):
+            if (
+                self.dl_sim_flag \
+                and options_obj.options_dict['check_fetch_comments']
+            ) or (
+                not self.dl_sim_flag \
+                and options_obj.options_dict['dl_fetch_comments']
+            ):
                 wait_secs = app_obj.json_timeout_with_comments_time * 60
             else:
                 wait_secs = app_obj.json_timeout_no_comments_time * 60
@@ -4688,7 +4694,8 @@ class VideoDownloader(object):
             if was_live_flag:
                 video_obj.set_was_live_flag(True)
 
-            if comment_list and app_obj.comment_store_flag:
+            if comment_list \
+            and options_obj.options_dict['store_comments_in_db']:
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \
@@ -4823,7 +4830,7 @@ class VideoDownloader(object):
 
             if not video_obj.comment_list \
             and comment_list \
-            and app_obj.comment_store_flag:
+            and options_obj.options_dict['store_comments_in_db']:
                 video_obj.set_comments(comment_list)
 
             if app_obj.store_playlist_id_flag \

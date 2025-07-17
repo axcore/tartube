@@ -634,6 +634,16 @@ class OptionsManager(object):
         subs_lang_list (list): List of language tags which are used to set
             the 'subs_lang' option
 
+        check_fetch_comments (bool): If true, when checking videos, add the
+            '--write-comments' parameter
+
+        dl_fetch_comments (bool): If true, when downloading videos, add the
+            '--write-comments' parameter
+
+        store_comments_in_db (bool): If true, comments are also added to the
+            Tartube database (assuming that either 'check_fetch_comments' or
+            'dl_fetch_comments', or both, are true)
+
         downloader_config (bool): If True, a youtube-dl configuration is
             specified with the '--config-location' option. On Linux/MacOS, the
             user-wide configuration file is used
@@ -934,6 +944,9 @@ class OptionsManager(object):
             'video_format_list': [],
             'video_format_mode': 'combine',
             'subs_lang_list': [ 'en' ],
+            'check_fetch_comments': False,
+            'dl_fetch_comments': False,
+            'store_comments_in_db': False,
             'downloader_config': False,
         }
 
@@ -1277,6 +1290,7 @@ class OptionsParser(object):
             # (not given an options.OptionHolder object)
 #           OptionHolder('output_format_list', '', []),
 #           OptionHolder('output_path_list', '', []),
+#           OptionHolder('extractor_args_list', '', []),
             # (Video Selection Options)
             # --break-on-existing
             OptionHolder('break_on_existing', '--break-on-existing', False),
@@ -1413,6 +1427,9 @@ class OptionsParser(object):
 #           OptionHolder('video_format_list', '', []),
 #           OptionHolder('video_format_mode', '', 'combine'),
 #           OptionHolder('subs_lang_list', '', []),
+#           OptionHolder('check_fetch_comments', '', False),
+#           OptionHolder('dl_fetch_comments', '', False),
+#           OptionHolder('store_comments_in_db', '', False),
 #           OptionHolder('downloader_config', '', False),
         ]
 
@@ -1622,6 +1639,25 @@ class OptionsParser(object):
         parsed_list = ttutils.parse_options(copy_dict['extra_cmd_string'])
         for item in parsed_list:
             options_list.append(item)
+
+        # Parse the comment options
+        if (
+            copy_dict['check_fetch_comments'] \
+            and (
+                operation_type == 'sim' \
+                or operation_type == 'custom_sim' \
+                or operation_type == 'classic_sim'
+            )
+        ) or (
+            copy_dict['dl_fetch_comments'] \
+            and (
+                operation_type == 'real' \
+                or operation_type == 'custom_real' \
+                or operation_type == 'classic_real' \
+                or operation_type == 'classic_custom'
+            )
+        ):
+            options_list.append('--write-comments')
 
         # Parse the 'downloader_config' option, so it overrules everything
         #   else

@@ -2,11 +2,14 @@
 # Shell script to start Tartube on MS Windows, using the MSYS2 environment
 #   provided by the Tartube installer
 
+#echo "tartube_mswin.sh: Starting re-configuration of Python's virtual environment (venv)..."
+
 # Get the directory for this script...
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURE[0]}")" && pwd)"
+#SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURE[0]}")" && pwd)"
 # ...and the directory for the python venv that was created for the Tartube
 #   installer
-VENV_DIR="$SCRIPT_DIR/ytdl-venv"
+#VENV_DIR="$SCRIPT_DIR/ytdl-venv"
+VENV_DIR="../ytdl-venv"
 
 # The venv contains file paths that were correct, when the installer was
 #   created; we need to convert them to the equivalent paths for the
@@ -15,7 +18,7 @@ VENV_DIR="$SCRIPT_DIR/ytdl-venv"
 #   .../ytdl-venv/bin/activate files
 
 # Relative path to pyvenv.cfg file
-cfg_file="ytdl-venv/pyvenv.cfg"
+cfg_file="$VENV_DIR/pyvenv.cfg"
 # Other relative paths
 bin_path="../../../mingw64/bin"
 python_path="../../../mingw64/bin/python.exe"
@@ -33,11 +36,15 @@ if [[ -f "$cfg_file" ]] ; then
 	sed -i "/^command = /s|.*|command = $python_path_mswin -m venv $venv_dir_mswin|" "$cfg_file"
 
 #	echo "tartube_mswin.sh: updated venv paths in $cfg_file"
-	
+
+#else
+
+#	echo "tartube_mswin.sh: could not find file: $cfg_file"
+    	
 fi
 
 # Relative path to activate file
-act_file="ytdl-venv/bin/activate"
+act_file="$VENV_DIR/bin/activate"
 if [[ -f "$act_file" ]] ; then 
 
 	# Convert relative paths to MSWin paths 
@@ -48,6 +55,10 @@ if [[ -f "$act_file" ]] ; then
 	sed -i "s|export VIRTUAL_ENV=.*|EXPORT VIRTUAL_ENV=$venv_dir_mswin|" "$act_file"
 
 #	echo "tartube_mswin.sh: updated venv paths in $act_file"
+
+#else
+
+#	echo "tartube_portable.sh: could not find file: $act_file"
 
 fi
 

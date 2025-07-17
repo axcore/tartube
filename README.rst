@@ -44,16 +44,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.5.145 (10 Jul 2025)**
+Stable release: **v2.5.156 (10 Jul 2025)**
 
-Development release: **v2.5.145 (10 Jul 2025)**
+Development release: **v2.5.156 (10 Jul 2025)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.145/install-tartube-2.5.145-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.145/install-tartube-with-ffmpeg-2.5.145-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.145/tartube-2.5.145-64bit-mswin-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.156/install-tartube-2.5.156-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.156/install-tartube-with-ffmpeg-2.5.156-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.156/tartube-2.5.156-64bit-mswin-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.145/python3-tartube_2.5.145.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.145/tartube-2.5.145.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.156/python3-tartube_2.5.156.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.156/tartube-2.5.156.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -70,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.145/tartube_v2.5.145.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.156/tartube_v2.5.156.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -2037,7 +2037,10 @@ Fetching comments will increase the length of a download, perhaps by a lot. Addi
 This is how to enable comment fetching.
 
 - Click **Edit > System preferences... > Downloaders > Forks**, and make sure **yt-dlp** is selected
-- In the same window, click the tab **Operations > Comments**
+- Click the OK button to close that window
+- Now click **Edit > General download options...**
+- If the **Show advanced download options** button is visible, click it
+- Now click the **Downloads > Comments** tab
 - Select **When checking videos, store comments in the metadata file**
 - You can also select **When downloading videos, store comments in the metadata file**
 - You can also select **Also store comments in the Tartube database**
@@ -2139,8 +2142,10 @@ You can now set the theme from Tartube's menu.
 * `7.34 Run out of disk space`_
 * `7.35 Cannot embed thumbnails in videos`_
 * `7.36 Cannot install FFmpeg`_
-* `7.37 Annoying messages after downloads`_
-* `7.38 No puedo hablar inglés`_
+* `7.37 Cannot install yt-dlp plugins`_
+* `7.38 Annoying messages after downloads`_
+* `7.39 No puedo hablar inglés`_
+
 
 7.1 Tartube won't install/won't run/doesn't work
 ------------------------------------------------
@@ -2642,14 +2647,36 @@ A: The software library that makes FFmpeg available for download breaks frequent
 
 This issue only affects users on MS Windows.
 
-7.37 Annoying messages after downloads
+7.37 Cannot install yt-dlp plugins
+----------------------------------
+
+*Q: I installed a yt-dlp plugin, but it doesn't work, and I can't download even a single video!*
+
+A: Since v2.5.145, Tartube uses a new configuration on MS Windows. (This problem doesn't affect other systems).
+
+If you want to install additional python modules, you must do so in a terminal window inside the virtual environment (venv) that has been set up for you.
+
+There are two ways to do it. The first way is the simplest:
+
+* In Tartube's menu, click **System > Open MSYS2 terminal**
+
+The second way will also work:
+
+* In Tartube's menu, click **System > Show Tartube install folder**
+* Navigate to **msys64** folder
+* Double-click the **mingw64.exe** application to open it
+* In the new terminal window, type the following command before installing anything:
+
+        **source ~/ytdl-venv/bin/activate**
+
+7.38 Annoying messages after downloads
 --------------------------------------
 
 *Q: Every time Tartube downloads videos, it shows an annoying dialogue window. Make it stop!*
 
 A: The dialogues can be disabled in **Edit > System preferences > Operations > Actions > Don't notify the user at the end of an operation**.
 
-7.38 No puedo hablar inglés
+7.39 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar Tartube porque no hablo inglés!*

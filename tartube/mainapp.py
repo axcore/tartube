@@ -128,7 +128,11 @@ DEBUG_NO_TIMER_FUNC_FLAG = False
 
 # Path to the python executable in the virtual environment created for the
 #       MS Windows installer
-VENV_DIR = os.environ['HOME'] + '/ytdl-venv'
+if os.name == 'nt':
+    VENV_DIR = os.path.abspath(os.path.join(sys.path[0], '../../ytdl-venv'))
+else:
+    VENV_DIR = os.environ['HOME'] + '/ytdl-venv'
+
 VENV_PYTHON_PATH = f'{VENV_DIR}/bin/python3'
 
 
@@ -2048,12 +2052,12 @@ class TartubeApp(Gtk.Application):
         #   the JSON data)
         self.apply_json_timeout_flag = True
         # The length of the timeouts to apply, in minutes, when not fetching
-        #   comments (self.check_comment_fetch_flag and
-        #   self.dl_comment_fetch_flag are both False)
+        #   comments (the download options 'check_fetch_comments' and
+        #   'dl_fetch_comments' are both False)
         self.json_timeout_no_comments_time = 2
         # The length of the timeouts to apply, in minutes, when fetching
-        #   comments (self.check_comment_fetch_flag and/or
-        #   self.dl_comment_fetch_flag are True)
+        #   comments (the download options 'check_fetch_comments' and
+        #   'dl_fetch_comments' are both False)
         self.json_timeout_with_comments_time = 5
         # Flag set to True if, when checking/downloading channels/playlists,
         #   we should look out for previously-downloaded videos (that the
@@ -2245,16 +2249,13 @@ class TartubeApp(Gtk.Application):
         #   acceptable filename for the operating system
         self.temp_output_override_dict = {}
 
-        # Flag set to True if download operations with yt-dlp should add the
-        #   '--write-comments' option, downloading comments to the .info.json
-        #   file
-        # Flag used in simulated downloads (checking videos)
+        # DEPRECATED as of v2.5.148; these values can no longer be changed,
+        #   and are only used to use the new download options
+        #   .check_fetch_comments, .dl_fetch_comments and .store_comments_in_db
         self.check_comment_fetch_flag = False
-        # Flag used in real downloads
         self.dl_comment_fetch_flag = False
-        # Flag set to True if the comments should also be stored in the Tartube
-        #   database, in each media.Vidoe object
         self.comment_store_flag = False
+
         # Flag set to False if the 'timestamp' field should be visible in the
         #   config.VideoEditWin; True if the 'time' field should be visible
         #   (as of v2.3.318, all comments in a YouTube video share the same
@@ -5302,6 +5303,7 @@ class TartubeApp(Gtk.Application):
             self.slice_video_cleanup_flag \
             = json_dict['slice_video_cleanup_flag']
 
+        # (DEPRECATED as of v2.5.148)
         if version > 2003316 \
         and version < 2003552 \
         and 'comment_fetch_flag' in json_dict:
@@ -5313,6 +5315,7 @@ class TartubeApp(Gtk.Application):
             self.dl_comment_fetch_flag = json_dict['dl_comment_fetch_flag']
         if version >= 2003316 and 'comment_store_flag' in json_dict:
             self.comment_store_flag = json_dict['comment_store_flag']
+
         if version >= 2003318 and 'comment_show_text_time_flag' in json_dict:
             self.comment_show_text_time_flag \
             = json_dict['comment_show_text_time_flag']
@@ -6489,9 +6492,11 @@ class TartubeApp(Gtk.Application):
             self.slice_video_force_keyframe_flag,
             'slice_video_cleanup_flag': self.slice_video_cleanup_flag,
 
+            # (DEPRECATED as of v2.5.148)
             'check_comment_fetch_flag': self.check_comment_fetch_flag,
             'dl_comment_fetch_flag': self.dl_comment_fetch_flag,
             'comment_store_flag': self.comment_store_flag,
+
             'comment_show_text_time_flag': self.comment_show_text_time_flag,
             'comment_show_formatted_flag': self.comment_show_formatted_flag,
 
@@ -8594,6 +8599,18 @@ class TartubeApp(Gtk.Application):
             for options_obj in options_obj_list:
                 options_obj.options_dict['fetch_formats_cmd_string'] = ''
                 options_obj.options_dict['fetch_subtitles_cmd_string'] = ''
+
+        if version < 2005148:       # v2.5.148
+
+            # This version adds new options to options.OptionsManager, set
+            #   using the values of the deprecated TartubeApp IVs
+            for options_obj in options_obj_list:
+                options_obj.options_dict['check_fetch_comments'] = \
+                self.check_comment_fetch_flag
+                options_obj.options_dict['dl_fetch_comments'] = \
+                self.dl_comment_fetch_flag
+                options_obj.options_dict['store_comments_in_db'] = \
+                self.comment_store_flag
 
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
@@ -28034,14 +28051,6 @@ class TartubeApp(Gtk.Application):
         self.catalogue_sort_mode = mode
 
 
-    def set_check_comment_fetch_flag(self, flag):
-
-        if not flag:
-            self.check_comment_fetch_flag = False
-        else:
-            self.check_comment_fetch_flag = True
-
-
     def add_classic_dropzone_list(self, value):
 
         self.classic_dropzone_list.append(value)
@@ -28116,14 +28125,6 @@ class TartubeApp(Gtk.Application):
             self.comment_show_text_time_flag = False
         else:
             self.comment_show_text_time_flag = True
-
-
-    def set_comment_store_flag(self, flag):
-
-        if not flag:
-            self.comment_store_flag = False
-        else:
-            self.comment_store_flag = True
 
 
     def set_complex_index_flag(self, flag):
@@ -28379,14 +28380,6 @@ class TartubeApp(Gtk.Application):
     def set_disk_space_warn_limit(self, value):
 
         self.disk_space_warn_limit = value
-
-
-    def set_dl_comment_fetch_flag(self, flag):
-
-        if not flag:
-            self.dl_comment_fetch_flag = False
-        else:
-            self.dl_comment_fetch_flag = True
 
 
     def set_dl_proxy_list(self, proxy_list):

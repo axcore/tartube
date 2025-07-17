@@ -4987,7 +4987,7 @@ class OptionsEditWin(GenericEditWin):
             self.setup_downloads_live_tab(inner_notebook)
             self.setup_downloads_playlists_tab(inner_notebook)
             self.setup_downloads_limits_tab(inner_notebook)
-            self.setup_downloads_merge_tab(inner_notebook)
+            self.setup_downloads_comments_tab(inner_notebook)
             self.setup_downloads_extractor_tab(inner_notebook)
             self.setup_downloads_filtering_tab(inner_notebook)
             self.setup_downloads_external_tab(inner_notebook)
@@ -5123,7 +5123,7 @@ class OptionsEditWin(GenericEditWin):
             0, 4, grid_width, 1,
         )
 
-        checkbutton = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             _(
                 'Ignore \'No video formats\' error (useful for extracting' \
                 + ' metadata from unavailable videos)',
@@ -5131,9 +5131,9 @@ class OptionsEditWin(GenericEditWin):
             'ignore_no_formats_error',
             0, 5, grid_width, 1,
         )
-        self.add_tooltip('--ignore-no-formats-error', checkbutton)
+        self.add_tooltip('--ignore-no-formats-error', checkbutton3)
 
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton4 = self.add_checkbutton(grid,
             _(
                 'Force download archive entries to be written as long as' \
                 + ' no errors occur',
@@ -5141,7 +5141,28 @@ class OptionsEditWin(GenericEditWin):
             'force_write_archive',
             0, 6, grid_width, 1,
         )
-        self.add_tooltip('--force-write-archive', checkbutton2)
+        self.add_tooltip('--force-write-archive', checkbutton4)
+
+        # Video/audio merge options (yt-dlp only)
+        self.add_label(grid,
+            '<u>' + _('Video/audio merge options') + '</u>' \
+            + self.ytdlp_only(),
+            0, 7, grid_width, 1,
+        )
+
+        checkbutton5 = self.add_checkbutton(grid,
+            _('Allow multiple video streams to be merged into a single file'),
+            'video_multistreams',
+            0, 8, grid_width, 1,
+        )
+        self.add_tooltip('--video-multistreams', checkbutton5)
+
+        checkbutton6 = self.add_checkbutton(grid,
+            _('Allow multiple audio streams to be merged into a single file'),
+            'audio_multistreams',
+            0, 9, grid_width, 1,
+        )
+        self.add_tooltip('--audio-multistreams', checkbutton6)
 
 
     def setup_downloads_live_tab(self, inner_notebook):
@@ -5243,11 +5264,11 @@ class OptionsEditWin(GenericEditWin):
         row_count = self.downloads_views_widgets(grid, row_count)
 
 
-    def setup_downloads_merge_tab(self, inner_notebook):
+    def setup_downloads_comments_tab(self, inner_notebook):
 
         """Called by self.setup_downloads_tab().
 
-        Sets up the 'Merge' inner notebook tab.
+        Sets up the 'Comments' inner notebook tab.
 
         Args:
 
@@ -5256,34 +5277,72 @@ class OptionsEditWin(GenericEditWin):
         """
 
         ignore_me = _(
-            'TRANSLATOR\'S NOTE: Download options > Downloads > Merge'
+            'TRANSLATOR\'S NOTE: Download options > Downloads > Comments'
         )
 
         tab, grid = self.add_inner_notebook_tab(
-            _('_Merge'),
+            _('_Comments'),
             inner_notebook,
         )
 
-        # Video/audio merge options (yt-dlp only)
+        # Video comments (yt-dlp only)
         self.add_label(grid,
-            '<u>' + _('Video/audio merge options') + '</u>' \
-            + self.ytdlp_only(),
+            '<u>' + _('Video comments') + '</u>' + self.ytdlp_only(),
             0, 0, 1, 1,
         )
 
         checkbutton = self.add_checkbutton(grid,
-            _('Allow multiple video streams to be merged into a single file'),
-            'video_multistreams',
+            _('When checking videos, store comments in the metadata file'),
+            None,
             0, 1, 1, 1,
         )
-        self.add_tooltip('--video-multistreams', checkbutton)
+        # (Signal connect appears below)
+        checkbutton.set_active(self.retrieve_val('check_fetch_comments'))
+        self.add_tooltip('--write-comments', checkbutton)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _('Allow multiple audio streams to be merged into a single file'),
-            'audio_multistreams',
+            _('When downloading videos, store comments in the metadata file'),
+            None,
             0, 2, 1, 1,
         )
-        self.add_tooltip('--audio-multistreams', checkbutton2)
+        # (Signal connect appears below)
+        checkbutton2.set_active(self.retrieve_val('dl_fetch_comments'))
+        self.add_tooltip('--write-comments', checkbutton2)
+
+        self.add_label(grid,
+            '<i>' + _('Warning: fetching comments will increase the download' \
+            + ' time, perhaps by a lot!') + '</i>',
+            0, 3, 1, 1,
+        )
+
+        checkbutton3 = self.add_checkbutton(grid,
+            _('Also store comments in the Tartube database'),
+            'store_comments_in_db',
+            0, 4, 1, 1,
+        )
+        if not checkbutton.get_active() \
+        and not checkbutton2.get_active():
+            checkbutton3.set_sensitive(False)
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_check_fetch_comments_button_toggled,
+            checkbutton3,
+        )
+        checkbutton2.connect(
+            'toggled',
+            self.on_dl_comment_fetch_button_toggled,
+            checkbutton3,
+        )
+
+        self.add_label(grid,
+            '<i>' + _(
+                'Warning: storing comments will increase the size of' \
+                + ' Tartube\'s datbase, perhaps by a lot!',
+            ) + '</i>',
+            0, 5, 1, 1,
+        )
 
 
     def setup_downloads_extractor_tab(self, inner_notebook):
@@ -9177,6 +9236,30 @@ class OptionsEditWin(GenericEditWin):
             entry.set_text('')
 
 
+    def on_check_fetch_comments_button_toggled(self, checkbutton, \
+    checkbutton2):
+
+        """Called by callback in self.setup_downloads_comments_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to update
+
+        """
+
+        if checkbutton.get_active():
+            self.edit_dict['check_fetch_comments'] = True
+            checkbutton2.set_sensitive(True)
+
+        else:
+            self.edit_dict['check_fetch_comments'] = False
+            if not self.retrieve_val('dl_fetch_comments'):
+                checkbutton2.set_active(False)
+                checkbutton2.set_sensitive(False)
+
+
     def on_clone_options_clicked(self, button):
 
         """Called by callback in self.setup_name_tab().
@@ -9440,6 +9523,30 @@ class OptionsEditWin(GenericEditWin):
 
             self.edit_dict['direct_cmd_flag'] = True
             checkbutton2.set_sensitive(True)
+
+
+    def on_dl_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
+
+        """Called by callback in self.setup_downloads_comments_tab().
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            checkbutton2 (Gtk.CheckButton): Another widget to update
+
+        """
+
+        if checkbutton.get_active():
+            self.edit_dict['dl_fetch_comments'] = True
+            checkbutton2.set_sensitive(True)
+
+        else:
+            self.edit_dict['dl_fetch_comments'] = False
+            if not self.retrieve_val('check_fetch_comments'):
+                checkbutton2.set_active(False)
+                checkbutton2.set_sensitive(False)
+
 
 
     def on_dl_config_button_clicked(self, button, entry, textbuffer, \
@@ -24293,7 +24400,6 @@ class SystemPrefWin(GenericPrefWin):
         self.setup_operations_actions_tab(self.operations_inner_notebook)
         self.setup_operations_clips_tab(self.operations_inner_notebook)
         self.setup_operations_slices_tab(self.operations_inner_notebook)
-        self.setup_operations_comments_tab(self.operations_inner_notebook)
         if not self.app_obj.simple_prefs_flag:
             self.setup_operations_mirrors_tab(self.operations_inner_notebook)
             self.setup_operations_proxies_tab(self.operations_inner_notebook)
@@ -26292,89 +26398,6 @@ class SystemPrefWin(GenericPrefWin):
                 'toggled',
                 self.on_slice_cleanup_button_toggled,
             )
-
-
-    def setup_operations_comments_tab(self, inner_notebook):
-
-        """Called by self.setup_operations_tab().
-
-        Sets up the 'Comments' inner notebook tab.
-
-        Args:
-
-            inner_notebook (Gtk.Notebook): The container for this tab
-
-        """
-
-        ignore_me = _(
-            'TRANSLATOR\'S NOTE: System preferences > Operations > Comments'
-        )
-
-        tab, grid = self.add_inner_notebook_tab(
-            _('C_omments'),
-            inner_notebook,
-        )
-        grid_width = 1
-
-        # Video comments (yt-dlp only)
-        self.add_label(grid,
-            '<u>' + _('Video comments') + '</u>' + self.ytdlp_only(),
-            0, 0, grid_width, 1,
-        )
-
-        checkbutton = self.add_checkbutton(grid,
-            _('When checking videos, store comments in the metadata file'),
-            self.app_obj.check_comment_fetch_flag,
-            True,               # Can be toggled by user
-            0, 1, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        checkbutton2 = self.add_checkbutton(grid,
-            _('When downloading videos, store comments in the metadata file'),
-            self.app_obj.dl_comment_fetch_flag,
-            True,               # Can be toggled by user
-            0, 2, grid_width, 1,
-        )
-        # (Signal connect appears below)
-
-        self.add_label(grid,
-            '<i>' + _('Warning: fetching comments will increase the download' \
-            + ' time, perhaps by a lot!') + '</i>',
-            0, 3, grid_width, 1,
-        )
-
-        checkbutton3 = self.add_checkbutton(grid,
-            _('Also store comments in the Tartube database'),
-            self.app_obj.comment_store_flag,
-            True,               # Can be toggled by user
-            0, 4, grid_width, 1,
-        )
-        # (Signal connect appears below)
-        if not self.app_obj.check_comment_fetch_flag \
-        and not self.app_obj.dl_comment_fetch_flag:
-            checkbutton3.set_sensitive(False)
-
-        # (Signal connects from above)
-        checkbutton.connect(
-            'toggled',
-            self.on_check_comment_fetch_button_toggled,
-            checkbutton3,
-        )
-        checkbutton2.connect(
-            'toggled',
-            self.on_dl_comment_fetch_button_toggled,
-            checkbutton3,
-        )
-        checkbutton3.connect('toggled', self.on_comment_store_button_toggled)
-
-        self.add_label(grid,
-            '<i>' + _(
-                'Warning: storing comments will increase the size of' \
-                + ' Tartube\'s datbase, perhaps by a lot!',
-            ) + '</i>',
-            0, 5, grid_width, 1,
-        )
 
 
     def setup_operations_mirrors_tab(self, inner_notebook):
@@ -29172,36 +29195,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_block_livestreams_flag(False)
 
 
-    def on_check_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
-
-        """Called from callback in self.setup_operations_comments_tab().
-
-        Enables/disables fetching video comments while checking videos.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            checkbutton2 (Gtk.CheckButton): Another widget to modify
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.check_comment_fetch_flag:
-            self.app_obj.set_check_comment_fetch_flag(True)
-            checkbutton2.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.check_comment_fetch_flag:
-            self.app_obj.set_check_comment_fetch_flag(False)
-
-            if not self.app_obj.dl_comment_fetch_flag:
-                checkbutton2.set_active(False)
-                checkbutton2.set_sensitive(False)
-            else:
-                checkbutton2.set_sensitive(True)
-
-
     def on_check_limit_changed(self, entry):
 
         """Called from callback in self.setup_operations_block_tab().
@@ -29387,26 +29380,6 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_close_to_tray_flag(False)
             checkbutton2.set_active(False)
             checkbutton2.set_sensitive(False)
-
-
-    def on_comment_store_button_toggled(self, checkbutton):
-
-        """Called from callback in self.setup_operations_comments_tab().
-
-        Enables/disables storing video comments in the Tartube database.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.comment_store_flag:
-            self.app_obj.set_comment_store_flag(True)
-        elif not checkbutton.get_active() \
-        and self.app_obj.comment_store_flag:
-            self.app_obj.set_comment_store_flag(False)
 
 
     def on_complex_button_toggled(self, checkbutton):
@@ -30899,36 +30872,6 @@ class SystemPrefWin(GenericPrefWin):
         """
 
         self.app_obj.set_disk_space_warn_limit(spinbutton.get_value())
-
-
-    def on_dl_comment_fetch_button_toggled(self, checkbutton, checkbutton2):
-
-        """Called from callback in self.setup_operations_comments_tab().
-
-        Enables/disables fetching video comments while downloading videos.
-
-        Args:
-
-            checkbutton (Gtk.CheckButton): The widget clicked
-
-            checkbutton2 (Gtk.CheckButton): Another widget to modify
-
-        """
-
-        if checkbutton.get_active() \
-        and not self.app_obj.dl_comment_fetch_flag:
-            self.app_obj.set_dl_comment_fetch_flag(True)
-            checkbutton2.set_sensitive(True)
-
-        elif not checkbutton.get_active() \
-        and self.app_obj.dl_comment_fetch_flag:
-            self.app_obj.set_dl_comment_fetch_flag(False)
-
-            if not self.app_obj.check_comment_fetch_flag:
-                checkbutton2.set_active(False)
-                checkbutton2.set_sensitive(False)
-            else:
-                checkbutton2.set_sensitive(True)
 
 
     def on_dl_limit_changed(self, entry):

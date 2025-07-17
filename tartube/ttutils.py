@@ -2872,14 +2872,6 @@ custom_dl_obj=None, divert_mode=None):
                 ),
             )
 
-    # yt-dlp options
-    if app_obj.ytdl_fork is not None and app_obj.ytdl_fork == 'yt-dlp':
-
-        # Fetch video comments, if required
-        if (dl_sim_flag and app_obj.check_comment_fetch_flag) \
-        or (not dl_sim_flag and app_obj.dl_comment_fetch_flag):
-            options_list.append('--write-comments')
-
     # Show verbose output (youtube-dl debugging mode), if required
     if app_obj.ytdl_write_verbose_flag:
         options_list.append('--verbose')
