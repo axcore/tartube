@@ -332,27 +332,62 @@
 # Header files
 # -------------------------------
 
+Unicode True
+
     !include "MUI2.nsh"
     !include "Sections.nsh"
+    !include "FileFunc.nsh"
 
 # General
 # -------------------------------
 
+    !define PROGRAM_NAME             "Tartube"
+    !define PROGRAM_VERSION          "2.5.156"
+
+    VIProductVersion                 ${PROGRAM_VERSION}.0
+    VIFileVersion                    ${PROGRAM_VERSION}.0
+
+    !define PROGRAM_PUBLISHER        "A S Lewis"
+    !define LINK_LOCATION            "http://tartube.sourceforge.io/"
+    !define BRANDING_TEXT            "  "
+    !define SOURCE_FOLDER            "msys64"
+
+    !define /date CURRENT_YEAR       "%Y"
+
+
     ;Name and file
-    Name "Tartube"
-    OutFile "install-tartube-2.5.156-64bit.exe"
+    Name    "${PROGRAM_NAME}"
+    Caption "$(Program_caption)"
+    OutFile "install-tartube-${PROGRAM_VERSION}-64bit.exe"
+
+    ShowInstDetails show
+    ShowUnInstDetails show
+
+    VIAddVersionKey "ProductName"        "${PROGRAM_NAME}"
+    VIAddVersionKey "ProductVersion"     "${PROGRAM_VERSION}"
+    VIAddVersionKey "Comments"           ""
+    VIAddVersionKey "CompanyName"        "${PROGRAM_PUBLISHER}"
+    VIAddVersionKey "LegalTrademarks"    "${PROGRAM_PUBLISHER} ${CURRENT_YEAR}"
+    VIAddVersionKey "LegalCopyright"     "${PROGRAM_PUBLISHER} ${CURRENT_YEAR}"
+    VIAddVersionKey "FileDescription"    "${PROGRAM_NAME} installer"
+    VIAddVersionKey "FileVersion"        "${PROGRAM_VERSION}"
+    VIAddVersionKey "InternalName"       "${PROGRAM_NAME}"
+
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
 
     ;Get installation folder from registry if available
-    InstallDirRegKey HKCU "Software\Tartube" ""
+    InstallDirRegKey HKCU "Software\${PROGRAM_NAME}" ""
 
     ;Request application privileges for Windows Vista
-    RequestExecutionLevel user
+;    RequestExecutionLevel user
+
+    ;Request application privileges to write info in program list
+    RequestExecutionLevel Admin
 
     ; Extra stuff here
-    BrandingText " "
+    BrandingText "${BRANDING_TEXT}"
 
 # Variables
 # -------------------------------
@@ -363,37 +398,36 @@
 # -------------------------------
 
     !define MUI_ABORTWARNING
-    !define MUI_ICON "tartube_icon.ico"
-    !define MUI_UNICON "tartube_icon.ico"
+    !define MUI_ICON                             "tartube_icon.ico"
+    !define MUI_UNICON                           "tartube_icon.ico"
     !define MUI_HEADERIMAGE
-    !define MUI_HEADERIMAGE_BITMAP "tartube_header.bmp"
-    !define MUI_HEADERIMAGE_UNBITMAP "tartube_header.bmp"
-    !define MUI_WELCOMEFINISHPAGE_BITMAP "tartube_wizard.bmp"
+    !define MUI_HEADERIMAGE_BITMAP               "tartube_header.bmp"
+    !define MUI_HEADERIMAGE_UNBITMAP             "tartube_header.bmp"
+    !define MUI_WELCOMEFINISHPAGE_BITMAP         "tartube_wizard.bmp"
 
 # Pages
 # -------------------------------
 
     !insertmacro MUI_PAGE_WELCOME
 
-    !insertmacro MUI_PAGE_LICENSE "license.txt"
+    !insertmacro MUI_PAGE_LICENSE                "license.txt"
 
     !insertmacro MUI_PAGE_DIRECTORY
 
-    !define MUI_STARTMENUPAGE_REGISTRY_ROOT "SHCTX"
-    !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\Tartube"
+    !define MUI_STARTMENUPAGE_REGISTRY_ROOT      "SHCTX"
+    !define MUI_STARTMENUPAGE_REGISTRY_KEY       "Software\${PROGRAM_NAME}"
     !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Startmenu"
-    !define MUI_STARTMENUPAGE_DEFAULTFOLDER "Tartube"
+    !define MUI_STARTMENUPAGE_DEFAULTFOLDER      "${PROGRAM_NAME}"
 
     !insertmacro MUI_PAGE_INSTFILES
 
-    !define MUI_FINISHPAGE_RUN "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat"
-    !define MUI_FINISHPAGE_RUN_TEXT "Run Tartube"
+    !define MUI_FINISHPAGE_RUN                   "$INSTDIR\${SOURCE_FOLDER}\home\user\tartube\tartube_64bit.bat"
+    !define MUI_FINISHPAGE_RUN_TEXT              "$(RunTartube)"
     !define MUI_FINISHPAGE_RUN_NOTCHECKED
-    !define MUI_FINISHPAGE_LINK "Visit the Tartube website for the latest news \
-        and support"
-    !define MUI_FINISHPAGE_LINK_LOCATION "http://tartube.sourceforge.io/"
-    !insertmacro MUI_PAGE_FINISH
+    !define MUI_FINISHPAGE_LINK                  "$(VisitTartubeSite)"
+    !define MUI_FINISHPAGE_LINK_LOCATION         "${LINK_LOCATION}"
 
+    !insertmacro MUI_PAGE_FINISH
     !insertmacro MUI_UNPAGE_CONFIRM
     !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -401,6 +435,22 @@
 # -------------------------------
 
     !insertmacro MUI_LANGUAGE "English"
+    !insertmacro MUI_LANGUAGE "Italian"
+
+    LangString RunTartube        ${LANG_ENGLISH} "Run ${PROGRAM_NAME}"
+    LangString VisitTartubeSite  ${LANG_ENGLISH} "Visit the ${PROGRAM_NAME} website for the latest news and support"
+    LangString UninstallTartube  ${LANG_ENGLISH} "Uninstall ${PROGRAM_NAME}"
+    LangString GtkGraphicsTest   ${LANG_ENGLISH} "Gtk graphics test"
+    LangString Program_installer ${LANG_ENGLISH} "${PROGRAM_NAME} installer"
+    LangString Program_caption   ${LANG_ENGLISH} "Setup of ${PROGRAM_NAME} ${PROGRAM_VERSION}"
+
+    LangString RunTartube        ${LANG_ITALIAN} "Esegui ${PROGRAM_NAME}"
+    LangString VisitTartubeSite  ${LANG_ITALIAN} "Visita il sito web di ${PROGRAM_NAME} per le ultime novità ed il supporto"
+    LangString UninstallTartube  ${LANG_ITALIAN} "Disinstalla ${PROGRAM_NAME}"
+    LangString GtkGraphicsTest   ${LANG_ITALIAN} "Test grafica Gtk"
+    LangString Program_installer ${LANG_ITALIAN} "${PROGRAM_NAME} installer"
+    LangString Program_caption   ${LANG_ITALIAN} "Installazione di ${PROGRAM_NAME} ${PROGRAM_VERSION}"
+
 
 # Installer sections
 # -------------------------------
@@ -411,60 +461,52 @@ Section "Tartube" SecClient
     SetOutPath "$INSTDIR"
 
     File "tartube_icon.ico"
-    File /r msys64
+    File /r ${SOURCE_FOLDER}
 
-    SetOutPath "$INSTDIR\msys64\home\user\tartube"
+    SetOutPath "$INSTDIR\${SOURCE_FOLDER}\home\user\tartube"
 
     # Start Menu
-    CreateDirectory "$SMPROGRAMS\Tartube"
-    CreateShortCut "$SMPROGRAMS\Tartube\Tartube.lnk" \
-        "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" \
-        "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
-    CreateShortCut "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk" \
-        "$INSTDIR\Uninstall.exe" \
-        "" "$INSTDIR\tartube_icon.ico"
+    CreateDirectory "$SMPROGRAMS\${PROGRAM_NAME}"
+    CreateShortCut  "$SMPROGRAMS\${PROGRAM_NAME}\${PROGRAM_NAME}.lnk"     "$INSTDIR\${SOURCE_FOLDER}\home\user\tartube\tartube_64bit.bat"   "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
+    CreateShortCut  "$SMPROGRAMS\${PROGRAM_NAME}\$(UninstallTartube).lnk" "$INSTDIR\Uninstall.exe"                                          "" "$INSTDIR\tartube_icon.ico"
+    CreateShortCut  "$SMPROGRAMS\${PROGRAM_NAME}\$(GtkGraphicsTest).lnk"  "$INSTDIR\${SOURCE_FOLDER}\mingw64\bin\gtk3-demo-application.exe" "" "$INSTDIR\tartube_icon.ico" ""
 
     # Desktop icon
-    CreateShortcut "$DESKTOP\Tartube.lnk" \
-        "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" \
-        "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
-
-    # Store installation folder
-    # Commented out since v1.5.0; these instructions don't work, and probably
-    #   aren't necessary anyway
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayName" "Tartube"
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "Publisher" "A S Lewis"
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.5.156"
+    CreateShortcut "$DESKTOP\Tartube.lnk" "$INSTDIR\${SOURCE_FOLDER}\home\user\tartube\tartube_64bit.bat" "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 
 SectionEnd
 
+Section -Post
+   !define PRODUCT_UNINST_ROOT_KEY  "HKLM"
+   !define PRODUCT_UNINST_KEY       "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
+   WriteRegStr   ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName"     "$(^Name)"
+   WriteRegStr   ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion"  "${PROGRAM_VERSION}"
+   WriteRegStr   ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
+   WriteRegStr   ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon"     "$INSTDIR\Uninstall.exe"
+   WriteRegStr   ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher"       "${PROGRAM_PUBLISHER}"
+   ;  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+   ;  IntFmt $0 "0x%08X" $0
+   ;  Following lines will make uninstaller work - do not change anything, unless you really want to.
+   ;WriteRegDWORD ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "EstimatedSize"   "$0"
+SectionEnd
+  
 # Uninstaller sections
 # -------------------------------
 
 Section "Uninstall"
 
-    Delete "$SMPROGRAMS\Tartube\Tartube.lnk"
-    Delete "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk"
-    Delete "$SMPROGRAMS\Tartube\Gtk graphics test.lnk"
-    RMDir /r "$SMPROGRAMS\Tartube"
-    Delete "$DESKTOP\Tartube.lnk"
+    Delete   "$SMPROGRAMS\${PROGRAM_NAME}\${PROGRAM_NAME}.lnk"
+    Delete   "$SMPROGRAMS\${PROGRAM_NAME}\$(UninstallTartube).lnk"
+    Delete   "$SMPROGRAMS\${PROGRAM_NAME}\$(GtkGraphicsTest).lnk"
+    RMDir /r "$SMPROGRAMS\${PROGRAM_NAME}"
+    Delete   "$DESKTOP\${PROGRAM_NAME}.lnk"
 
     RMDir /r "$INSTDIR"
-    Delete "$INSTDIR\Uninstall.exe"
+    Delete   "$INSTDIR\Uninstall.exe"
 
-    DeleteRegKey HKLM \
-        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
 
 SectionEnd
