@@ -2699,6 +2699,20 @@ class TartubeApp(Gtk.Application):
             '--hls-split-discontinuity': False,
         }
 
+        # Strings used in the NSIS installation script
+        # This IV is not used by Tartube code, but should be registered by
+        #   Weblate, so that translators can provide translations
+        self.extra_translation_list = [
+            # Used in the current version (v2.5.161)
+            _('Run Tartube'),
+            _('Visit the Tartube website for the latest news and support'),
+            _('Uninstall Tartube'),
+            # (Used in the current version, may be added later)
+            _('Gtk graphics test'),
+            _('Tartube installer'),
+            _('Tartube v{1} Setup'),
+        ]
+
 
     def do_startup(self):
 

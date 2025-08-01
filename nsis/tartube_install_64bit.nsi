@@ -1,4 +1,4 @@
-# Tartube v2.5.156 installer script for MS Windows
+﻿# Tartube v2.5.164 installer script for MS Windows
 #
 # Copyright (C) 2019-2025 A S Lewis
 #
@@ -340,7 +340,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.5.156-64bit.exe"
+    OutFile "install-tartube-2.5.164-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
@@ -387,10 +387,11 @@
     !insertmacro MUI_PAGE_INSTFILES
 
     !define MUI_FINISHPAGE_RUN "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat"
-    !define MUI_FINISHPAGE_RUN_TEXT "Run Tartube"
+#   !define MUI_FINISHPAGE_RUN_TEXT "Run Tartube"
+    !define MUI_FINISHPAGE_RUN_TEXT "$(RunTartube)"
     !define MUI_FINISHPAGE_RUN_NOTCHECKED
-    !define MUI_FINISHPAGE_LINK "Visit the Tartube website for the latest news \
-        and support"
+#   !define MUI_FINISHPAGE_LINK "Visit the Tartube website for the latest news and support"
+    !define MUI_FINISHPAGE_LINK "$(VisitTartubeSite)"
     !define MUI_FINISHPAGE_LINK_LOCATION "http://tartube.sourceforge.io/"
     !insertmacro MUI_PAGE_FINISH
 
@@ -401,6 +402,15 @@
 # -------------------------------
 
     !insertmacro MUI_LANGUAGE "English"
+    !insertmacro MUI_LANGUAGE "Italian"
+
+    LangString RunTartube        ${LANG_ENGLISH} "Run Tartube"
+    LangString VisitTartubeSite  ${LANG_ENGLISH} "Visit the Tartube website for the latest news and support"
+    LangString UninstallTartube  ${LANG_ENGLISH} "Uninstall Tartube"
+
+    LangString RunTartube        ${LANG_ITALIAN} "Esegui Tartube"
+    LangString VisitTartubeSite  ${LANG_ITALIAN} "Visita il sito web di Tartube per le ultime novità ed il supporto"
+    LangString UninstallTartube  ${LANG_ITALIAN} "Disinstalla Tartube"
 
 # Installer sections
 # -------------------------------
@@ -411,39 +421,18 @@ Section "Tartube" SecClient
     SetOutPath "$INSTDIR"
 
     File "tartube_icon.ico"
-    File /r msys64
+    File /r /x settings.json msys64
 
     SetOutPath "$INSTDIR\msys64\home\user\tartube"
 
     # Start Menu
     CreateDirectory "$SMPROGRAMS\Tartube"
-    CreateShortCut "$SMPROGRAMS\Tartube\Tartube.lnk" \
-        "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" \
-        "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
-    CreateShortCut "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk" \
-        "$INSTDIR\Uninstall.exe" \
-        "" "$INSTDIR\tartube_icon.ico"
+    CreateShortCut "$SMPROGRAMS\Tartube\Tartube.lnk" "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
+#   CreateShortCut "$SMPROGRAMS\Tartube\Uninstall Tartube.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\tartube_icon.ico"
+    CreateShortCut "$SMPROGRAMS\Tartube\$(UninstallTartube).lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\tartube_icon.ico"
 
     # Desktop icon
-    CreateShortcut "$DESKTOP\Tartube.lnk" \
-        "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" \
-        "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
-
-    # Store installation folder
-    # Commented out since v1.5.0; these instructions don't work, and probably
-    #   aren't necessary anyway
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayName" "Tartube"
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "Publisher" "A S Lewis"
-#    WriteRegStr HKLM \
-#        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube" \
-#        "DisplayVersion" "2.5.156"
+    CreateShortcut "$DESKTOP\Tartube.lnk" "$INSTDIR\msys64\home\user\tartube\tartube_64bit.bat" "" "$INSTDIR\tartube_icon.ico" "" SW_SHOWMINIMIZED
 
     # Create uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -464,7 +453,6 @@ Section "Uninstall"
     RMDir /r "$INSTDIR"
     Delete "$INSTDIR\Uninstall.exe"
 
-    DeleteRegKey HKLM \
-        "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
 
 SectionEnd

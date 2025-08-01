@@ -4409,6 +4409,51 @@ class VideoDownloader(object):
             self.stop_now_flag = True
 
 
+    def confirm_remuxed_video(self, dir_path, filename, extension):
+
+        """Called by self.extract_stdout_data().
+
+        Written to handle problems described in Git #714.
+
+        When youtube-dl reports a video has been remuxed, make sure that the
+        media.Video object has its file extension updated.
+
+        If no matching video can be found, call .confirm_old_video() to handle
+        it.
+
+        Args:
+
+            dir_path (str): The full path to the directory in which the video
+                is saved, e.g. '/home/yourname/tartube/downloads/Videos'
+
+            filename (str): The video's filename, e.g. 'My Video'
+
+            extension (str): The video's extension, e.g. '.mp4'
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('dld 4197 confirm_remuxed_video')
+
+        # Create shortcut variables (for convenience)
+        app_obj = self.download_manager_obj.app_obj
+        media_data_obj = self.download_item_obj.media_data_obj
+
+        # Find the matching video, and update its file extension
+        if isinstance(media_data_obj, media.Video):
+            video_obj = media_data_obj
+
+        else:
+            video_obj = media_data_obj.find_matching_video(app_obj, filename)
+
+        if video_obj:
+            video_obj.set_file_ext(extension)
+
+        else:
+            # No matching video found, so let .confirm_old_video() handle it
+            return confirm_old_video(self, dir_path, filename, extension)
+
+
     def confirm_sim_video(self, json_dict):
 
         """Called by self.extract_stdout_data().
@@ -5684,7 +5729,7 @@ class VideoDownloader(object):
                 dl_stat_dict['extension'] = extension
                 self.reset_temp_destination()
 
-                self.confirm_new_video(path, filename, extension)
+                self.confirm_remuxed_video(path, filename, extension)
 
             elif (
                 isinstance(media_data_obj, media.Channel)

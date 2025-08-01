@@ -1,7 +1,18 @@
+v2.5.164 (1 Aug 2025)
+-------------------------------------------------------------------------------
+
+MAJOR FIXES
+- Fixed broken virtual environment configuration on some MS Windows systems
+    (again, as the fix in the previous release did not work as intended)
+- The MS Windows installer will no longer overwrite Tartube's settings file
+    (settings.json) when Tartube is reinstalled
+- Fixed failure to update the Tartube database with a remuxed video, again
+    (Git #714)
+
 v2.5.156 (17 Jul 2025)
 -------------------------------------------------------------------------------
 
-MAJOR NEW FEATURES
+MAJOR FIXES
 - Fixed broken virtual environment configuration on some MS Windows systems
 - Also added a 'repair' shell script which will repair the configuration, in
     case you tweak the settings yourself. The existing shell scripts will also
