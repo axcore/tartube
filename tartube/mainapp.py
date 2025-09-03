@@ -5841,7 +5841,8 @@ class TartubeApp(Gtk.Application):
                     'ytdl_update_pip3_recommend',
                     'ytdl_update_pipx_omit_user',
                 ]:
-                    del self.ytdl_update_dict[item]
+                    if item in self.ytdl_update_dict:
+                        del self.ytdl_update_dict[item]
                     if self.ytdl_update_current == item:
                         self.ytdl_update_current = 'ytdl_update_pipx'
 

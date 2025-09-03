@@ -1,4 +1,4 @@
-﻿# Tartube v2.5.164 installer script for MS Windows
+﻿# Tartube v2.5.167 installer script for MS Windows
 #
 # Copyright (C) 2019-2025 A S Lewis
 #
@@ -340,7 +340,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.5.164-64bit.exe"
+    OutFile "install-tartube-2.5.167-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"
