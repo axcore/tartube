@@ -10913,8 +10913,12 @@ class TartubeApp(Gtk.Application):
         # (Must compile a list of top-level container objects first, or Python
         #   will complain about the dictionary changing size)
         obj_list = []
+        # !!! DEBUG: Git #737: temporary workaround for db inconstistencies
+#       for dbid in self.container_reg_dict.keys():
+#           obj_list.append(self.media_reg_dict[dbid])
         for dbid in self.container_reg_dict.keys():
-            obj_list.append(self.media_reg_dict[dbid])
+            if dbid in self.media_reg_dict:
+                obj_list.append(self.media_reg_dict[dbid])
 
         for media_data_obj in obj_list:
 
