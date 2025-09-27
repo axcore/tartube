@@ -1739,6 +1739,38 @@ class MainWin(Gtk.ApplicationWindow):
         # Separator
         ops_sub_menu.append(Gtk.SeparatorMenuItem())
 
+        selected_videos_submenu = Gtk.Menu()
+
+        self.check_selected_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Check'),
+        )
+        selected_videos_submenu.append(self.check_selected_menu_item)
+        self.check_selected_menu_item.set_action_name(
+            'app.check_selected_menu',
+        )
+        
+        self.dl_selected_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Download'),
+        )
+        selected_videos_submenu.append(self.dl_selected_menu_item)
+        self.dl_selected_menu_item.set_action_name('app.dl_selected_menu')
+
+        self.temp_dl_selected_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Temporary download'),
+        )
+        selected_videos_submenu.append(self.temp_dl_selected_menu_item)
+        self.temp_dl_selected_menu_item.set_action_name(
+            'app.temp_dl_selected_menu',
+        )
+        
+        selected_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Selected _videos'))
+        selected_videos_menu_item.set_submenu(selected_videos_submenu)
+        ops_sub_menu.append(selected_videos_menu_item)
+
+        # Separator
+        ops_sub_menu.append(Gtk.SeparatorMenuItem())
+
         self.refresh_db_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Refresh database...'),
         )
@@ -19295,7 +19327,9 @@ class MainWin(Gtk.ApplicationWindow):
                 new_media_data_obj.set_cloned_name(media_data_obj)
                 # Remember the name of the original container object, for
                 #   display in the Video catalogue
-                new_media_data_obj.set_orig_parent(media_data_obj.parent_obj)
+                new_media_data_obj.set_orig_parent_obj(
+                    media_data_obj.parent_obj
+                )
 
 
     def on_video_catalogue_mark_temp_dl_multi(self, menu_item,
@@ -19349,7 +19383,7 @@ class MainWin(Gtk.ApplicationWindow):
                 # Remember the name of the original container object, for
                 #   display in the Video catalogue
                 if new_media_data_obj:
-                    new_media_data_obj.set_orig_parent(
+                    new_media_data_obj.set_orig_parent_obj(
                         media_data_obj.parent_obj,
                     )
 
@@ -20733,7 +20767,7 @@ class MainWin(Gtk.ApplicationWindow):
                 # Remember the name of the original container object, for
                 #   display in the Video catalogue
                 if new_media_data_obj:
-                    new_media_data_obj.set_orig_parent(
+                    new_media_data_obj.set_orig_parent_obj(
                         media_data_obj.parent_obj,
                     )
 
@@ -20808,7 +20842,7 @@ class MainWin(Gtk.ApplicationWindow):
                     # Remember the name of the original container object, for
                     #   display in the Video catalogue
                     if new_media_data_obj:
-                        new_media_data_obj.set_orig_parent(
+                        new_media_data_obj.set_orig_parent_obj(
                             media_data_obj.parent_obj,
                         )
 
@@ -24998,13 +25032,13 @@ class SimpleCatalogueItem(object):
         if self.main_win_obj.app_obj.catalogue_mode != 'simple_show_parent':
             return
 
-        if self.video_obj.orig_parent is not None:
+        if self.video_obj.orig_parent_obj is not None:
 
             string = _('Originally from:') + ' \''
 
             string2 = html.escape(
                 ttutils.shorten_string(
-                    self.video_obj.orig_parent,
+                    self.video_obj.orig_parent_obj.name,
                     self.main_win_obj.long_string_max_len,
                 ),
                 quote=True,
@@ -26073,13 +26107,13 @@ class ComplexCatalogueItem(object):
 
             # Show the name of the parent channel/playlist/folder, optionally
             #   followed by the whole video description, depending on settings
-            if self.video_obj.orig_parent is not None:
+            if self.video_obj.orig_parent_obj is not None:
 
                 string = _('Originally from:') + ' \''
 
                 string += html.escape(
                     ttutils.shorten_string(
-                        self.video_obj.orig_parent,
+                        self.video_obj.orig_parent_obj.name,
                         self.main_win_obj.very_long_string_max_len,
                     ),
                     quote=True,
@@ -28551,8 +28585,8 @@ class GridCatalogueItem(ComplexCatalogueItem):
         if DEBUG_FUNC_FLAG:
             ttutils.debug_time('mwn 28374 update_container_name')
 
-        if self.video_obj.orig_parent is not None:
-            parent_obj = self.video_obj.orig_parent
+        if self.video_obj.orig_parent_obj is not None:
+            parent_obj = self.video_obj.orig_parent_obj
         else:
             parent_obj = self.video_obj.parent_obj
 

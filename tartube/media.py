@@ -2013,9 +2013,9 @@ class Video(GenericMedia):
         self.waiting_flag = False
 
         # When a video is marked to be downloaded in the fixed 'Temporary
-        #   Videos' folder, we store the name of the original parent channel/
-        #   playlist/folder here, for display in the Video Catalogue
-        self.orig_parent = None
+        #   Videos' folder, we store the original parent channel/playlist/
+        #   folder here, so its details can be displayed in the Video Catalogue
+        self.orig_parent_obj = None
 
         # List of subtitles available for this video. Items in the list are
         #   language codes gathered from the video's metadata file (e.g.
@@ -2154,7 +2154,7 @@ class Video(GenericMedia):
             'bookmark_flag': False,
             'missing_flag': False,
             'waiting_flag': False,
-            'orig_parent': None,
+            'orig_parent_obj': None,
             'split_flag': False,
             'stamp_list': [],
             'slice_list': [],
@@ -2837,9 +2837,9 @@ class Video(GenericMedia):
 #   def set_options_obj():      # Inherited from GenericMedia
 
 
-    def set_orig_parent(self, parent_obj):
+    def set_orig_parent_obj(self, parent_obj):
 
-        self.orig_parent = parent_obj.name
+        self.orig_parent_obj = parent_obj
 
 
     def set_parent_obj(self, parent_obj):
