@@ -46,6 +46,7 @@ import config
 import formats
 import html
 import __main__
+import guiutils
 import mainapp
 import media
 import options
@@ -11953,8 +11954,7 @@ class MainWin(Gtk.ApplicationWindow):
             #   temporarily
             if column_count > 1:
                 posn = self.videos_paned.get_position()
-                self.videos_paned.set_position(posn + 1)
-                self.videos_paned.set_position(posn - 1)
+                guiutils.nudge_paned_position(self.videos_paned, posn)
 
 
     def video_catalogue_grid_check_expand(self):
