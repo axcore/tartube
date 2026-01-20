@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -4544,6 +4544,13 @@ class VideoDownloader(object):
         if 'chapters' in json_dict:
             chapter_list = json_dict['chapters']
 
+        if 'uploader' in json_dict:
+            author = json_dict['uploader']
+        elif 'channel' in json_dict:
+            author = json_dict['channel']
+        else:
+            author = None
+
         if 'description' in json_dict:
             descrip = json_dict['description']
         else:
@@ -4729,6 +4736,9 @@ class VideoDownloader(object):
                     chapter_list,
                 )
 
+            if author is not None:
+                video_obj.set_author(author)
+
             if descrip is not None:
                 video_obj.set_video_descrip(
                     app_obj,
@@ -4862,6 +4872,9 @@ class VideoDownloader(object):
                     app_obj,
                     chapter_list,
                 )
+
+            if not video_obj.author and author is not None:
+                video_obj.set_author(author)
 
             if not video_obj.descrip and descrip is not None:
                 video_obj.set_video_descrip(

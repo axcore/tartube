@@ -44,16 +44,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.5.164 (1 Aug 2025)**
+Stable release: **v2.5.197 (20 Jan 2026)**
 
-Development release: **v2.5.177 (27 Sep 2025)**
+Development release: **v2.5.197 (20 Jan 2026)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.164/install-tartube-2.5.164-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.164/install-tartube-with-ffmpeg-2.5.164-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.164/tartube-2.5.164-64bit-mswin-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.197/install-tartube-2.5.197-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.197/install-tartube-with-ffmpeg-2.5.197-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.197/tartube-2.5.197-64bit-mswin-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.164/python3-tartube_2.5.164.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.164/tartube-2.5.164.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.197/python3-tartube_2.5.197.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.197/tartube-2.5.197.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -70,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.164/tartube_v2.5.164.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.197/tartube_v2.5.197.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 

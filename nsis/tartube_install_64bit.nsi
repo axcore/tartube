@@ -1,6 +1,6 @@
-﻿# Tartube v2.5.177 installer script for MS Windows
+﻿# Tartube v2.5.197 installer script for MS Windows
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -340,7 +340,7 @@
 
     ;Name and file
     Name "Tartube"
-    OutFile "install-tartube-2.5.177-64bit.exe"
+    OutFile "install-tartube-2.5.197-64bit.exe"
 
     ;Default installation folder
     InstallDir "$LOCALAPPDATA\Tartube"

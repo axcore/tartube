@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -991,6 +991,7 @@ SMALL_ICON_DICT = {
     'live_old_no_file_small': 'live_old_no_file.png',
     'live_wait_small': 'live_wait.png',
     'no_file_small': 'no_file.png',
+    'regex_small': 'regex.png',
     'slice_small': 'slice.png',
     'split_file_small': 'split_file.png',
     'stamp_small': 'stamp.png',

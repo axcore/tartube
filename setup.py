@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -175,7 +175,7 @@ for path in glob.glob('sounds/*'):
 # Setup
 setuptools.setup(
     name = 'tartube',
-    version = '2.5.177',
+    version = '2.5.197',
     description = 'GUI front-end for youtube-dl and yt-dlp',
     long_description = long_description,
     long_description_content_type = 'text/plain',

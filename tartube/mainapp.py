@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -469,8 +469,9 @@ class TartubeApp(Gtk.Application):
         self.show_pretty_dates_flag = True
 
         # In the Video Catalogue, flags set to True if we should filter videos
-        #   by name, description and/or comments
+        #   by name, author, description and/or comments
         self.catalogue_filter_name_flag = True
+        self.catalogue_filter_author_flag = True
         self.catalogue_filter_descrip_flag = False
         self.catalogue_filter_comment_flag = False
         # In the Video Catalogue, flag set to True if a frame should be drawn
@@ -2424,6 +2425,9 @@ class TartubeApp(Gtk.Application):
         #   integer, minimum value 0; ignored if self.auto_delete_flag is
         #   False)
         self.auto_delete_days = 30
+        # If False, self.auto_delete_days is days since the video was
+        #   downloaded; if True, it is the days since the video was uploaded
+        self.auto_delete_type_flag = False
         # Flag set to True if videos should be removed from the Tartube
         #   database after a certain time, but with no files deleted
         self.auto_remove_flag = False
@@ -2431,6 +2435,9 @@ class TartubeApp(Gtk.Application):
         #   integer, minimum value 0; ignored if self.auto_remove_flag is
         #   False)
         self.auto_remove_days = 30
+        # If False, self.auto_remove_days is days since the video was
+        #   downloaded; if True, it is the days since the video was uploaded
+        self.auto_remove_type_flag = False
         # Flag set to True if videos should be automatically deleted/removed,
         #   but only if they have been watched (media.Video.dl_flag is True,
         #   media.Video.new_flag is False; ignored if
@@ -3260,6 +3267,16 @@ class TartubeApp(Gtk.Application):
         )
         self.add_action(scroll_down_toolbutton_action)
 
+        regulate_grid_toolbutton_action = Gio.SimpleAction.new(
+            'regulate_grid_toolbutton',
+            None,
+        )
+        regulate_grid_toolbutton_action.connect(
+            'activate',
+            self.on_button_regulate_grid,
+        )
+        self.add_action(regulate_grid_toolbutton_action)
+
         show_filter_toolbutton_action = Gio.SimpleAction.new(
             'show_filter_toolbutton',
             None,
@@ -3301,16 +3318,6 @@ class TartubeApp(Gtk.Application):
             self.on_button_use_regex,
         )
         self.add_action(use_regex_togglebutton_action)
-
-        apply_filter_button_action = Gio.SimpleAction.new(
-            'apply_filter_toolbutton',
-            None,
-        )
-        apply_filter_button_action.connect(
-            'activate',
-            self.on_button_apply_filter,
-        )
-        self.add_action(apply_filter_button_action)
 
         cancel_filter_button_action = Gio.SimpleAction.new(
             'cancel_filter_toolbutton',
@@ -4734,6 +4741,10 @@ class TartubeApp(Gtk.Application):
         if version >= 2003397 and 'catalogue_filter_name_flag' in json_dict:
             self.catalogue_filter_name_flag \
             = json_dict['catalogue_filter_name_flag']
+        if version >= 2005193 and 'catalogue_filter_author_flag' in json_dict:
+            self.catalogue_filter_author_flag \
+            = json_dict['catalogue_filter_author_flag']
+        if version >= 2003397 and 'catalogue_filter_descrip_flag' in json_dict:
             self.catalogue_filter_descrip_flag \
             = json_dict['catalogue_filter_descrip_flag']
             self.catalogue_filter_comment_flag \
@@ -5446,9 +5457,13 @@ class TartubeApp(Gtk.Application):
         if version >= 1001029 and 'auto_delete_flag' in json_dict:
             self.auto_delete_flag = json_dict['auto_delete_flag']
             self.auto_delete_days = json_dict['auto_delete_days']
+        if version >= 2005185 and 'auto_delete_type_flag' in json_dict:
+            self.auto_delete_type_flag = json_dict['auto_delete_type_flag']
         if version >= 2003609 and 'auto_remove_flag' in json_dict:
             self.auto_remove_flag = json_dict['auto_remove_flag']
             self.auto_remove_days = json_dict['auto_remove_days']
+        if version >= 2005185 and 'auto_remove_type_flag' in json_dict:
+            self.auto_delete_type_flag = json_dict['auto_remove_type_flag']
         if version >= 1001029 and 'auto_delete_watched_flag' in json_dict:
             self.auto_delete_watched_flag \
             = json_dict['auto_delete_watched_flag']
@@ -6254,6 +6269,7 @@ class TartubeApp(Gtk.Application):
             'show_pretty_dates_flag': self.show_pretty_dates_flag,
 
             'catalogue_filter_name_flag': self.catalogue_filter_name_flag,
+            'catalogue_filter_author_flag': self.catalogue_filter_author_flag,
             'catalogue_filter_descrip_flag': \
             self.catalogue_filter_descrip_flag,
             'catalogue_filter_comment_flag': \
@@ -6590,8 +6606,10 @@ class TartubeApp(Gtk.Application):
 
             'auto_delete_flag': self.auto_delete_flag,
             'auto_delete_days': self.auto_delete_days,
+            'auto_delete_type_flag': self.auto_delete_type_flag,
             'auto_remove_flag': self.auto_remove_flag,
             'auto_remove_days': self.auto_remove_days,
+            'auto_remove_type_flag': self.auto_remove_type_flag,
             'auto_delete_watched_flag': self.auto_delete_watched_flag,
             'auto_delete_asap_flag': self.auto_delete_asap_flag,
 
@@ -8664,7 +8682,14 @@ class TartubeApp(Gtk.Application):
                 if isinstance(media_data_obj, media.Video):
                     media_data_obj.orig_parent_obj = None
                     del media_data_obj.orig_parent
-                    
+
+        if version < 2005189:       # v2.5.189
+
+            # This version adds a new IV to media.Video objects
+            for media_data_obj in self.media_reg_dict.values():
+                if isinstance(media_data_obj, media.Video):
+                    media_data_obj.author = None
+
         # --- Do this last, or the call to .check_integrity_db() fails -------
         # --------------------------------------------------------------------
 
@@ -10423,8 +10448,16 @@ class TartubeApp(Gtk.Application):
             if isinstance(media_data_obj, media.Video) \
             and media_data_obj.dl_flag \
             and not media_data_obj.archive_flag \
-            and media_data_obj.receive_time < time_limit \
             and (
+                (
+                    not self.auto_delete_flag \
+                    and media_data_obj.receive_time < time_limit
+                ) or
+                (
+                    self.auto_delete_flag \
+                    and media_data_obj.upload_time < time_limit
+                )
+            ) and (
                 not self.auto_delete_watched_flag \
                 or not media_data_obj.new_flag
             ):
@@ -10473,8 +10506,16 @@ class TartubeApp(Gtk.Application):
             if isinstance(media_data_obj, media.Video) \
             and media_data_obj.dl_flag \
             and not media_data_obj.archive_flag \
-            and media_data_obj.receive_time < time_limit \
             and (
+                (
+                    not self.auto_remove_flag \
+                    and media_data_obj.receive_time < time_limit
+                ) or
+                (
+                    self.auto_remove_flag \
+                    and media_data_obj.upload_time < time_limit
+                )
+            ) and (
                 not self.auto_delete_watched_flag \
                 or not media_data_obj.new_flag
             ):
@@ -14675,138 +14716,145 @@ class TartubeApp(Gtk.Application):
             ttutils.debug_time('app 14315 update_video_from_json')
 
         json_path = video_obj.check_actual_path_by_ext(self, '.info.json')
-        if json_path is not None:
+        if json_path is None:
+            return
 
-            json_dict = self.file_manager_obj.load_json(json_path)
+        json_dict = self.file_manager_obj.load_json(json_path)
+        if json_dict is None:
+            return
 
-            if mode == 'default':
+        if mode == 'default':
 
-                if 'title' in json_dict:
-                    video_obj.set_nickname(json_dict['title'])
+            if 'title' in json_dict:
+                video_obj.set_nickname(json_dict['title'])
 
-                if 'id' in json_dict:
-                    video_obj.set_vid(json_dict['id'])
+            if 'id' in json_dict:
+                video_obj.set_vid(json_dict['id'])
 
-                # (Git #322, 'upload_date' might be None)
-                if 'upload_date' in json_dict \
-                and json_dict['upload_date'] is not None:
+            # (Git #322, 'upload_date' might be None)
+            if 'upload_date' in json_dict \
+            and json_dict['upload_date'] is not None:
 
-                    try:
-                        # date_string in form YYYYMMDD
-                        date_string = json_dict['upload_date']
-                        dt_obj = datetime.datetime.strptime(
-                            date_string,
-                            '%Y%m%d',
-                        )
-                        video_obj.set_upload_time(dt_obj.timestamp())
-
-                    except:
-                        video_obj.set_upload_time()
-
-                if 'duration' in json_dict:
-                    video_obj.set_duration(json_dict['duration'])
-
-                if 'webpage_url' in json_dict:
-                    # !!! DEBUG: yt-dlp Git #119: filter out the extraneous
-                    #   characters at the end of the URL, if present
-#                   video_obj.set_source(json_dict['webpage_url'])
-                    video_obj.set_source(
-                        re.sub(
-                            r'\&has_verified\=.*\&bpctr\=.*',
-                            '',
-                            json_dict['webpage_url'],
-                        )
+                try:
+                    # date_string in form YYYYMMDD
+                    date_string = json_dict['upload_date']
+                    dt_obj = datetime.datetime.strptime(
+                        date_string,
+                        '%Y%m%d',
                     )
+                    video_obj.set_upload_time(dt_obj.timestamp())
 
-                if 'description' in json_dict:
-                    video_obj.set_video_descrip(
-                        self,
-                        json_dict['description'],
-                        self.main_win_obj.descrip_line_max_len,
+                except:
+                    video_obj.set_upload_time()
+
+            if 'duration' in json_dict:
+                video_obj.set_duration(json_dict['duration'])
+
+            if 'webpage_url' in json_dict:
+                # !!! DEBUG: yt-dlp Git #119: filter out the extraneous
+                #   characters at the end of the URL, if present
+#               video_obj.set_source(json_dict['webpage_url'])
+                video_obj.set_source(
+                    re.sub(
+                        r'\&has_verified\=.*\&bpctr\=.*',
+                        '',
+                        json_dict['webpage_url'],
                     )
-
-                if self.store_playlist_id_flag \
-                and 'playlist_id' in json_dict \
-                and not isinstance(video_obj.parent_obj, media.Folder):
-
-                    if 'playlist_title' in json_dict:
-                        video_obj.parent_obj.set_playlist_id(
-                            json_dict['playlist_id'],
-                            json_dict['playlist_title'],
-                        )
-                    else:
-                        video_obj.parent_obj.set_playlist_id(
-                            json_dict['playlist_id'],
-                            None,
-                        )
-
-                if 'subtitles' in json_dict and json_dict['subtitles']:
-                    video_obj.extract_subs_list(json_dict['subtitles'])
-                else:
-                    video_obj.reset_subs_list()
-
-                self.extract_parent_name_from_metadata(video_obj, json_dict)
-
-                if isinstance(video_obj.parent_obj, media.Channel) \
-                or isinstance(video_obj.parent_obj, media.Playlist):
-                    # 'Enhanced' websites only: set the channel/playlist RSS
-                    #   feed, if not already set
-                    video_obj.parent_obj.update_rss_from_json(json_dict)
-
-                    # If downloading from a channel/playlist, remember the
-                    #   video's index. (The server supplies an index even for a
-                    #   channel, and the user might want to convert a channel
-                    #   to a playlist)
-                    if 'playlist_index' in json_dict:
-                        video_obj.set_index(json_dict['playlist_index'])
-
-            if (
-                (mode == 'default' and self.comment_store_flag) \
-                or mode == 'comments'
-            ) and 'comments' in json_dict:
-                video_obj.set_comments(json_dict['comments'])
-
-            if (
-                (mode == 'default' and self.video_timestamps_extract_json_flag)
-                or mode == 'chapters'
-            ) and 'chapters' in json_dict \
-            and (
-                not video_obj.stamp_list \
-                or self.video_timestamps_replace_flag
-            ):
-                video_obj.extract_timestamps_from_chapters(
-                    self,
-                    json_dict['chapters'],
                 )
 
-            if mode == 'default':
+            if 'uploader' in json_dict:
+                video_obj.set_author(json_dict['uploader'])
+            elif 'channel' in json_dict:
+                video_obj.set_author(json_dict['channel'])
 
-                if 'is_live' in json_dict \
-                and json_dict['is_live'] \
-                and not video_obj.live_mode \
-                and not video_obj.was_live_flag:
+            if 'description' in json_dict:
+                video_obj.set_video_descrip(
+                    self,
+                    json_dict['description'],
+                    self.main_win_obj.descrip_line_max_len,
+                )
+
+            if self.store_playlist_id_flag \
+            and 'playlist_id' in json_dict \
+            and not isinstance(video_obj.parent_obj, media.Folder):
+
+                if 'playlist_title' in json_dict:
+                    video_obj.parent_obj.set_playlist_id(
+                        json_dict['playlist_id'],
+                        json_dict['playlist_title'],
+                    )
+                else:
+                    video_obj.parent_obj.set_playlist_id(
+                        json_dict['playlist_id'],
+                        None,
+                    )
+
+            if 'subtitles' in json_dict and json_dict['subtitles']:
+                video_obj.extract_subs_list(json_dict['subtitles'])
+            else:
+                video_obj.reset_subs_list()
+
+            self.extract_parent_name_from_metadata(video_obj, json_dict)
+
+            if isinstance(video_obj.parent_obj, media.Channel) \
+            or isinstance(video_obj.parent_obj, media.Playlist):
+                # 'Enhanced' websites only: set the channel/playlist RSS feed,
+                #   if not already set
+                video_obj.parent_obj.update_rss_from_json(json_dict)
+
+                # If downloading from a channel/playlist, remember the video's
+                #   index. (The server supplies an index even for a channel,
+                #   and the user might want to convert a channel to a playlist
+                if 'playlist_index' in json_dict:
+                    video_obj.set_index(json_dict['playlist_index'])
+
+        if (
+            (mode == 'default' and self.comment_store_flag) \
+            or mode == 'comments'
+        ) and 'comments' in json_dict:
+            video_obj.set_comments(json_dict['comments'])
+
+        if (
+            (mode == 'default' and self.video_timestamps_extract_json_flag)
+            or mode == 'chapters'
+        ) and 'chapters' in json_dict \
+        and (
+            not video_obj.stamp_list \
+            or self.video_timestamps_replace_flag
+        ):
+            video_obj.extract_timestamps_from_chapters(
+                self,
+                json_dict['chapters'],
+            )
+
+        if mode == 'default':
+
+            if 'is_live' in json_dict \
+            and json_dict['is_live'] \
+            and not video_obj.live_mode \
+            and not video_obj.was_live_flag:
+                self.mark_video_live(
+                    video_obj,
+                    2,
+                    {},
+                    True,   # Don't update Video Index
+                    True,   # Don't update Video Catalogue
+                    True,   # Don't sort the parent container
+                )
+
+            elif 'was_live' in json_dict \
+            and json_dict['was_live']:
+                if video_obj.live_mode:
                     self.mark_video_live(
                         video_obj,
-                        2,
+                        0,
                         {},
                         True,   # Don't update Video Index
                         True,   # Don't update Video Catalogue
                         True,   # Don't sort the parent container
                     )
-
-                elif 'was_live' in json_dict \
-                and json_dict['was_live']:
-                    if video_obj.live_mode:
-                        self.mark_video_live(
-                            video_obj,
-                            0,
-                            {},
-                            True,   # Don't update Video Index
-                            True,   # Don't update Video Catalogue
-                            True,   # Don't sort the parent container
-                        )
-                    elif not video_obj.was_live_flag:
-                        video_obj.set_was_live_flag(True)
+                elif not video_obj.was_live_flag:
+                    video_obj.set_was_live_flag(True)
 
 
     def update_video_from_filesystem(self, video_obj, video_path,
@@ -24071,35 +24119,6 @@ class TartubeApp(Gtk.Application):
         self.main_win_obj.errors_list_apply_filter()
 
 
-    def on_button_apply_filter(self, action, par):
-
-        """Called from a callback in self.do_startup().
-
-        Applies a filter to the Video Catalogue, hiding any videos which don't
-        match the search text specified by the user.
-
-        Args:
-
-            action (Gio.SimpleAction): Object generated by Gio
-
-            par (None): Ignored
-
-        """
-
-        if DEBUG_FUNC_FLAG:
-            ttutils.debug_time('app 23336 on_button_apply_filter')
-
-        # Sanity check
-        if not self.main_win_obj.video_catalogue_dict:
-            return self.system_error(
-                187,
-                'Apply filter request failed sanity check',
-            )
-
-        # Apply the filter
-        self.main_win_obj.video_catalogue_apply_filter()
-
-
     def on_button_cancel_date(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -24160,11 +24179,13 @@ class TartubeApp(Gtk.Application):
             ttutils.debug_time('app 23406 on_button_cancel_filter')
 
         # Sanity check
-        if not self.main_win_obj.video_catalogue_dict:
-            return self.system_error(
-                188,
-                'Cancel filter request failed sanity check',
-            )
+        # Removed in v2.5.192 to make the behaviour of the 'Cancel filter'
+        #       button consistent with the search box
+#       if not self.main_win_obj.video_catalogue_dict:
+#           return self.system_error(
+#               188,
+#               'Cancel filter request failed sanity check',
+#           )
 
         # Cancel the filter
         self.main_win_obj.video_catalogue_cancel_filter()
@@ -25232,6 +25253,36 @@ class TartubeApp(Gtk.Application):
             True,           # Reset scrollbars
             True,           # Don't cancel the filter, if applied
         )
+
+
+    def on_button_regulate_grid(self, action, par):
+
+        """Called from a callback in self.do_startup().
+
+        Forces the Video Catalogue grid into at least two columns, or more for
+        large windows.
+
+        Args:
+
+            action (Gio.SimpleAction): Object generated by Gio
+
+            par (None): Ignored
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('app 24464 on_button_regulate_grid')
+
+        width = self.main_win_obj.win_last_width
+
+        if self.catalogue_mode == 'grid_show_parent' \
+        or self.catalogue_mode == 'grid_show_parent_ext':
+            if width > 1600:
+                self.main_win_obj.video_catalogue_grid_check_size(4)
+            elif width > 1100:
+                self.main_win_obj.video_catalogue_grid_check_size(3)
+            else:
+                self.main_win_obj.video_catalogue_grid_check_size(2)
 
 
     def on_button_resort_catalogue(self, action, par):
@@ -26528,11 +26579,11 @@ class TartubeApp(Gtk.Application):
             self.download_manager_obj.operation_classic_flag
         ):
             return self.system_error(
-                198, 
+                198,
                 'Check selected videos request failed sanity check',
             )
 
-        video_list = [] 
+        video_list = []
         for catalogue_item_obj \
         in self.main_win_obj.video_catalogue_dict.values():
             if catalogue_item_obj.selected_flag:
@@ -26577,7 +26628,7 @@ class TartubeApp(Gtk.Application):
                 video_list,
             )
 
-                                    
+
     def on_menu_check_version(self, action, par):
 
         """Called from a callback in self.do_startup().
@@ -26747,7 +26798,7 @@ class TartubeApp(Gtk.Application):
             )
 
 
-    def on_menu_dl_selected(self, action, par): 
+    def on_menu_dl_selected(self, action, par):
 
         """Called from a callback in self.do_startup().
 
@@ -26774,11 +26825,11 @@ class TartubeApp(Gtk.Application):
             self.download_manager_obj.operation_classic_flag
         ):
             return self.system_error(
-                199, 
+                199,
                 'Download selected videos request failed sanity check',
             )
 
-        video_list = [] 
+        video_list = []
         for catalogue_item_obj \
         in self.main_win_obj.video_catalogue_dict.values():
             if catalogue_item_obj.selected_flag \
@@ -27403,7 +27454,7 @@ class TartubeApp(Gtk.Application):
         config.SystemPrefWin(self)
 
 
-    def on_menu_temp_dl_selected(self, action, par): 
+    def on_menu_temp_dl_selected(self, action, par):
 
         """Called from a callback in self.do_startup().
 
@@ -27419,7 +27470,7 @@ class TartubeApp(Gtk.Application):
 
         if DEBUG_FUNC_FLAG:
             ttutils.debug_time('app 26201 on_menu_temp_dl_selected')
-        
+
         # N.B. Code adapted from self.on_menu_dl_selected() and
         #       mainwin.MainWin.on_video_catalogue_temp_dl_multi()
         if (
@@ -27434,7 +27485,7 @@ class TartubeApp(Gtk.Application):
                 'Temp download selected videos request failed sanity check',
             )
 
-        video_list = [] 
+        video_list = []
         for catalogue_item_obj \
         in self.main_win_obj.video_catalogue_dict.values():
             if catalogue_item_obj.selected_flag \
@@ -27443,7 +27494,7 @@ class TartubeApp(Gtk.Application):
 
         ready_list = []
         for video_obj in video_list:
-            
+
             # Create a new media.Video object in the 'Temporary Videos' folder
             new_video_obj = self.add_video(
                 self.fixed_temp_folder,
@@ -27972,6 +28023,14 @@ class TartubeApp(Gtk.Application):
             self.auto_delete_flag = True
 
 
+    def set_auto_delete_type_flag(self, flag):
+
+        if not flag:
+            self.auto_delete_type_flag = False
+        else:
+            self.auto_delete_type_flag = True
+
+
     def set_auto_delete_days(self, days):
 
         self.auto_delete_days = days
@@ -28051,6 +28110,14 @@ class TartubeApp(Gtk.Application):
             self.auto_remove_flag = False
         else:
             self.auto_remove_flag = True
+
+
+    def set_auto_remove_type_flag(self, flag):
+
+        if not flag:
+            self.auto_remove_type_flag = False
+        else:
+            self.auto_remove_type_flag = True
 
 
     def set_auto_remove_days(self, days):
@@ -28208,6 +28275,14 @@ class TartubeApp(Gtk.Application):
             self.catalogue_draw_undownloaded_flag = False
         else:
             self.catalogue_draw_undownloaded_flag = True
+
+
+    def set_catalogue_filter_author_flag(self, flag):
+
+        if not flag:
+            self.catalogue_filter_author_flag = False
+        else:
+            self.catalogue_filter_author_flag = True
 
 
     def set_catalogue_filter_comment_flag(self, flag):
@@ -29407,6 +29482,7 @@ class TartubeApp(Gtk.Application):
             self.progress_list_remember_width_flag = True
             # (self.progress_list_width_source, etc, are set by
             #   self.save_config() )
+            pass
 
 
     def set_refresh_moviepy_timeout(self, value):

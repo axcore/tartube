@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -1951,6 +1951,9 @@ class Video(GenericMedia):
         self.file_name = None
         self.file_ext = None
 
+        # Video author - the uploader (if available), otherwise the real
+        #   channel name (if available)
+        self.author = None
         # Video description. A string of any length, containing newline
         #   characters if necessary. (Set to None if the video description is
         #   not known)
@@ -2624,6 +2627,11 @@ class Video(GenericMedia):
             self.archive_flag = True
         else:
             self.archive_flag = False
+
+
+    def set_author(self, author):
+
+        self.author = author
 
 
     def set_block_flag(self, flag):

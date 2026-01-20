@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -2195,6 +2195,20 @@ class GenericEditWin(GenericConfigWin):
         if parent_obj:
             entry4.set_text(parent_obj.name)
 
+        if isinstance(self.edit_obj, media.Video):
+
+            label3 = self.add_label(grid,
+                _('Author'),
+                0, 4, 1, 1,
+            )
+            label3.set_hexpand(False)
+
+            entry5 = self.add_entry(grid,
+                'author',
+                2, 4, 1, 1,
+            )
+            entry5.set_editable(False)
+
 
     def add_destination_properties(self, grid):
 
@@ -2294,15 +2308,20 @@ class GenericEditWin(GenericConfigWin):
         else:
             string = _('Video URL')
 
+        if isinstance(self.edit_obj, media.Video):
+            row = 5
+        else:
+            row = 4
+
         label = self.add_label(grid,
             string,
-            0, 4, 1, 1,
+            0, row, 1, 1,
         )
         label.set_hexpand(False)
 
         entry = self.add_entry(grid,
             'source',
-            2, 4, 1, 1,
+            2, row, 1, 1,
         )
         entry.set_editable(False)
 
@@ -15006,13 +15025,13 @@ class VideoEditWin(GenericEditWin):
 
         label = self.add_label(grid,
             _('File'),
-            0, 5, 1, 1,
+            0, 6, 1, 1,
         )
         label.set_hexpand(False)
 
         frame = self.add_image(grid,
             self.app_obj.main_win_obj.icon_dict['stock_file'],
-            1, 5, 1, 1,
+            1, 6, 1, 1,
         )
         # (The frame looks cramped without this. The icon itself is 16x16)
         frame.set_size_request(
@@ -15022,7 +15041,7 @@ class VideoEditWin(GenericEditWin):
 
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
-        grid2 = self.add_secondary_grid(grid, 2, 5, 1, 1)
+        grid2 = self.add_secondary_grid(grid, 2, 6, 1, 1)
 
         entry = self.add_entry(grid2,
             None,
@@ -15055,13 +15074,13 @@ class VideoEditWin(GenericEditWin):
         # (Back to the main grid)
         label2 = self.add_label(grid,
             _('Metadata file'),
-            0, 6, 2, 1,
+            0, 7, 2, 1,
         )
         label2.set_hexpand(False)
 
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
-        grid3 = self.add_secondary_grid(grid, 2, 6, 1, 1)
+        grid3 = self.add_secondary_grid(grid, 2, 7, 1, 1)
 
         entry2 = self.add_entry(grid3,
             None,
@@ -15101,7 +15120,7 @@ class VideoEditWin(GenericEditWin):
 
         # (To avoid messing up the neat format of the rows above, add a
         #   secondary grid, and put the next set of widgets inside it)
-        grid4 = self.add_secondary_grid(grid, 0, 7, grid_width, 1)
+        grid4 = self.add_secondary_grid(grid, 0, 8, grid_width, 1)
 
         checkbutton = self.add_checkbutton(grid4,
             _('Video downloaded'),
@@ -21955,7 +21974,7 @@ class SystemPrefWin(GenericPrefWin):
             _('D_elete'),
             inner_notebook,
         )
-        grid_width = 3
+        grid_width = 12
 
         # Automatic video deletion/removal preferences
         self.add_label(grid,
@@ -21975,46 +21994,58 @@ class SystemPrefWin(GenericPrefWin):
             _('Automatically delete downloaded videos'),
             self.app_obj.auto_delete_flag,
             True,               # Can be toggled by user
-            0, 2, 1, 1,
+            0, 2, 6, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton = self.add_spinbutton(grid,
             0, 999, 1, self.app_obj.auto_delete_days,
-            1, 2, 1, 1,
+            6, 2, 3, 1,
         )
         if not self.app_obj.auto_delete_flag:
             self.spinbutton.set_sensitive(False)
         # (Signal connect appears below)
 
-        self.add_label(grid,
-            _('days'),
-            2, 2, 1, 1,
+        combo_list = [
+            [ _('days since download'), 'download' ],
+            [ _('days since upload'), 'upload' ],
+        ]
+
+        combo = self.add_combo_with_data(grid,
+            combo_list,
+            None,
+            9, 2, 3, 1,
         )
+        if self.app_obj.auto_delete_type_flag:
+            combo.set_active(1)
+        if not self.app_obj.auto_delete_flag:
+            combo.set_sensitive(False)
 
         checkbutton2 = self.add_checkbutton(grid,
-            _(
-                'Remove downloaded videos from the database (but don\'t' \
-                + ' delete files)',
-            ),
+            _('Only downloaded videos from the database'),
             self.app_obj.auto_remove_flag,
             True,               # Can be toggled by user
-            0, 3, 1, 1,
+            0, 3, 6, 1,
         )
         # (Signal connect appears below)
 
         self.spinbutton2 = self.add_spinbutton(grid,
             0, 999, 1, self.app_obj.auto_remove_days,
-            1, 3, 1, 1,
+            6, 3, 3, 1,
         )
         if not self.app_obj.auto_remove_flag:
             self.spinbutton2.set_sensitive(False)
         # (Signal connect appears below)
 
-        self.add_label(grid,
-            _('days'),
-            2, 3, 1, 1,
+        combo2 = self.add_combo_with_data(grid,
+            combo_list,
+            None,
+            9, 3, 3, 1,
         )
+        if self.app_obj.auto_remove_type_flag:
+            combo2.set_active(1)
+        if not self.app_obj.auto_remove_flag:
+            combo2.set_sensitive(False)
 
         checkbutton3 = self.add_checkbutton(grid,
             _('Only delete/remove videos which have been watched'),
@@ -22030,20 +22061,20 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_label(grid2,
             _('Delete/remove files:'),
-            0, 0, 1, 1,
+            0, 0, 2, 1,
         )
 
         self.radiobutton = self.add_radiobutton(grid2,
             None,
             _('When the database is loaded'),
-            1, 0, 1, 1,
+            2, 0, 5, 1,
         )
         # (Signal connect appears below)
 
         self.radiobutton2 = self.add_radiobutton(grid2,
             self.radiobutton,
             _('After every download operation'),
-            2, 0, 1, 1,
+            7, 0, 5, 1,
         )
         if self.app_obj.auto_delete_asap_flag:
             self.radiobutton2.set_active(True)
@@ -22059,6 +22090,7 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_auto_delete_videos_button_toggled,
             self.spinbutton,
+            combo,
             checkbutton2,
             checkbutton3,
             self.radiobutton,
@@ -22068,10 +22100,12 @@ class SystemPrefWin(GenericPrefWin):
             'value-changed',
             self.on_auto_delete_videos_spinbutton_changed,
         )
+        combo.connect('changed', self.on_auto_delete_type_combo_changed)
         checkbutton2.connect(
             'toggled',
             self.on_auto_remove_videos_button_toggled,
             self.spinbutton2,
+            combo2,
             checkbutton,
             checkbutton3,
             self.radiobutton,
@@ -22081,6 +22115,7 @@ class SystemPrefWin(GenericPrefWin):
             'value-changed',
             self.on_auto_remove_videos_spinbutton_changed,
         )
+        combo2.connect('changed', self.on_auto_remove_type_combo_changed)
         checkbutton3.connect('toggled', self.on_delete_watched_button_toggled)
         self.radiobutton.connect('toggled', self.on_delete_asap_button_toggled)
 
@@ -28681,8 +28716,30 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_split_video_auto_delete_flag(False)
 
 
-    def on_auto_delete_videos_button_toggled(self, checkbutton, spinbutton,
-    checkbutton2, checkbutton3, radiobutton, radiobutton2):
+    def on_auto_delete_type_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_files_delete_tab().
+
+        Sets whether auto-deletion applies to videos downloaded or uploaded
+        after a certain time.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+
+        if model[tree_iter][1] == 'upload':
+            self.app_obj.set_auto_delete_type_flag(True)
+        else:
+            self.app_obj.set_auto_delete_type_flag(False)
+
+
+    def on_auto_delete_videos_button_toggled(self, checkbutton, combo,
+    spinbutton, checkbutton2, checkbutton3, radiobutton, radiobutton2):
 
         """Called from callback in self.setup_files_delete_tab().
 
@@ -28693,6 +28750,8 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton (Gtk.CheckButton): The widget clicked
 
             spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
+
+            combo (Gtk.ComboBox): Other widgets to be (de)sensitised
 
             checkbutton2, checkbutton3 (Gtk.CheckButton): Other widgets to be
                 (de)sensitised
@@ -28706,6 +28765,7 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.auto_delete_flag:
             self.app_obj.set_auto_delete_flag(True)
             spinbutton.set_sensitive(True)
+            combo.set_sensitive(True)
             checkbutton3.set_sensitive(True)
             radiobutton.set_sensitive(True)
             radiobutton2.set_sensitive(True)
@@ -28714,6 +28774,7 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.auto_delete_flag:
             self.app_obj.set_auto_delete_flag(False)
             spinbutton.set_sensitive(False)
+            combo.set_sensitive(False)
             if checkbutton2.get_active():
                 checkbutton3.set_sensitive(True)
                 radiobutton.set_sensitive(True)
@@ -28742,8 +28803,8 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_auto_delete_days(spinbutton.get_value())
 
 
-    def on_auto_remove_videos_button_toggled(self, checkbutton, spinbutton,
-    checkbutton2, checkbutton3, radiobutton, radiobutton2):
+    def on_auto_remove_videos_button_toggled(self, checkbutton, combo,
+    spinbutton, checkbutton2, checkbutton3, radiobutton, radiobutton2):
 
         """Called from callback in self.setup_files_delete_tab().
 
@@ -28754,6 +28815,8 @@ class SystemPrefWin(GenericPrefWin):
             checkbutton (Gtk.CheckButton): The widget clicked
 
             spinbutton (Gtk.SpinButton): A widget to be (de)sensitised
+
+            combo (Gtk.ComboBox): Other widgets to be (de)sensitised
 
             checkbutton2, checkbutton3 (Gtk.CheckButton): Other widgets to be
                 (de)sensitised
@@ -28767,6 +28830,7 @@ class SystemPrefWin(GenericPrefWin):
         and not self.app_obj.auto_remove_flag:
             self.app_obj.set_auto_remove_flag(True)
             spinbutton.set_sensitive(True)
+            combo.set_sensitive(True)
             checkbutton3.set_sensitive(True)
             radiobutton.set_sensitive(True)
             radiobutton2.set_sensitive(True)
@@ -28775,6 +28839,7 @@ class SystemPrefWin(GenericPrefWin):
         and self.app_obj.auto_remove_flag:
             self.app_obj.set_auto_remove_flag(False)
             spinbutton.set_sensitive(False)
+            combo.set_sensitive(False)
             if checkbutton2.get_active():
                 checkbutton3.set_sensitive(True)
                 radiobutton.set_sensitive(True)
@@ -28822,6 +28887,28 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.split_video_auto_open_flag:
             self.app_obj.set_split_video_auto_open_flag(False)
+
+
+    def on_auto_remove_type_combo_changed(self, combo):
+
+        """Called from a callback in self.setup_files_delete_tab().
+
+        Sets whether auto-removal applies to videos downloaded or uploaded
+        after a certain time.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+
+        if model[tree_iter][1] == 'upload':
+            self.app_obj.set_auto_remove_type_flag(True)
+        else:
+            self.app_obj.set_auto_remove_type_flag(False)
 
 
     def on_auto_restart_button_toggled(self, checkbutton, spinbutton,

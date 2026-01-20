@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2019-2025 A S Lewis
+# Copyright (C) 2019-2026 A S Lewis
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU Lesser General Public License as published by the Free
@@ -224,6 +224,8 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_scroll_up_button = None  # Gtk.ToolButton
         self.catalogue_scroll_down_button = None
                                                 # Gtk.ToolButton
+        self.catalogue_regulate_grid_button = None
+                                                # Gtk.ToolButton
         self.catalogue_show_filter_button = None
                                                 # Gtk.ToolButton
         self.catalogue_toolbar2 = None          # Gtk.Toolbar
@@ -241,12 +243,12 @@ class MainWin(Gtk.ApplicationWindow):
                                                 # Gtk.ToggleButton
         self.catalogue_filter_name_button = None
                                                 # Gtk.CheckButton
+        self.catalogue_filter_author_button = None
+                                                # Gtk.CheckButton
         self.catalogue_filter_descrip_button = None
                                                 # Gtk.CheckButton
         self.catalogue_filter_comment_button = None
                                                 # Gtk.CheckButton
-        self.catalogue_apply_filter_button = None
-                                                # Gtk.ToolButton
         self.catalogue_cancel_filter_button = None
                                                 # Gtk.ToolButton
         self.catalogue_thumb_combo = None       # Gtk.ComboBox
@@ -1748,7 +1750,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.check_selected_menu_item.set_action_name(
             'app.check_selected_menu',
         )
-        
+
         self.dl_selected_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Download'),
         )
@@ -1762,7 +1764,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.temp_dl_selected_menu_item.set_action_name(
             'app.temp_dl_selected_menu',
         )
-        
+
         selected_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('Selected _videos'))
         selected_videos_menu_item.set_submenu(selected_videos_submenu)
@@ -2467,22 +2469,23 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_last_entry.set_width_chars(4)
         self.catalogue_last_entry.set_sensitive(False)
         self.catalogue_last_entry.set_editable(False)
+        self.catalogue_last_entry.set_tooltip_text(_('Total pages'))
 
         # Separator. In this instance, empty labels look better than
         #   Gtk.SeparatorToolItem
 #        self.catalogue_toolbar.insert(Gtk.SeparatorToolItem(), -1)
-        toolitem = Gtk.ToolItem.new()
-        self.catalogue_toolbar.insert(toolitem, -1)
-        toolitem.add(Gtk.Label('   '))
-
         toolitem5 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem5, -1)
-        toolitem5.add(Gtk.Label('  ' + _('Size') + '  '))
+        toolitem5.add(Gtk.Label('   '))
 
         toolitem6 = Gtk.ToolItem.new()
         self.catalogue_toolbar.insert(toolitem6, -1)
+        toolitem6.add(Gtk.Label('  ' + _('Size') + '  '))
+
+        toolitem7 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem7, -1)
         self.catalogue_size_entry = Gtk.Entry()
-        toolitem6.add(self.catalogue_size_entry)
+        toolitem7.add(self.catalogue_size_entry)
         self.catalogue_size_entry.set_text(
             str(self.app_obj.catalogue_page_size),
         )
@@ -2494,9 +2497,9 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Separator
-        toolitem = Gtk.ToolItem.new()
-        self.catalogue_toolbar.insert(toolitem, -1)
-        toolitem.add(Gtk.Label('   '))
+        toolitem8 = Gtk.ToolItem.new()
+        self.catalogue_toolbar.insert(toolitem8, -1)
+        toolitem8.add(Gtk.Label('   '))
 
         if not self.app_obj.show_custom_icons_flag:
             self.catalogue_first_button \
@@ -2595,6 +2598,23 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         if not self.app_obj.show_custom_icons_flag:
+            self.catalogue_regulate_grid_button \
+            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_REFRESH)
+        else:
+            self.catalogue_regulate_grid_button = Gtk.ToolButton.new()
+            self.catalogue_regulate_grid_button.set_icon_widget(
+                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_refresh']),
+            )
+        self.catalogue_toolbar.insert(self.catalogue_regulate_grid_button, -1)
+        self.catalogue_regulate_grid_button.set_sensitive(False)
+        self.catalogue_regulate_grid_button.set_tooltip_text(
+            _('Reset grid columns'),
+        )
+        self.catalogue_regulate_grid_button.set_action_name(
+            'app.regulate_grid_toolbutton',
+        )
+
+        if not self.app_obj.show_custom_icons_flag:
             self.catalogue_show_filter_button \
             = Gtk.ToolButton.new_from_stock(Gtk.STOCK_SORT_ASCENDING)
         else:
@@ -2619,12 +2639,12 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_toolbar2 = Gtk.Toolbar()
         self.catalogue_toolbar2.set_visible(False)
 
-        toolitem7 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem7, -1)
-        toolitem7.add(Gtk.Label(_('Sort') + '   '))
+        toolitem9 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem9, -1)
+        toolitem9.add(Gtk.Label(_('Sort') + '   '))
 
-        toolitem8 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem8, -1)
+        toolitem10 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem10, -1)
 
         store = Gtk.ListStore(str, str)
         store.append( [ _('Upload time') , 'default'] )
@@ -2633,7 +2653,7 @@ class MainWin(Gtk.ApplicationWindow):
         store.append( [ _('Database ID') , 'dbid'] )
 
         self.catalogue_sort_combo = Gtk.ComboBox.new_with_model(store)
-        toolitem8.add(self.catalogue_sort_combo)
+        toolitem10.add(self.catalogue_sort_combo)
         renderer_text = Gtk.CellRendererText()
         self.catalogue_sort_combo.pack_start(renderer_text, True)
         self.catalogue_sort_combo.add_attribute(renderer_text, 'text', 0)
@@ -2698,14 +2718,14 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Separator
-        toolitem = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem, -1)
-#       toolitem.add(Gtk.Label('          '))
-        toolitem.add(Gtk.Label('   '))
+        toolitem11 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem11, -1)
+#       toolitem11.add(Gtk.Label('          '))
+        toolitem11.add(Gtk.Label('   '))
 
-        toolitem9 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem9, -1)
-        toolitem9.add(Gtk.Label(_('Find date')))
+        toolitem12 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem12, -1)
+        toolitem12.add(Gtk.Label(_('Find date')))
 
         if not self.app_obj.show_custom_icons_flag:
             self.catalogue_find_date_button \
@@ -2742,17 +2762,17 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Separator
-        toolitem = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem, -1)
-#       toolitem.add(Gtk.Label('          '))
-        toolitem.add(Gtk.Label('  '))
+        toolitem13 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem13, -1)
+#       toolitem13.add(Gtk.Label('          '))
+        toolitem13.add(Gtk.Label('  '))
 
-        toolitem16 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem16, -1)
-        toolitem16.add(Gtk.Label(_('Thumbnail size') + '   '))
+        toolitem14 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem14, -1)
+        toolitem14.add(Gtk.Label(_('Thumbnail size') + '   '))
 
-        toolitem17 = Gtk.ToolItem.new()
-        self.catalogue_toolbar2.insert(toolitem17, -1)
+        toolitem15 = Gtk.ToolItem.new()
+        self.catalogue_toolbar2.insert(toolitem15, -1)
 
         store2 = Gtk.ListStore(str, str)
         thumb_size_list = self.app_obj.thumb_size_list.copy()
@@ -2760,7 +2780,7 @@ class MainWin(Gtk.ApplicationWindow):
             store2.append( [ thumb_size_list.pop(0), thumb_size_list.pop(0)] )
 
         self.catalogue_thumb_combo = Gtk.ComboBox.new_with_model(store2)
-        toolitem17.add(self.catalogue_thumb_combo)
+        toolitem15.add(self.catalogue_thumb_combo)
         renderer_text = Gtk.CellRendererText()
         self.catalogue_thumb_combo.pack_start(renderer_text, True)
         self.catalogue_thumb_combo.add_attribute(renderer_text, 'text', 0)
@@ -2776,24 +2796,30 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_toolbar3 = Gtk.Toolbar()
         self.catalogue_toolbar3.set_visible(False)
 
-        toolitem10 = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem10, -1)
-        toolitem10.add(Gtk.Label(_('Filter') + '  '))
+        toolitem16 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem16, -1)
+        toolitem16.add(Gtk.Label(_('Filter') + '  '))
 
-        toolitem11 = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem11, -1)
+        toolitem17 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem17, -1)
         self.catalogue_filter_entry = Gtk.Entry()
-        toolitem11.add(self.catalogue_filter_entry)
+        toolitem17.add(self.catalogue_filter_entry)
         self.catalogue_filter_entry.set_width_chars(16)
         self.catalogue_filter_entry.set_sensitive(False)
         self.catalogue_filter_entry.set_tooltip_text(_('Enter search text'))
+        self.catalogue_filter_entry.connect(
+            'activate',
+            self.on_video_catalogue_filter_entry_activated,
+        )
 
-        toolitem12 = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem12, -1)
-        self.catalogue_regex_togglebutton \
-        = Gtk.ToggleButton(_('Regex'))
-        toolitem12.add(self.catalogue_regex_togglebutton)
+        toolitem18 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem18, -1)
+        self.catalogue_regex_togglebutton = Gtk.ToggleButton()
+        toolitem18.add(self.catalogue_regex_togglebutton)
         self.catalogue_regex_togglebutton.set_sensitive(False)
+        self.catalogue_regex_togglebutton.set_image(
+             Gtk.Image.new_from_pixbuf(self.pixbuf_dict['regex_small'])
+        )
         if not self.app_obj.catalogue_use_regex_flag:
             self.catalogue_regex_togglebutton.set_active(False)
         else:
@@ -2803,70 +2829,6 @@ class MainWin(Gtk.ApplicationWindow):
         )
         self.catalogue_regex_togglebutton.set_action_name(
             'app.use_regex_togglebutton',
-        )
-
-        # Separator
-        toolitem = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem, -1)
-        toolitem.add(Gtk.Label('   '))
-
-        toolitem13 = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem13, -1)
-
-        self.catalogue_filter_name_button = Gtk.CheckButton()
-        toolitem13.add(self.catalogue_filter_name_button)
-        self.catalogue_filter_name_button.set_label(_('Names'))
-        self.catalogue_filter_name_button.set_active(
-            self.app_obj.catalogue_filter_name_flag,
-        )
-        self.catalogue_filter_name_button.connect(
-            'toggled',
-            self.on_filter_name_checkbutton_changed,
-        )
-
-        toolitem14 = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem14, -1)
-
-        self.catalogue_filter_descrip_button = Gtk.CheckButton()
-        toolitem14.add(self.catalogue_filter_descrip_button)
-        self.catalogue_filter_descrip_button.set_label(_('Descriptions'))
-        self.catalogue_filter_descrip_button.set_active(
-            self.app_obj.catalogue_filter_descrip_flag,
-        )
-        self.catalogue_filter_descrip_button.connect(
-            'toggled',
-            self.on_filter_descrip_checkbutton_changed,
-        )
-
-        toolitem15 = Gtk.ToolItem.new()
-        self.catalogue_toolbar3.insert(toolitem15, -1)
-
-        self.catalogue_filter_comment_button = Gtk.CheckButton()
-        toolitem15.add(self.catalogue_filter_comment_button)
-        self.catalogue_filter_comment_button.set_label(_('Comments'))
-        self.catalogue_filter_comment_button.set_active(
-            self.app_obj.catalogue_filter_comment_flag,
-        )
-        self.catalogue_filter_comment_button.connect(
-            'toggled',
-            self.on_filter_comment_checkbutton_changed,
-        )
-
-        if not self.app_obj.show_custom_icons_flag:
-            self.catalogue_apply_filter_button \
-            = Gtk.ToolButton.new_from_stock(Gtk.STOCK_FIND)
-        else:
-            self.catalogue_apply_filter_button = Gtk.ToolButton.new()
-            self.catalogue_apply_filter_button.set_icon_widget(
-                Gtk.Image.new_from_pixbuf(self.pixbuf_dict['stock_find']),
-            )
-        self.catalogue_toolbar3.insert(self.catalogue_apply_filter_button, -1)
-        self.catalogue_apply_filter_button.set_sensitive(False)
-        self.catalogue_apply_filter_button.set_tooltip_text(
-            _('Filter videos'),
-        )
-        self.catalogue_apply_filter_button.set_action_name(
-            'app.apply_filter_toolbutton',
         )
 
         if not self.app_obj.show_custom_icons_flag:
@@ -2886,77 +2848,165 @@ class MainWin(Gtk.ApplicationWindow):
             'app.cancel_filter_toolbutton',
         )
 
+        # Separator
+        toolitem19 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem19, -1)
+        toolitem19.add(Gtk.Label('   '))
+
+        toolitem20 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem20, -1)
+
+        self.catalogue_filter_name_button = Gtk.CheckButton()
+        toolitem20.add(self.catalogue_filter_name_button)
+        self.catalogue_filter_name_button.set_label(_('Names'))
+        self.catalogue_filter_name_button.set_active(
+            self.app_obj.catalogue_filter_name_flag,
+        )
+        self.catalogue_filter_name_button.set_tooltip_text(
+            _('Search by video name'),
+        )
+        self.catalogue_filter_name_button.connect(
+            'toggled',
+            self.on_filter_name_checkbutton_changed,
+        )
+
+        toolitem21 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem21, -1)
+
+        self.catalogue_filter_author_button = Gtk.CheckButton()
+        toolitem21.add(self.catalogue_filter_author_button)
+        self.catalogue_filter_author_button.set_label(_('Authors'))
+        self.catalogue_filter_author_button.set_active(
+            self.app_obj.catalogue_filter_author_flag,
+        )
+        self.catalogue_filter_author_button.set_tooltip_text(
+            _('Search by video upoader or channel name'),
+        )
+        self.catalogue_filter_author_button.connect(
+            'toggled',
+            self.on_filter_author_checkbutton_changed,
+        )
+
+        toolitem22 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem22, -1)
+
+        self.catalogue_filter_descrip_button = Gtk.CheckButton()
+        toolitem22.add(self.catalogue_filter_descrip_button)
+        self.catalogue_filter_descrip_button.set_label(_('Descriptions'))
+        self.catalogue_filter_descrip_button.set_active(
+            self.app_obj.catalogue_filter_descrip_flag,
+        )
+        self.catalogue_filter_descrip_button.set_tooltip_text(
+            _('Search in video descriptions'),
+        )
+        self.catalogue_filter_descrip_button.connect(
+            'toggled',
+            self.on_filter_descrip_checkbutton_changed,
+        )
+
+        toolitem23 = Gtk.ToolItem.new()
+        self.catalogue_toolbar3.insert(toolitem23, -1)
+
+        self.catalogue_filter_comment_button = Gtk.CheckButton()
+        toolitem23.add(self.catalogue_filter_comment_button)
+        self.catalogue_filter_comment_button.set_label(_('Comments'))
+        self.catalogue_filter_comment_button.set_active(
+            self.app_obj.catalogue_filter_comment_flag,
+        )
+        self.catalogue_filter_comment_button.set_tooltip_text(
+            _('Search in video comments'),
+        )
+        self.catalogue_filter_comment_button.connect(
+            'toggled',
+            self.on_filter_comment_checkbutton_changed,
+        )
+
         # Fourth toolbar, which is likewise not added to the VBox until the
         #   call to self.update_catalogue_filter_widgets()
         self.catalogue_toolbar4 = Gtk.Toolbar()
         self.catalogue_toolbar4.set_visible(False)
 
-        toolitem18 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem18, -1)
+        toolitem24 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem24, -1)
 
         self.catalogue_frame_button = Gtk.CheckButton()
-        toolitem18.add(self.catalogue_frame_button)
+        toolitem24.add(self.catalogue_frame_button)
         self.catalogue_frame_button.set_label(_('Draw frames'))
         self.catalogue_frame_button.set_active(
             self.app_obj.catalogue_draw_frame_flag,
+        )
+        self.catalogue_frame_button.set_tooltip_text(
+            _('Draw frames around videos'),
         )
         self.catalogue_frame_button.connect(
             'toggled',
             self.on_draw_frame_checkbutton_changed,
         )
 
-        toolitem19 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem19, -1)
+        toolitem25 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem25, -1)
 
         self.catalogue_icons_button = Gtk.CheckButton()
-        toolitem19.add(self.catalogue_icons_button)
+        toolitem25.add(self.catalogue_icons_button)
         self.catalogue_icons_button.set_label(_('Draw icons'))
         self.catalogue_icons_button.set_active(
             self.app_obj.catalogue_draw_icons_flag,
+        )
+        self.catalogue_icons_button.set_tooltip_text(
+            _('Draw icons beside videos'),
         )
         self.catalogue_icons_button.connect(
             'toggled',
             self.on_draw_icons_checkbutton_changed,
         )
 
-        toolitem20 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem20, -1)
+        toolitem26 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem26, -1)
 
         self.catalogue_downloaded_button = Gtk.CheckButton()
-        toolitem20.add(self.catalogue_downloaded_button)
+        toolitem26.add(self.catalogue_downloaded_button)
         self.catalogue_downloaded_button.set_label(_('Show downloaded'))
         self.catalogue_downloaded_button.set_active(
             self.app_obj.catalogue_draw_downloaded_flag,
+        )
+        self.catalogue_downloaded_button.set_tooltip_text(
+            _('Show downloaded videos'),
         )
         self.catalogue_downloaded_button.connect(
             'toggled',
             self.on_draw_downloaded_checkbutton_changed,
         )
 
-        toolitem21 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem21, -1)
+        toolitem27 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem27, -1)
 
         self.catalogue_undownloaded_button = Gtk.CheckButton()
-        toolitem21.add(self.catalogue_undownloaded_button)
+        toolitem27.add(self.catalogue_undownloaded_button)
         self.catalogue_undownloaded_button.set_label(
             _('Show undownloaded'),
         )
         self.catalogue_undownloaded_button.set_active(
             self.app_obj.catalogue_draw_undownloaded_flag,
         )
+        self.catalogue_undownloaded_button.set_tooltip_text(
+            _('Show videos not downloaded yet'),
+        )
         self.catalogue_undownloaded_button.connect(
             'toggled',
             self.on_draw_undownloaded_checkbutton_changed,
         )
 
-        toolitem22 = Gtk.ToolItem.new()
-        self.catalogue_toolbar4.insert(toolitem22, -1)
+        toolitem28 = Gtk.ToolItem.new()
+        self.catalogue_toolbar4.insert(toolitem28, -1)
 
         self.catalogue_blocked_button = Gtk.CheckButton()
-        toolitem22.add(self.catalogue_blocked_button)
+        toolitem28.add(self.catalogue_blocked_button)
         self.catalogue_blocked_button.set_label(_('Show blocked'))
         self.catalogue_blocked_button.set_active(
             self.app_obj.catalogue_draw_blocked_flag,
+        )
+        self.catalogue_blocked_button.set_tooltip_text(
+            _('Show videos that are now blocked'),
         )
         self.catalogue_blocked_button.connect(
             'toggled',
@@ -11201,9 +11251,10 @@ class MainWin(Gtk.ApplicationWindow):
         #   videos
         self.video_catalogue_toolbar_update(page_num, video_count)
 
-        # In all cases, sensitise the scroll up/down toolbar buttons
+        # In all cases, sensitise some of the toolbar buttons
         self.catalogue_scroll_up_button.set_sensitive(True)
         self.catalogue_scroll_down_button.set_sensitive(True)
+        self.catalogue_regulate_grid_button.set_sensitive(True)
         # Reset the scrollbar, if required
         if reset_scroll_flag:
             self.catalogue_scrolled.get_vadjustment().set_value(0)
@@ -11825,13 +11876,16 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_grid_rearrange_flag = True
 
 
-    def video_catalogue_grid_check_size(self):
+    def video_catalogue_grid_check_size(self, force_columns=None):
 
         """Called by self.on_video_catalogue_thumb_combo_changed(),
         self.on_window_size_allocate() and .on_paned_size_allocate().
 
         Also called by mainapp.TartubeApp.script_fast_timer_callback(), after a
         recent call to self.video_catalogue_grid_set_gridbox_width().
+
+        Also called by mainapp.TartubeApp.on_button_regulate_grid(), which is
+        when the 'force_columns' argument is specified.
 
         Used only when the Video Catalogue is displaying videos on a grid.
         Each grid location contains a single gridbox (mainwin.CatalogueGridBox)
@@ -11840,6 +11894,12 @@ class MainWin(Gtk.ApplicationWindow):
         Check the available size of the grid. Given the minimum required width
         for a gridbox, increase or decrease the number of columns in the grid,
         if necessary.
+
+        Optional args:
+
+            force_columns (int): If specified, force the grid to have this many
+                columns
+
         """
 
         if DEBUG_FUNC_FLAG:
@@ -11851,7 +11911,10 @@ class MainWin(Gtk.ApplicationWindow):
         grid_width = self.win_last_width - self.videos_paned.get_position() \
         - (self.spacing_size * (self.catalogue_grid_column_count + 7))
 
-        if self.catalogue_grid_width_dict[thumb_size] is None:
+        if force_columns is not None:
+            column_count = force_columns
+
+        elif self.catalogue_grid_width_dict[thumb_size] is None:
             column_count = 1
 
         else:
@@ -12460,7 +12523,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.catalogue_blocked_button.set_sensitive(False)
         self.catalogue_filter_entry.set_sensitive(False)
         self.catalogue_regex_togglebutton.set_sensitive(False)
-        self.catalogue_apply_filter_button.set_sensitive(False)
         self.catalogue_cancel_filter_button.set_sensitive(False)
         self.catalogue_find_date_button.set_sensitive(False)
 
@@ -12544,7 +12606,6 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_icons_button.set_sensitive(False)
             self.catalogue_filter_entry.set_sensitive(False)
             self.catalogue_regex_togglebutton.set_sensitive(False)
-            self.catalogue_apply_filter_button.set_sensitive(False)
             self.catalogue_cancel_filter_button.set_sensitive(False)
             self.catalogue_find_date_button.set_sensitive(False)
             self.catalogue_cancel_date_button.set_sensitive(False)
@@ -12564,10 +12625,8 @@ class MainWin(Gtk.ApplicationWindow):
             self.catalogue_filter_entry.set_sensitive(True)
             self.catalogue_regex_togglebutton.set_sensitive(True)
             if self.video_catalogue_filtered_flag:
-                self.catalogue_apply_filter_button.set_sensitive(False)
                 self.catalogue_cancel_filter_button.set_sensitive(True)
             else:
-                self.catalogue_apply_filter_button.set_sensitive(True)
                 self.catalogue_cancel_filter_button.set_sensitive(False)
             self.catalogue_find_date_button.set_sensitive(True)
             self.catalogue_cancel_date_button.set_sensitive(False)
@@ -12575,7 +12634,7 @@ class MainWin(Gtk.ApplicationWindow):
 
     def video_catalogue_apply_filter(self):
 
-        """Called by mainapp.TartubeApp.on_button_apply_filter().
+        """Called by self.on_video_catalogue_filter_entry_activated().
 
         Applies a filter, so that all videos not matching the search text are
         hidden in the Video Catalogue.
@@ -12640,6 +12699,19 @@ class MainWin(Gtk.ApplicationWindow):
                         )
                     )
                 ) or (
+                    self.app_obj.catalogue_filter_author_flag \
+                    and (
+                        not regex_flag \
+                        and child_obj.author.lower().find(lower_text) > -1
+                    ) or (
+                        regex_flag \
+                        and re.search(
+                            search_text,
+                            child_obj.author,
+                            re.IGNORECASE,
+                        )
+                    )
+                ) or (
                     self.app_obj.catalogue_filter_descrip_flag \
                     and (
                         not regex_flag \
@@ -12648,7 +12720,7 @@ class MainWin(Gtk.ApplicationWindow):
                         regex_flag \
                         and re.search(
                             search_text,
-                            child_obj.name,
+                            child_obj.descrip,
                             re.IGNORECASE,
                         )
                     )
@@ -12670,7 +12742,6 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
         # Sensitise widgets, as appropriate
-        self.catalogue_apply_filter_button.set_sensitive(False)
         self.catalogue_cancel_filter_button.set_sensitive(True)
         # (Desensitise these widgets, to make it clear to the user that the
         #   settings don't apply when the filter is applied)
@@ -12699,7 +12770,6 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_redraw_all(self.video_index_current_dbid)
 
         # Sensitise widgets, as appropriate
-        self.catalogue_apply_filter_button.set_sensitive(True)
         self.catalogue_cancel_filter_button.set_sensitive(False)
         self.catalogue_downloaded_button.set_sensitive(True)
         self.catalogue_undownloaded_button.set_sensitive(True)
@@ -19143,6 +19213,33 @@ class MainWin(Gtk.ApplicationWindow):
                 self.output_tab_show_first_page()
 
 
+    def on_video_catalogue_filter_entry_activated(self, entry):
+
+        """Called from a callback in self.setup_videos_tab().
+
+        The user having typed something in the search box and pressed ENTER,
+        initiates the filter, replacing any filter currently in effect.
+
+        (This is a shortcut for using the 'Filter videos' button).
+
+        Args:
+
+            entry (Gtk.Entry): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time(
+                'mwn 18998 on_video_catalogue_filter_entry_activated',
+            )
+
+        self.video_catalogue_apply_filter()
+        # For the user's convenience, make the entry box grab the focus, so
+        #   they can immediately type another search term there, if desired
+        entry.grab_focus()
+        entry.select_region(0, -1)
+
+
     def on_video_catalogue_finalise_livestream(self, menu_item, \
     media_data_obj):
 
@@ -23242,6 +23339,32 @@ class MainWin(Gtk.ApplicationWindow):
         )
 
 
+    def on_filter_author_checkbutton_changed(self, checkbutton):
+
+        """Called from callback in self.setup_videos_tab().
+
+        In the Videos tab, when the user toggles the checkbutton, enable/
+        disable filtering by author.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The clicked widget
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time(
+                'mwn 23026 on_filter_author_checkbutton_changed',
+            )
+
+        self.app_obj.set_catalogue_filter_author_flag(checkbutton.get_active())
+        # (No need to redraw the Video Catalogue, just to make the status icons
+        #   visible/invisible)
+        if self.app_obj.catalogue_mode_type != 'simple':
+            for catalogue_obj in self.video_catalogue_dict.values():
+                catalogue_obj.update_status_images()
+
+
     def on_filter_comment_checkbutton_changed(self, checkbutton):
 
         """Called from callback in self.setup_videos_tab().
@@ -23264,7 +23387,7 @@ class MainWin(Gtk.ApplicationWindow):
             checkbutton.get_active(),
         )
         # (No need to redraw the Video Catalogue, just to make the status icons
-        #   visible/invisible
+        #   visible/invisible)
         if self.app_obj.catalogue_mode_type != 'simple':
             for catalogue_obj in self.video_catalogue_dict.values():
                 catalogue_obj.update_status_images()
@@ -23292,7 +23415,7 @@ class MainWin(Gtk.ApplicationWindow):
             checkbutton.get_active(),
         )
         # (No need to redraw the Video Catalogue, just to make the status icons
-        #   visible/invisible
+        #   visible/invisible)
         if self.app_obj.catalogue_mode_type != 'simple':
             for catalogue_obj in self.video_catalogue_dict.values():
                 catalogue_obj.update_status_images()
@@ -23316,7 +23439,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         self.app_obj.set_catalogue_filter_name_flag(checkbutton.get_active())
         # (No need to redraw the Video Catalogue, just to make the status icons
-        #   visible/invisible
+        #   visible/invisible)
         if self.app_obj.catalogue_mode_type != 'simple':
             for catalogue_obj in self.video_catalogue_dict.values():
                 catalogue_obj.update_status_images()
@@ -24688,6 +24811,11 @@ class SimpleCatalogueItem(object):
         # Video name
         self.name_label = Gtk.Label('', xalign = 0)
         vbox.pack_start(self.name_label, True, True, 0)
+#       self.name_label.set_hexpand(True)
+        self.name_label.set_line_wrap(True)
+        self.name_label.set_max_width_chars(
+            self.main_win_obj.very_long_string_max_len,
+        )
 
         # Parent channel/playlist/folder name (if allowed)
         if self.main_win_obj.app_obj.catalogue_mode == 'simple_show_parent':
@@ -25348,6 +25476,11 @@ class ComplexCatalogueItem(object):
 
         self.name_label = Gtk.Label('', xalign = 0)
         hbox2.pack_start(self.name_label, True, True, 0)
+#       self.name_label.set_hexpand(True)
+        self.name_label.set_line_wrap(True)
+        self.name_label.set_max_width_chars(
+            self.main_win_obj.very_long_string_max_len,
+        )
 
         # Status icons
         self.status_image = Gtk.Image()
@@ -28082,11 +28215,17 @@ class GridCatalogueItem(ComplexCatalogueItem):
         self.name_label = Gtk.Label('', xalign = 0)
         self.grid2.attach(self.name_label, 0, 0, 1, 1)
         self.name_label.set_hexpand(True)
+        self.name_label.set_line_wrap(True)
+        self.name_label.set_max_width_chars(
+            self.main_win_obj.quite_long_string_max_len,
+        )
 
         # Third row - parent channel/playlist/folder name
         self.container_label = Gtk.Label('', xalign = 0)
         self.grid2.attach(self.container_label, 0, 1, 1, 1)
         self.container_label.set_hexpand(True)
+        self.container_label.set_line_wrap(True)
+        self.container_label.set_max_width_chars(True)
 
         # Fourth row - video stats, or livestream notification options,
         #   depending on settings
@@ -28511,9 +28650,6 @@ class GridCatalogueItem(ComplexCatalogueItem):
             ttutils.debug_time('mwn 28299 update_video_name')
 
         app_obj = self.main_win_obj.app_obj
-        thumb_size = app_obj.thumb_size_custom
-        gridbox_min_width \
-        = self.main_win_obj.catalogue_grid_width_dict[thumb_size]
 
         # For videos whose name is unknown, display the URL, rather than the
         #   usual '(video with no name)' string
@@ -28549,28 +28685,9 @@ class GridCatalogueItem(ComplexCatalogueItem):
         if self.video_obj.dl_sim_flag:
             string += ' style="italic"'
 
-        # The video name is split into two lines, if there is enough text.
-        #   Set the length of a the lines matching the size of the thumbnail
-        if thumb_size == 'tiny':
-            max_line_length = self.main_win_obj.medium_string_max_len
-        elif thumb_size == 'small':
-            max_line_length = self.main_win_obj.quite_long_string_max_len
-        elif thumb_size == 'medium':
-            max_line_length = self.main_win_obj.long_string_max_len
-        elif thumb_size == 'large':
-            max_line_length = self.main_win_obj.very_long_string_max_len
-        else:
-            max_line_length = self.main_win_obj.exceedingly_long_string_max_len
-
         self.name_label.set_markup(
-            '<span font_size="large"' + string + '>' + \
-            html.escape(
-                ttutils.shorten_string_two_lines(
-                    name,
-                    max_line_length,
-                ),
-                quote=True,
-            ) + '</span>'
+            '<span font_size="large"' + string + '>' \
+            + html.escape(name, quote=True) + '</span>'
         )
 
 

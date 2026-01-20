@@ -1,3 +1,40 @@
+v2.5.197 (20 Jan 2026)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- The installers for MS Windows now include Deno, so there's no need to install
+    it yourself. (Deno is now yt-dlp's recommended Javascript runtime, so users
+    on other platforms should probably install it too) (Git #749)
+- Videos added to Tartube's database now include the name of the video's author
+    (i.e. the uploader, or the channel name if the uploader is not available).
+    You can re-check your existing videos to automatically update the database.
+    In the toolbar at the bottom of the Videos tab, you can now search videos
+    by author (as well as by video name, etc) (Git #719)
+- The toolbar at the bottom of the Videos tab has been improved, so that
+    searching for videos (i.e. applying a filter) is much more convenient. A
+    number of explanatory tooltips have also been added there (Git #719)
+
+MINOR NEW FEATURES
+- You can now auto-delete videos by upload dates, as well as by download date.
+    Click Edit > System preferences... > Files > Delete, where you can now
+    select 'days since download' or 'days since upload' (Git #743)
+- Improved the layout of the grid in the Videos tab, making it much more likely
+    that users will see multiple columns (as intended), rather than a single
+    one. This should help (for example) users downloading videos with Japanese-
+    language titles, which take up more horizontal space than expected; video
+    titles are now line-wrapped more efficiently. There is also a new button at
+    the bottom of the Videos tab, which can be clicked to force the grid into
+    2, 3 or 4 columns (depending on the window size) (Git #751)
+- Added new menu options for checking/downloading the selected video (Git #740)
+
+MAJOR FIXES
+- Fixed Tartube's failure to start and/or load the database, when loading data
+    from a (much) earlier version (Git #733, #737)
+- Fixed code handling temporary downloads (Git #740)
+
+MINOR FIXES
+- Improved anti-aliasing and fonts on MS Windows (Git #730)
+
 v2.5.164 (1 Aug 2025)
 -------------------------------------------------------------------------------
 
@@ -24,7 +61,7 @@ MINOR NEW FEATURES
 - The settings to download comments, when videos are downloaded, have been
     moved. You can now find them in Edit > General download options... >
     Downloads > Comments (Git #703)
-    
+
 v2.5.145 (10 Jul 2025)
 -------------------------------------------------------------------------------
 
@@ -35,7 +72,7 @@ MAJOR NEW FEATURES
     to re-install yt-dlp before you can use it. Note that the procedure for
     performing a manual installation has changed; see the updated notes in the
     README
-    
+
 MINOR NEW FEATURES
 - When fetching a list of videos formats or subtitles (for example, by right-
     clicking and selecting Fetch > Available formats), you can now specify
@@ -52,7 +89,7 @@ MAJOR FIXES
     tab were broken; fixed them (Git #707)
 - Tartube did not detect the download of a remuxed video, instead adding the
     video in its original format to the Tartube database. Fixed (Git #714)
-    
+
 MINOR FIXES
 - Tweaked text in the README in a few places (Git #689, #700, #702, #703)
 - When fetching a list of videos formats or subtitles (for example, by right-
