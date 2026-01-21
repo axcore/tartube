@@ -375,7 +375,7 @@
 
     !insertmacro MUI_PAGE_WELCOME
 
-    !insertmacro MUI_PAGE_LICENSE "license.txt"
+    !insertmacro MUI_PAGE_LICENSE "license.rtf"
 
     !insertmacro MUI_PAGE_DIRECTORY
 
@@ -456,3 +456,4 @@ Section "Uninstall"
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
 
 SectionEnd
+
