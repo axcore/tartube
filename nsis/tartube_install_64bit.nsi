@@ -339,20 +339,36 @@
 # -------------------------------
 
     ;Name and file
-    Name "Tartube"
-    OutFile "install-tartube-2.5.197-64bit.exe"
+
+    !define PRODUCT_NAME "Tartube"
+    !define PRODUCT_VERSION "2.5.197"
+
+    Name "${PRODUCT_NAME} ${PRODUCT_VERSION} 64bit"
+    OutFile "install-tartube-${PRODUCT_VERSION}-64bit.exe"
 
     ;Default installation folder
-    InstallDir "$LOCALAPPDATA\Tartube"
+    InstallDir "$LOCALAPPDATA\${PRODUCT_NAME}"
 
     ;Get installation folder from registry if available
-    InstallDirRegKey HKCU "Software\Tartube" ""
+    InstallDirRegKey HKCU "Software\${PRODUCT_NAME}" ""
 
     ;Request application privileges for Windows Vista
     RequestExecutionLevel user
 
     ; Extra stuff here
     BrandingText " "
+
+    VIFileVersion   "${PRODUCT_VERSION}"
+    VIAddVersionKey "ProductName"        "${PRODUCT_NAME}"
+    VIAddVersionKey "ProductVersion"     "${PRODUCT_VERSION}"
+    VIAddVersionKey "Comments"           ""
+    VIAddVersionKey "CompanyName"        ""
+    VIAddVersionKey "LegalTrademarks"    ""
+    VIAddVersionKey "LegalCopyright"     ""
+    VIAddVersionKey "FileDescription"    "${PRODUCT_NAME} 64bit Installer"
+    VIAddVersionKey "FileVersion"        "${PRODUCT_VERSION}"
+    ;VIAddVersionKey "DisplayIcon"        "$instdir\\tartube.exe"
+    VIAddVersionKey "InternalName"       "${PRODUCT_NAME}"
 
 # Variables
 # -------------------------------
@@ -456,4 +472,5 @@ Section "Uninstall"
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
 
 SectionEnd
+
 
