@@ -46,7 +46,7 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 
 Stable release: **v2.5.197 (20 Jan 2026)**
 
-Development release: **v2.5.197 (20 Jan 2026)**
+Development release: **v2.5.204 (2 Feb 2026)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
@@ -224,6 +224,12 @@ With thanks to m3lab-zzl:
 
         **brew install cairo pkg-config python**
 
+- Set up the python virtual environment
+
+        **python3 -m venv ~/.my-venv**
+        
+        **source ~/.my-venv/bin/activate**
+
 - Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 
         **pip3 install pycairo**
@@ -263,6 +269,12 @@ With thanks to JeremyShih:
 
         **brew install python**
 
+- Set up the python virtual environment
+
+        **python3 -m venv ~/.my-venv**
+        
+        **source ~/.my-venv/bin/activate**
+        
 - Install `Gtk 3 <https://python-gtk-3-tutorial.readthedocs.io/en/latest/>`__
 
         **pip3 install pycairo**

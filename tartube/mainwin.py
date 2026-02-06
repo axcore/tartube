@@ -12700,6 +12700,7 @@ class MainWin(Gtk.ApplicationWindow):
                     )
                 ) or (
                     self.app_obj.catalogue_filter_author_flag \
+                    and child_obj.author is not None \
                     and (
                         not regex_flag \
                         and child_obj.author.lower().find(lower_text) > -1
@@ -22215,9 +22216,9 @@ class MainWin(Gtk.ApplicationWindow):
 
         # (Update the IV)
         if text == _('Convert to this format'):
-            self.app_obj.set_classic_format_convert_flag(True)
-        else:
             self.app_obj.set_classic_format_convert_flag(False)
+        else:
+            self.app_obj.set_classic_format_convert_flag(True)
 
         # (Update the banner at the top of the tab, according to current
         #   conditions)

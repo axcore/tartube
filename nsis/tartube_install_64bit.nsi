@@ -1,4 +1,4 @@
-﻿# Tartube v2.5.197 installer script for MS Windows
+﻿# Tartube v2.5.204 installer script for MS Windows
 #
 # Copyright (C) 2019-2026 A S Lewis
 #
@@ -339,9 +339,8 @@
 # -------------------------------
 
     ;Name and file
-
     !define PRODUCT_NAME "Tartube"
-    !define PRODUCT_VERSION "2.5.197"
+    !define PRODUCT_VERSION "2.5.204"
 
     Name "${PRODUCT_NAME} ${PRODUCT_VERSION} 64bit"
     OutFile "install-tartube-${PRODUCT_VERSION}-64bit.exe"
@@ -355,9 +354,7 @@
     ;Request application privileges for Windows Vista
     RequestExecutionLevel user
 
-    ; Extra stuff here
-    BrandingText " "
-
+    ;Installer metadata
     VIFileVersion   "${PRODUCT_VERSION}"
     VIAddVersionKey "ProductName"        "${PRODUCT_NAME}"
     VIAddVersionKey "ProductVersion"     "${PRODUCT_VERSION}"
@@ -369,6 +366,9 @@
     VIAddVersionKey "FileVersion"        "${PRODUCT_VERSION}"
     ;VIAddVersionKey "DisplayIcon"        "$instdir\\tartube.exe"
     VIAddVersionKey "InternalName"       "${PRODUCT_NAME}"
+    
+    ; Extra stuff here
+    BrandingText " "
 
 # Variables
 # -------------------------------
@@ -472,5 +472,3 @@ Section "Uninstall"
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Tartube"
 
 SectionEnd
-
-
