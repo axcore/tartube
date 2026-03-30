@@ -6594,7 +6594,7 @@ class OptionsEditWin(GenericEditWin):
 
             # Special case: reset the other two widgets, which causes further
             #   calls to this function, in which the download option is updated
-            entry2.set_text('')
+            entry.set_text('')
             combo2.set_active(0)
             return
 
@@ -28064,21 +28064,36 @@ class SystemPrefWin(GenericPrefWin):
         checkbutton5.set_hexpand(False)
         checkbutton5.connect('toggled', self.on_output_stderr_button_toggled)
 
+        # N.B. I didn't actually implement a check for MS Windows, so this
+        #   setting will still be visible on Linux (where users are likely
+        #   seeing a monospace font for all operations anyway)
         checkbutton6 = self.add_checkbutton(grid,
-            _('Limit the size of Output tab pages to'),
-            self.app_obj.output_size_apply_flag,
+            _('Disable monospace fonts in the Output tab (MS Windows only)'),
+            self.app_obj.disable_monospaced_output_flag,
             True,               # Can be toggled by user
             0, 6, 1, 1,
         )
         checkbutton6.set_hexpand(False)
-        checkbutton6.connect('toggled', self.on_output_size_button_toggled)
+        checkbutton6.connect(
+            'toggled',
+            self.on_disable_monospaced_button_toggled
+        )
+
+        checkbutton7 = self.add_checkbutton(grid,
+            _('Limit the size of Output tab pages to'),
+            self.app_obj.output_size_apply_flag,
+            True,               # Can be toggled by user
+            0, 7, 1, 1,
+        )
+        checkbutton7.set_hexpand(False)
+        checkbutton7.connect('toggled', self.on_output_size_button_toggled)
 
         spinbutton = self.add_spinbutton(grid,
             self.app_obj.output_size_min,
             self.app_obj.output_size_max,
             1,                  # Step
             self.app_obj.output_size_default,
-            1, 6, 1, 1,
+            1, 7, 1, 1,
         )
         spinbutton.connect(
             'value-changed',
@@ -28087,78 +28102,81 @@ class SystemPrefWin(GenericPrefWin):
 
         if not self.app_obj.simple_prefs_flag:
 
-            checkbutton7 = self.add_checkbutton(grid,
+            checkbutton8 = self.add_checkbutton(grid,
                 _(
                     'Empty pages in the Output tab at the start of every' \
                     + ' operation',
                 ),
                 self.app_obj.ytdl_output_start_empty_flag,
                 True,               # Can be toggled by user
-                0, 7, grid_width, 1,
+                0, 8, grid_width, 1,
             )
-            checkbutton7.set_hexpand(False)
-            checkbutton7.connect(
+            checkbutton8.set_hexpand(False)
+            checkbutton8.connect(
                 'toggled',
                 self.on_output_empty_button_toggled,
             )
 
-            checkbutton8 = self.add_checkbutton(grid,
+            checkbutton9 = self.add_checkbutton(grid,
                 _(
                 'Show a summary of active threads (changes are applied when' \
                 + ' Tartube restarts)',
                 ),
                 self.app_obj.ytdl_output_show_summary_flag,
                 True,               # Can be toggled by user
-                0, 8, grid_width, 1,
+                0, 9, grid_width, 1,
             )
-            checkbutton8.set_hexpand(False)
-            checkbutton8.connect(
+            checkbutton9.set_hexpand(False)
+            checkbutton9.connect(
                 'toggled',
                 self.on_output_summary_button_toggled,
             )
 
-            checkbutton9 = self.add_checkbutton(grid,
+            checkbutton10 = self.add_checkbutton(grid,
                 _(
                 'During update/info operations, automatically switch to the' \
                 + ' Output tab',
                 ),
                 self.app_obj.auto_switch_output_flag,
                 True,                   # Can be toggled by user
-                0, 9, grid_width, 1,
+                0, 10, grid_width, 1,
             )
-            checkbutton9.connect('toggled', self.on_auto_switch_button_toggled)
+            checkbutton10.connect(
+                'toggled',
+                self.on_auto_switch_button_toggled,
+            )
 
-            checkbutton10 = self.add_checkbutton(grid,
+            checkbutton11 = self.add_checkbutton(grid,
                 _(
                 'During a refresh operation, show all matching videos in the' \
                 + ' Output tab',
                 ),
                 self.app_obj.refresh_output_videos_flag,
                 True,               # Can be toggled by user
-                0, 10, grid_width, 1,
-            )
-            checkbutton10.set_hexpand(False)
-            # (Signal connect appears below)
-
-            checkbutton11 = self.add_checkbutton(grid,
-                _('...also show all non-matching videos'),
-                self.app_obj.refresh_output_verbose_flag,
-                True,               # Can be toggled by user
                 0, 11, grid_width, 1,
             )
             checkbutton11.set_hexpand(False)
-            checkbutton11.connect(
+            # (Signal connect appears below)
+
+            checkbutton12 = self.add_checkbutton(grid,
+                _('...also show all non-matching videos'),
+                self.app_obj.refresh_output_verbose_flag,
+                True,               # Can be toggled by user
+                0, 12, grid_width, 1,
+            )
+            checkbutton12.set_hexpand(False)
+            checkbutton12.connect(
                 'toggled',
                 self.on_refresh_verbose_button_toggled,
             )
             if not self.app_obj.refresh_output_videos_flag:
-                checkbutton10.set_sensitive(False)
+                checkbutton11.set_sensitive(False)
 
             # (Signal connect from above)
-            checkbutton10.connect(
+            checkbutton11.connect(
                 'toggled',
                 self.on_refresh_videos_button_toggled,
-                checkbutton11,
+                checkbutton12,
             )
 
 
@@ -30880,6 +30898,26 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.set_disable_dl_all_flag(False)
 
 
+    def on_disable_monospaced_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_output_outputtab_tab().
+
+        Enables/disables monospace fonts in the Output tab.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.disable_monospaced_output_flag:
+            self.app_obj.set_disable_monospaced_output_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.disable_monospaced_output_flag:
+            self.app_obj.set_disable_monospaced_output_flag(False)
+
+
     def on_disk_stop_button_toggled(self, checkbutton, spinbutton):
 
         """Called from a callback in self.setup_files_device_tab().
@@ -32169,7 +32207,6 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.operation_limit_include_out_of_range_flag:
             self.app_obj.set_operation_limit_include_out_of_range_flag(False)
-
 
 
     def on_livestream_auto_alarm_button_toggled(self, checkbutton):

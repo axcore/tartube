@@ -990,6 +990,10 @@ class TartubeApp(Gtk.Application):
         self.output_size_min = 1
         # Flag set to True when the limit is actually applied, False when not
         self.output_size_apply_flag = True
+        # Flag set to True to disable monospace fonts in the Output tab (not
+        #   recommended, but may be necessary if the system's monospace font is
+        #   unreadable)
+        self.disable_monospaced_output_flag = False
 
         # Flag set to True if an update operation has succeeded at least once
         #   (the first time, we try to auto-detect youtube-dl's location)
@@ -4903,6 +4907,10 @@ class TartubeApp(Gtk.Application):
         if version >= 2002043 and 'output_size_default' in json_dict:
             self.output_size_default = json_dict['output_size_default']
             self.output_size_apply_flag = json_dict['output_size_apply_flag']
+        if version >= 2005209 \
+        and 'disable_monospaced_output_flag' in json_dict:
+            self.disable_monospaced_output_flag = \
+            json_dict['disable_monospaced_output_flag']
 
         if version >= 2001117 and 'ytdl_update_once_flag' in json_dict:
             self.ytdl_update_once_flag = json_dict['ytdl_update_once_flag']
@@ -6364,6 +6372,8 @@ class TartubeApp(Gtk.Application):
             'auto_switch_output_flag': self.auto_switch_output_flag,
             'output_size_default': self.output_size_default,
             'output_size_apply_flag': self.output_size_apply_flag,
+            'disable_monospaced_output_flag': \
+            self.disable_monospaced_output_flag,
 
             'ytdl_update_once_flag': self.ytdl_update_once_flag,
             'ytdl_fork': self.ytdl_fork,
@@ -28683,6 +28693,14 @@ class TartubeApp(Gtk.Application):
         else:
             self.disable_dl_all_flag = True
             self.main_win_obj.disable_dl_all_buttons()
+
+
+    def set_disable_monospaced_output_flag(self, flag):
+
+        if not flag:
+            self.disable_monospaced_output_flag = False
+        else:
+            self.disable_monospaced_output_flag = True
 
 
     def set_dialogue_move_container_flag(self, flag):

@@ -15432,6 +15432,10 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             ttutils.debug_time('mwn 15248 output_tab_write')
 
+        # Disable monospace fonts, if required generally
+        if self.app_obj.disable_monospaced_output_flag:
+            force_monospace_flag = False
+
         # Add the text to the textview. STDERR messages and system commands are
         #   displayed in a different colour
         # (Note that the summary page is not necessarily visible)

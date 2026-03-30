@@ -1332,7 +1332,7 @@ class OptionsParser(object):
             OptionHolder(
                 'no_cookies_from_browser',
                 '--no-cookies-from-browser',
-                True,
+                False,
             ),
             # (Internet Shortcut Options)
             # --write-link
