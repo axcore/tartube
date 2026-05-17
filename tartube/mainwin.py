@@ -6990,6 +6990,18 @@ class MainWin(Gtk.ApplicationWindow):
         downloads_submenu.append(enforce_check_menu_item)
         # (Widget sensitivity set below)
 
+        downloads_submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_downloaded_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark existing videos as _downloaded'),
+        )
+        mark_downloaded_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_downloaded,
+            media_data_obj,
+        )
+        downloads_submenu.append(mark_downloaded_menu_item)
+
         # (Widget sensitivity from above)
         if self.app_obj.current_manager_obj \
         or (
@@ -6999,6 +7011,7 @@ class MainWin(Gtk.ApplicationWindow):
             no_db_menu_item.set_sensitive(False)
             disable_menu_item.set_sensitive(False)
             enforce_check_menu_item.set_sensitive(False)
+            mark_downloaded_menu_item.set_sensitive(False)
 
         downloads_menu_item = Gtk.MenuItem.new_with_mnemonic(_('Down_loads'))
         downloads_menu_item.set_submenu(downloads_submenu)
@@ -16719,6 +16732,105 @@ class MainWin(Gtk.ApplicationWindow):
             0,
             self.video_index_update_row_text,
             media_data_obj,
+        )
+
+
+    def on_video_index_mark_downloaded(self, menu_item, media_data_obj):
+
+        """Mark all videos in this channel/playlist/folder as downloaded."""
+
+        if self.app_obj.current_manager_obj:
+            return
+
+        app_obj = self.app_obj
+        video_list = media_data_obj.compile_all_videos([])
+        count = 0
+        archive_dict = {}
+
+        for video_obj in video_list:
+            if not video_obj.dl_flag:
+                count += 1
+            app_obj.mark_video_downloaded(video_obj, True, True)
+
+            if video_obj.vid is None or video_obj.source is None:
+                continue
+            if not re.search(
+                r'^https?\:\/\/((www|m)\.)?(youtube\.com|youtu\.be)',
+                video_obj.source,
+            ):
+                continue
+
+            parent_obj = video_obj.parent_obj
+            if isinstance(parent_obj, media.Folder) \
+            and parent_obj.fixed_flag \
+            and app_obj.allow_ytdl_archive_mode == 'default':
+                continue
+
+            dl_path = parent_obj.get_default_dir(app_obj)
+            if app_obj.allow_ytdl_archive_mode == 'top':
+                archive_dir = app_obj.data_dir
+            elif app_obj.allow_ytdl_archive_mode == 'custom' \
+            and app_obj.allow_ytdl_archive_path:
+                archive_dir = app_obj.allow_ytdl_archive_path
+            else:
+                archive_dir = dl_path
+
+            archive_path = os.path.abspath(
+                os.path.join(archive_dir, app_obj.ytdl_archive_name),
+            )
+            archive_dict.setdefault(archive_path, []).append(
+                'youtube ' + video_obj.vid,
+            )
+
+        archive_count = 0
+        for archive_path, id_list in archive_dict.items():
+            try:
+                existing = set()
+                if os.path.isfile(archive_path):
+                    fh = open(archive_path, 'r')
+                    existing = {ln.strip() for ln in fh if ln.strip()}
+                    fh.close()
+
+                new_list = [i for i in id_list if i not in existing]
+                if not new_list:
+                    continue
+
+                archive_dir = os.path.dirname(archive_path)
+                if not os.path.isdir(archive_dir):
+                    os.makedirs(archive_dir)
+
+                added = len(new_list)
+                fh = open(archive_path, 'a')
+                if os.path.getsize(archive_path) == 0 and new_list:
+                    fh.write(new_list.pop(0))
+                for line in new_list:
+                    fh.write('\n' + line)
+                fh.close()
+                archive_count += added
+
+            except:
+                pass
+
+        self.video_index_catalogue_reset(True)
+
+        if app_obj.save_db():
+            msg = _(
+                'Marked {0} videos as downloaded ({1} added to archive).\n\n' \
+                + 'Database saved.',
+            ).format(count, archive_count)
+            msg_type = 'info'
+        else:
+            msg = _(
+                'Marked {0} videos as downloaded ({1} added to archive).\n\n' \
+                + 'Database could not be saved.',
+            ).format(count, archive_count)
+            msg_type = 'warning'
+
+        self.app_obj.dialogue_manager_obj.show_simple_msg_dialogue(
+            msg,
+            msg_type,
+            'ok',
+            None,
         )
 
 
