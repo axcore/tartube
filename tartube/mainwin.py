@@ -3075,7 +3075,7 @@ class MainWin(Gtk.ApplicationWindow):
             [
                 'hide', 'hide', 'hide', '', _('Source'), '#', _('Status'),
                 _('Incoming file'), _('Ext'), '%', _('Speed'), _('ETA'),
-                _('Size'),
+                _('Size'), _('Finished at'),
             ]
         ):
             if not column_title:
@@ -3104,7 +3104,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_liststore = Gtk.ListStore(
             int, int, str,
             GdkPixbuf.Pixbuf,
-            str, str, str, str, str, str, str, str, str,
+            str, str, str, str, str, str, str, str, str, str,
         )
         self.progress_list_treeview.set_model(self.progress_list_liststore)
 
@@ -12897,7 +12897,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_liststore = Gtk.ListStore(
             int, int, str,
             GdkPixbuf.Pixbuf,
-            str, str, str, str, str, str, str, str, str,
+            str, str, str, str, str, str, str, str, str, str,
         )
         self.progress_list_treeview.set_model(self.progress_list_liststore)
 
@@ -13006,6 +13006,7 @@ class MainWin(Gtk.ApplicationWindow):
         row_list.append(None)
         row_list.append(None)
         row_list.append(None)
+        row_list.append(None)
 
         # Create a new row in the treeview. Doing the .show_all() first
         #   prevents a Gtk error (for unknown reasons)
@@ -13094,6 +13095,19 @@ class MainWin(Gtk.ApplicationWindow):
         if finish_flag:
             self.progress_list_finish_dict[download_item_obj.item_id] \
             = time.time() + self.progress_list_hide_time
+
+            try:
+                tree_path = Gtk.TreePath(
+                    self.progress_list_row_dict[download_item_obj.item_id],
+                )
+                tree_iter = self.progress_list_liststore.get_iter(tree_path)
+                self.progress_list_liststore.set(
+                    tree_iter,
+                    13,
+                    datetime.datetime.now().strftime('%d %b %Y %H:%M:%S'),
+                )
+            except:
+                pass
 
 
     def progress_list_display_dl_stats(self):
