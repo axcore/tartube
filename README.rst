@@ -1,9 +1,9 @@
+Tartube - The Easy Way To Download and Watch Videos
 ===================================================
-Tartube - The Easy Way To Watch And Download Videos
-===================================================
----------------------------------------------------------------
 Works with YouTube, Twitch, Odysee, and hundreds of other sites
 ---------------------------------------------------------------
+Download Tartube from `trustworthy websites <https://github.com/axcore/tartube/releases>`__ - not fake ones!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: screenshots/screenshot.png
   :alt: Tartube screenshot
@@ -44,16 +44,16 @@ Problems can be reported at `our GitHub page <https://github.com/axcore/tartube/
 3 Downloads
 ===========
 
-Stable release: **v2.5.197 (20 Jan 2026)**
+Stable release: **v2.5.231 (24 May 2026)**
 
-Development release: **v2.5.210 (30 Mar 2026)**
+Development release: **v2.5.231 (24 May 2026)**
 
 Official packages (also available from the `Github release page <https://github.com/axcore/tartube/releases>`__):
 
-- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.197/install-tartube-2.5.197-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.197/install-tartube-with-ffmpeg-2.5.197-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.197/tartube-2.5.197-64bit-mswin-portable.zip/download>`__ from Sourceforge
+- `MS Windows (64-bit) installer <https://sourceforge.net/projects/tartube/files/v2.5.231/install-tartube-2.5.231-64bit.exe/download>`__, `MS Windows (64-bit) and FFmpeg installer <https://sourceforge.net/projects/tartube/files/v2.5.231/install-tartube-with-ffmpeg-2.5.231-64bit.exe/download>`__ and `portable edition <https://sourceforge.net/projects/tartube/files/v2.5.231/tartube-2.5.231-64bit-mswin-portable.zip/download>`__ from Sourceforge
 - Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_
-- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.197/python3-tartube_2.5.197.deb/download>`__ from Sourceforge
-- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.197/tartube-2.5.197.rpm/download>`__ from Sourceforge
+- `DEB package (for Debian-based distros, e.g. Ubuntu, Linux Mint) <https://sourceforge.net/projects/tartube/files/v2.5.231/python3-tartube_2.5.231.deb/download>`__ from Sourceforge
+- `RPM package (for RHEL-based distros, e.g. Fedora) <https://sourceforge.net/projects/tartube/files/v2.5.231/tartube-2.5.231.rpm/download>`__ from Sourceforge
 
 Official 'Strict' packages:
 
@@ -70,7 +70,7 @@ Semi-official packages (Linux):
 
 Source code:
 
-- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.197/tartube_v2.5.197.tar.gz/download>`__ from Sourceforge
+- `Source code <https://sourceforge.net/projects/tartube/files/v2.5.231/tartube_v2.5.231.tar.gz/download>`__ from Sourceforge
 - `Source code <https://github.com/axcore/tartube>`__ and `support <https://github.com/axcore/tartube/issues>`__ from GitHub
 - In case this Github repository is taken down, there is an official backup `here <https://gitlab.com/axcore/tartube>`__
 
@@ -112,7 +112,7 @@ MS Windows users should use the installer `available at the Tartube website <htt
 
 There is also a portable edition; use this if you want to install **Tartube** onto removable media, such as a USB drive. Download the ZIP file, extract it, and run the file **tartube_portable_64bit.bat**.
 
-Both the installer and the portable edition include a copy of `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__, so there is no need to install it yourself.
+Both the installer and the portable edition include vital dependencies like `AtomicParsley <https://bitbucket.org/jonhedgerows/atomicparsley/wiki/Home>`__ and `Deno <https://docs.deno.com/runtime/getting_started/installation/>`__, so there is no need to install them yourself.
 
 Tartube is no longer supported on older versions of MS Windows - see `7.24 Doesn't work on 32-bit Windows / Windows 7 / Windows 8`_.
 
@@ -145,10 +145,9 @@ If you want to perform a manual installation, you can follow this procedure, whi
 
         **pacman -S mingw-w64-x86_64-gsettings-desktop-schemas**
 
-- (Don't close the MINGW64 terminal until you have finished the manual installation)
 - Install Microsoft Visual C++ (a free download from the Microsoft website)
 - Navigate to the folder **C:\\Windows\\System32**
-- Copy all the files whose name starts with **msvcr** (e.g. **msvcr1230_clr0400.dll**) into the folder **C:\\msys64\\mingw64\\bin**
+- Copy all the files whose name starts with **msvcr** (e.g. **msvcr120_clr0400.dll**) into the folder **C:\\msys64\\mingw64\\bin**
 
 - In the MINGW64 terminal, type the following commands:
 
@@ -182,13 +181,19 @@ If you want to perform a manual installation, you can follow this procedure, whi
 
 - If you want to install `Atomic Parsley <https://github.com/wez/atomicparsley>`__, copy the MS Windows executable into the **C:\\msys64\\usr\\bin** folder
 
-- In the MINGW64 terminal, type the following commands:
+- The following dependencies are optional. If you decide to install them, then type these commands into a new MINGW64 terminal
 
-        **pip install feedparser**
-
-        **pip install playsound**
+        **C:/msys64/home/YOURNAME/ytdl-venv/bin/python3.exe -m pip install playsound3 feedparser**
 
         **pacman -S mingw-w64-x86_64-aria2**
+
+- If you want to install dark themes, then `download and extract the file <https://github.com/B00merang-Project/Windows-10-Dark>`__. Creae the folder
+
+        **../mingw64/share/themes/Windows10/gtk-3.0/**
+
+- ...and copy into it the contents of the extract folder **gtk-3.20**
+
+- Install `Deno <https://github.com/B00merang-Project/Windows-10-Dark>`__, which is now a requirement for **YouTube** downloads. Download the file **deno-x86_64-pc-windows-msvc.zip** from the `Deno releases page <https://github.com/denoland/deno/releases>`__. Extract the file, and move **deno.exe** to **C:\\msys64\\home\\YOURNAME\\ytdl-venv/bin**
 
 - Download the **Tartube** source code from **Sourceforge**, using the links above
 - Extract it into the folder **C:\\msys64\\home\\YOURNAME**, creating a folder called **C:\\msys64\\home\\YOURNAME\\tartube**
@@ -250,6 +255,8 @@ With thanks to m3lab-zzl:
 
         **brew install ffmpeg**
 
+- Deno is now required for all YouTube downloads. Install it using `these instructions <https://docs.deno.com/runtime/getting_started/installation/>`__
+
 - Install Tartube
 
         **pip3 install tartube**
@@ -308,6 +315,8 @@ With thanks to JeremyShih:
 - It is strongly recommended that you install `FFmpeg <https://ffmpeg.org/>`__, too
 
         **brew install ffmpeg**
+
+- Deno is now required for all YouTube downloads. Install it using `these instructions <https://docs.deno.com/runtime/getting_started/installation/>`__
 
 - Install Tartube
 
@@ -485,8 +494,9 @@ These dependencies are optional, but recommended:
 - `Python pip <https://pypi.org/project/pip/>`__ - keeping youtube-dl up to date is much simpler when pip is installed
 - `Python feedparser module <https://pypi.org/project/feedparser/>`__ - enables **Tartube** to detect livestreams
 - `Python moviepy module <https://pypi.org/project/moviepy/>`__ - if the website doesn't tell **Tartube** about the length of its videos, moviepy can work it out
-- `Python playsound module <https://pypi.org/project/playsound/>`__ - enables **Tartube** to play an alarm when a livestream starts
+- `Python playsound3 module <https://pypi.org/project/playsound3/>`__ - enables **Tartube** to play an alarm when a livestream starts
 - `FFmpeg <https://ffmpeg.org/>`__ - required for various video post-processing tasks; see the section below if you want to use FFmpeg
+- `Deno <https://docs.deno.com/runtime/getting_started/installation/>`__ - required for all YouTube downloads
 - `AtomicParsley <https://bitbucket.org/wez/atomicparsley/src/default/>`__ - required for embedding thumbnails in audio files
 - `aria2 <https://aria2.github.io/>`__ - provides an external downloader for youtube-dl
 - `matplotlib <https://matplotlib.org/>`__ - required for drawing graphs
@@ -2168,7 +2178,8 @@ You can now set the theme from Tartube's menu.
 * `7.36 Cannot install FFmpeg`_
 * `7.37 Cannot install yt-dlp plugins`_
 * `7.38 Annoying messages after downloads`_
-* `7.39 No puedo hablar inglés`_
+* `7.39 Can't download from YouTube any more`_
+* `7.40 No puedo hablar inglés`_
 
 
 7.1 Tartube won't install/won't run/doesn't work
@@ -2563,11 +2574,11 @@ A: Right-click the video and select **Livestream > Not a livestream**.
 
 A: Obviously you have already checked that your speakers are turned on, so now click **Edit > System preferences... > General > Modules**.
 
-If the `Python playsound module <https://pypi.org/project/playsound/>`__ is not available, you can install it via PyPI. On Linux/BSD, the command to use is something like:
+If the `Python playsound3 module <https://pypi.org/project/playsound3/>`__ is not available, you can install it via PyPI. On Linux/BSD, the command to use is something like:
 
-**pip3 install playsound**
+**pip3 install playsound3**
 
-The Tartube installer for 64-bit MS Windows already contains a copy of **playsound**, so there is no need to install it again.
+The Tartube installer for 64-bit MS Windows already contains a copy of **playsound3**, so there is no need to install it again.
 
 7.28 Some icons not visible
 ---------------------------
@@ -2700,7 +2711,14 @@ The second way will also work:
 
 A: The dialogues can be disabled in **Edit > System preferences > Operations > Actions > Don't notify the user at the end of an operation**.
 
-7.39 No puedo hablar inglés
+7.39 Can't download from YouTube any more
+-----------------------------------------
+
+*Q: I can't download YouTube any more! I always see an "n challenge solving failed" message!*
+
+A: **yt-dlp** now requires Deno in order to download YouTube videos. The **Tartube** installer for MS Windows already includes it; otherwise, you can `install it yourself <https://docs.deno.com/runtime/getting_started/installation/>`__.
+
+7.40 No puedo hablar inglés
 ---------------------------
 
 *Q: ¡No puedo usar Tartube porque no hablo inglés!*

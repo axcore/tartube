@@ -1,3 +1,62 @@
+v2.5.231 (24 May 2026)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Downloads from YouTube now require that you install Deno or some other
+    compatible JavaScript runtime. The MS Windows installer includes a copy of
+    Deno; users on Linux should install Deno using their normal package
+    manager. Tartube is now configured by default to specify Deno in all
+    video downloads; you can modify this behaviour, if you like, by clicking
+    Edit > System preferences... > Downloaders > JavaScript
+- For some time, the alarm that should be played when a livestream started (if
+    you've enabled that behaviour) did not play, because the Python playsound
+    module has been abandoned and is not available to most users. Tartube now
+    supports the playsound3 module instead; it's included in the MS Windows
+    installer
+
+MINOR NEW FEATURES
+- Added an option to disable the monospace fonts in the Output tab, for the
+    benefit of a small number of users for whom the fonts are illegible. To
+    set it, click Edit > System preferences > Output > Output tab, and select
+    'Disable monospace fonts in the Output tab' (Git #766)
+- The Output tab (and Classic Mode tab) now show the time at which a download
+    finished, which is useful for scheduled downloads (Git #783)
+- In the Videos tab, you can now mark multiple videos as downloaded (or not
+    downloaded), for example by right-clicking a channel and selecting
+    'Channel contents > Mark as downloaded'. You can also select multiple
+    videos, and then right-click them before selecting 'Mark videos >
+    Downloaded'. This feature should be used with caution (Git #783)
+- When updating yt-dlp, you can now update using the nightly build, instead of
+    the main release (if you want to). This works on all systems, but only for
+    PIP installs (so it's available for all MS Windows users). To enable it,
+    click Edit > System preferences... > Downloaders > Forks, and enable the
+    'Install nightly build' option
+
+MAJOR FIXES
+- Fixed a crash when preparing yt-dlp download options (Git #778)
+- Added a workaround for a crash observed when re-downloading a video; more
+    detail is required for a permanent fix (Git #779)
+- In the Videos tab, the search feature did not work when the 'Authors' button
+    was selected. Another user reported crashes when using the search feature.
+    Fixed (Git #761, #784)
+- In the download options window, in the Files > Cookies tab, the entry box
+    above the 'Browser' dropdown box was not updated, when the dropdown box
+    itself was updated. Fixed (Git #774)
+- Also in the Files > Cookies tab, if the user de-selected 'Do not load cookies
+    from this browser (having earlier selected it), then
+    '--no-cookies-from-browser' was added to the yt-dlp command. Fixed
+    (Git #768)
+- Also in the Files > Cookies tab, when the user selected 'Firefox' in the
+    'Browser' dropdown box, and then reset that box, and then clicked 'Apply',
+    the 'Firefox' option was automatically re-enabled. Fixed (Git #776)
+
+MINOR FIXES
+- In the Classic Mode tab, when the user changed the 'Download in this format'
+    box to 'Convert to this form', the choice was not remembered. Fixed
+    (Git #759)
+- Minor updates to the MS Windows installer (Git #760)
+- Updated MacOS installation instructions (Git #764)
+
 v2.5.197 (20 Jan 2026)
 -------------------------------------------------------------------------------
 

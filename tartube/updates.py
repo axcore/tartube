@@ -641,6 +641,15 @@ class UpdateManager(threading.Thread):
 
             mod_list.append(arg)
 
+        # (v2.5.229: Ugly hack to enable yt-dlp nightly builds; experimental
+        #   feature)
+        if not self.wiz_win_obj \
+        and self.app_obj.ytdl_fork == 'yt-dlp' \
+        and ytdl_update_current != 'ytdl_update_default_path' \
+        and ytdl_update_current != 'ytdl_update_local_path' \
+        and ytdl_update_current != 'ytdl_update_custom_path':
+            mod_list.append("--pre")
+
         # ...and display it in the Output tab (if required)
         self.install_ytdl_write_output(
             ' '.join(mod_list),

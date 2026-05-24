@@ -72,7 +72,7 @@ except:
     HAVE_MOVIEPY_FLAG = False
 
 try:
-    import playsound
+    import playsound3
     HAVE_PLAYSOUND_FLAG = True
 except:
     HAVE_PLAYSOUND_FLAG = False
@@ -1026,6 +1026,10 @@ class TartubeApp(Gtk.Application):
             self.ytdl_fork_no_dependency_flag = True
         else:
             self.ytdl_fork_no_dependency_flag = False
+        # v2.5.229: Experimental hack to allow updating to yt-dlp's nightly
+        #   build. As it's experimental, I won't try to update the contents of
+        #   self.ytdl_update_dict
+        self.ytdl_fork_nightly_flag = False
 
         # Flag set to True if youtube-dl system commands should be displayed in
         #   the Output tab
@@ -1162,6 +1166,19 @@ class TartubeApp(Gtk.Application):
         # Ignored if self.ffmpeg_fail_flag is True or
         #   self.ffmpeg_convert_webp_flag is False
         self.ffmpeg_retain_webp_flag = True
+
+        # Flag set to True to enable the JavaScript runtime/engine during
+        #   downloads (recommended for all YouTube downloads)
+        self.js_runtime_flag = True
+        # List of compatible javascript runtime/engines (matching the values
+        #   used by yt-dlp]
+        self.js_runtime_list = ['deno', 'node', 'quickjs', 'bun']
+        # The JavaScript runtime/engine to use; one of the values above ('deno'
+        #   is recommended for most users)
+        self.js_runtime_choice = 'deno'
+        # Path to the JavaScript runtime engine; if None, no path is specified
+        #   during downloads
+        self.js_runtime_path = None
 
         # Mode for downloading broadcasting livestreams:
         #   'default' - use the current downloader alone. This normally works
@@ -4380,13 +4397,14 @@ class TartubeApp(Gtk.Application):
             Error codes for this function and for self.system_warning are
             currently assigned thus:
 
-            100-199: mainapp.py     (in use: 101-200)
+            100-199: mainapp.py     (in use: 101-199)
             200-299: mainwin.py     (in use: 201-278)
             300-399: downloads.py   (in use: 301-310)
             400-499: config.py      (in use: 401-406)
             500-599: ttutils.py     (in use: 501-503)
             600-699: info.py        (in use: 601)
             700-799: updates.py     (in use: 701-704)
+            800-899: overspill      (in use: 801-803)
             901:     Uncaught exceptions, handled by a call to
                         self.system_exception()
                                     (in use: 901)
@@ -4922,6 +4940,8 @@ class TartubeApp(Gtk.Application):
         if version >= 2003182 and 'ytdl_fork_no_dependency_flag' in json_dict:
             self.ytdl_fork_no_dependency_flag \
             = json_dict['ytdl_fork_no_dependency_flag']
+        if version >= 2005229 and 'ytdl_fork_nightly_flag' in json_dict:
+            self.ytdl_fork_nightly_flag = json_dict['ytdl_fork_nightly_flag']
 
         if version >= 1003074 and 'ytdl_output_system_cmd_flag' in json_dict:
             self.ytdl_output_system_cmd_flag \
@@ -5036,6 +5056,11 @@ class TartubeApp(Gtk.Application):
         if version >= 2004148 and 'ffmpeg_retain_webp_flag' in json_dict:
             self.ffmpeg_retain_webp_flag \
             = json_dict['ffmpeg_retain_webp_flag']
+
+        if version >= 2005220 and 'js_runtime_flag' in json_dict:
+            self.js_runtime_flag = json_dict['js_runtime_flag']
+            self.js_runtime_choice = json_dict['js_runtime_choice']
+            self.js_runtime_path = json_dict['js_runtime_path']
 
         if version >= 2003566 and 'livestream_dl_mode' in json_dict:
             self.livestream_dl_mode = json_dict['livestream_dl_mode']
@@ -6378,6 +6403,7 @@ class TartubeApp(Gtk.Application):
             'ytdl_update_once_flag': self.ytdl_update_once_flag,
             'ytdl_fork': self.ytdl_fork,
             'ytdl_fork_no_dependency_flag': self.ytdl_fork_no_dependency_flag,
+            'ytdl_fork_nightly_flag': self.ytdl_fork_nightly_flag,
 
             'ytdl_output_system_cmd_flag': self.ytdl_output_system_cmd_flag,
             'ytdl_output_stdout_flag': self.ytdl_output_stdout_flag,
@@ -6423,6 +6449,10 @@ class TartubeApp(Gtk.Application):
             'avconv_path': self.avconv_path,
             'ffmpeg_convert_webp_flag': self.ffmpeg_convert_webp_flag,
             'ffmpeg_retain_webp_flag': self.ffmpeg_retain_webp_flag,
+
+            'js_runtime_flag': self.js_runtime_flag,
+            'js_runtime_choice': self.js_runtime_choice,
+            'js_runtime_path': self.js_runtime_path,
 
             'livestream_dl_mode': self.livestream_dl_mode,
             'livestream_dl_timeout': self.livestream_dl_timeout,
@@ -16497,7 +16527,18 @@ class TartubeApp(Gtk.Application):
                 video_obj.set_dl_flag(True)
 
         # Recover files
-        file_list = os.listdir(path = temp_dir)
+        try:
+            file_list = os.listdir(path = temp_dir)
+        except:
+            return self.system_error(
+                801,
+                 _(
+                'Following a failed download operation, failed to recover' \
+                + ' the previous version of the downloaded files - folder' \
+                + ' does not exist or is inaccessible'
+                ) + ': ' + temp_dir,
+            )
+
         for temp_filename in file_list:
 
             temp_path = os.path.abspath(
@@ -17351,13 +17392,16 @@ class TartubeApp(Gtk.Application):
 
                 (action_type, action_flag, container_obj, video_list)
 
-            ...where 'action_type' is one of the strings 'bookmark',
-                'favourite', 'missing', 'new' or 'waiting', 'action_flag' is
-                True (e,g. to bookmark a video) or False (e.g. to unbookmark a
-                video), 'container_obj' is a media.Channel, media.Playlist or
-                media.Folder object, and 'video_list' is a list of media.Video
-                objects to update (only specified when 'action_type' is
-                'favourite', 'missing' or 'new')
+            ...where:
+                'action_type' is one of the strings 'bookmark', 'downloaded',
+                    'favourite', 'missing', 'new' or 'waiting'
+                'action_flag' is True (e,g. to bookmark a video) or False
+                    (e.g. to unbookmark a video)
+                'container_obj' is a media.Channel, media.Playlist or
+                    media.Folder object
+                'video_list' is a list of media.Video objects to update (only
+                    specified when 'action_type' is 'downloaded', 'favourite',
+                    'missing' or 'new')
 
         """
 
@@ -17367,8 +17411,8 @@ class TartubeApp(Gtk.Application):
         action_type = data_list.pop(0)
         action_flag = data_list.pop(0)
         container_obj = data_list.pop(0)
-        if action_type == 'favourite' or action_type == 'missing' \
-        or action_type == 'new':
+        if action_type == 'downloaded' or action_type == 'favourite' \
+        or action_type == 'missing' or action_type == 'new':
             video_list = data_list.pop(0)
         else:
             video_list = container_obj.child_list
@@ -17385,6 +17429,22 @@ class TartubeApp(Gtk.Application):
                         True,           # Don't update the Video Index
                         True,           # Don't update the Video Catalogue
                         True,           # Don't sort the child list each time
+                    )
+
+                elif action_type == 'downloaded':
+
+                    self.mark_video_downloaded(
+                        child_obj,
+                        action_flag,    # Mark video downloaded (or not)
+                        True,           # Video is not new
+                    )
+                    # .mark_video_downloaded() doesn't update the Video
+                    #   Catalogue (unlike for example .mark_video_favourite() )
+                    #   so we must do that manually
+                    GObject.timeout_add(
+                        0,
+                        self.main_win_obj.video_catalogue_update_video,
+                        child_obj,
                     )
 
                 elif action_type == 'favourite':
@@ -18920,6 +18980,134 @@ class TartubeApp(Gtk.Application):
             )
 
 
+    def mark_container_downloaded(self, media_data_obj, dl_flag,
+    only_child_videos_flag):
+
+        """Called by mainwin.MainWin.on_video_index_mark_downloaded() and
+        .on_video_index_mark_not_downloaded().
+
+        Marks any descendant videos as (not) downloaded.
+
+        Args:
+
+            media_data_obj (media.Channel, media.Playlist or media.Folder):
+                The container object to update
+
+            dl_flag (bool): True to mark as downloaded, False to mark as not
+                downloaded
+
+            only_child_videos_flag (bool): Set to True if only child video
+                objects should be marked; False if the all its descendants
+                should be marked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('app 18151 mark_container_downloaded')
+
+        if isinstance(media_data_obj, media.Video):
+            return self.system_error(
+                803,
+                'Mark container as downloaded request failed sanity check',
+            )
+
+        video_list = []
+
+        if only_child_videos_flag:
+
+            # Check only videos that are children of the specified media data
+            #   object
+            for other_obj in media_data_obj.child_list:
+
+                if isinstance(other_obj, media.Video):
+                    video_list.append(other_obj)
+
+        else:
+
+            # Check only video objects that are descendants of the specified
+            #   media data object
+            for other_obj in media_data_obj.compile_all_videos( [] ):
+
+                if isinstance(other_obj, media.Video):
+                    video_list.append(other_obj)
+
+        # Take action, depending on how many videos there are
+        count = len(video_list)
+
+        if not count:
+
+            # Just update the row on the Video Index
+            GObject.timeout_add(
+                0,
+                self.main_win_obj.video_index_update_row_icon,
+                media_data_obj,
+            )
+            GObject.timeout_add(
+                0,
+                self.main_win_obj.video_index_update_row_text,
+                media_data_obj,
+            )
+
+        elif count < self.main_win_obj.mark_video_lower_limit:
+
+            # The procedure should be quick
+            for child_obj in video_list:
+                self.mark_video_downloaded(child_obj, dl_flag, True)
+                # .mark_video_downloaded() doesn't update the Video Catalogue
+                #   (unlike for example .mark_video_favourite() ), so we must
+                #   do that manually
+                GObject.timeout_add(
+                    0,
+                    self.main_win_obj.video_catalogue_update_video,
+                    child_obj,
+                )
+
+        elif count < self.main_win_obj.mark_video_higher_limit:
+
+            # This will take a few seconds, so don't prompt the user
+            self.prepare_mark_video(
+                ['downloaded', dl_flag, media_data_obj, video_list],
+            )
+
+        else:
+
+            # This might take a few tens of seconds, so prompt the user for
+            #   confirmation first
+            media_type = media_data_obj.get_type()
+            if media_type == 'channel':
+                msg = _(
+                    'The channel contains {0} item(s), so this action may' \
+                    + ' take a while',
+                ).format(str(count))
+
+            elif media_type == 'playlist':
+                msg = _(
+                    'The playlist contains {0} item(s), so this action may' \
+                    + ' take a while',
+                ).format(str(count))
+
+            else:
+                msg = _(
+                    'The folder contains {0} item(s), so this action may' \
+                    + ' take a while',
+                ).format(str(count))
+
+            msg += '\n\n' + _('Are you sure you want to continue?')
+
+            self.dialogue_manager_obj.show_simple_msg_dialogue(
+                msg,
+                'question',
+                'yes-no',
+                None,                   # Parent window is main window
+                {
+                    'yes': 'prepare_mark_video',
+                    # Specified options
+                    'data': \
+                    ['downloaded', dl_flag, media_data_obj, video_list],
+                },
+            )
+
+
     def mark_container_favourite(self, media_data_obj, fav_flag,
     only_child_videos_flag):
 
@@ -18945,7 +19133,7 @@ class TartubeApp(Gtk.Application):
         """
 
         if DEBUG_FUNC_FLAG:
-            ttutils.debug_time('app 18150 mark_container_favourite')
+            ttutils.debug_time('app 18152 mark_container_favourite')
 
         if isinstance(media_data_obj, media.Video):
             return self.system_error(
@@ -23375,13 +23563,15 @@ class TartubeApp(Gtk.Application):
             #   defined' error
             # Cannot reproduce the problem, so enclose this code in a try block
             #   to prevent the error
+            # v2.5.224 - playsound module replaced with playsound3 system-wide,
+            #   don't know if the old error still occurs
             try:
-                playsound.playsound(path)
+                playsound3.playsound(path)
             except:
                 self.system_error(
                     184,
                     'System tried to play sound effect, even though Python' \
-                    + ' playsound module was not detected',
+                    + ' playsound3 module was not detected',
                 )
 
 
@@ -27491,7 +27681,7 @@ class TartubeApp(Gtk.Application):
             self.download_manager_obj.operation_classic_flag
         ):
             return self.system_error(
-                200,
+                801,
                 'Temp download selected videos request failed sanity check',
             )
 
@@ -29069,6 +29259,24 @@ class TartubeApp(Gtk.Application):
             self.ignore_yt_uploader_deleted_flag = True
 
 
+    def set_js_runtime_choice(self, value):
+
+        self.js_runtime_choice = value
+
+
+    def set_js_runtime_flag(self, flag):
+
+        if not flag:
+            self.js_runtime_flag = False
+        else:
+            self.js_runtime_flag = True
+
+
+    def set_js_runtime_path(self, value):
+
+        self.js_runtime_path = value
+
+
     def set_json_timeout_no_comments_time(self, value):
 
         self.json_timeout_no_comments_time = value
@@ -30169,6 +30377,14 @@ class TartubeApp(Gtk.Application):
 
         # Update main window menu items
         self.main_win_obj.update_menu()
+
+
+    def set_ytdl_fork_nightly_flag(self, flag):
+
+        if not flag:
+            self.ytdl_fork_nightly_flag = False
+        else:
+            self.ytdl_fork_nightly_flag = True
 
 
     def set_ytdl_fork_no_dependency_flag(self, flag):

@@ -1832,7 +1832,7 @@ class OptionsParser(object):
         and override_obj is not None:
 
             # Because of the override, save all videos to a system folder
-            override_obj = other_obj.get_default_dir(self.app_obj)
+            dir_path = override_obj.get_default_dir(self.app_obj)
 
         elif isinstance(media_data_obj, media.Video):
             dir_path = media_data_obj.parent_obj.get_actual_dir(self.app_obj)

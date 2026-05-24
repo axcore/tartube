@@ -6590,7 +6590,7 @@ class OptionsEditWin(GenericEditWin):
         model = combo.get_model()
         browser = model[tree_iter][0]
 
-        if browser == '':
+        if browser == '' and combo2.get_active() != 0:
 
             # Special case: reset the other two widgets, which causes further
             #   calls to this function, in which the download option is updated
@@ -21199,8 +21199,8 @@ class SystemPrefWin(GenericPrefWin):
 
         self.add_checkbutton(grid,
             _(
-            'playsound module is available (sound an alarm when a livestream' \
-            + ' starts)',
+            'playsound3 module is available (sound an alarm when a' \
+            + ' livestream starts)',
             ),
             mainapp.HAVE_PLAYSOUND_FLAG,
             False,                      # Can't be toggled by user
@@ -26808,6 +26808,7 @@ class SystemPrefWin(GenericPrefWin):
         # ...with its own tabs
         self.setup_downloader_forks_tab(self.downloader_inner_notebook)
         self.setup_downloader_paths_tab(self.downloader_inner_notebook)
+        self.setup_downloader_js_runtime_tab(self.downloader_inner_notebook)
         if not self.app_obj.simple_prefs_flag:
             self.setup_downloader_ffmpeg_tab(self.downloader_inner_notebook)
             self.setup_downloader_streamlink_tab(
@@ -26878,6 +26879,15 @@ class SystemPrefWin(GenericPrefWin):
             self.app_obj.ytdl_fork_no_dependency_flag,
             True,                   # Can be toggled by user
             1, 1, 1, 1,
+        )
+        # (Signal connect appears below)
+
+        checkbutton2 = self.add_checkbutton(grid2,
+            _('Install nightly build') + '\n' \
+            + _('(experimental, PIP installs only)'),
+            self.app_obj.ytdl_fork_nightly_flag,
+            True,                   # Can be toggled by user
+            2, 1, 1, 1,
         )
         # (Signal connect appears below)
 
@@ -26959,10 +26969,12 @@ class SystemPrefWin(GenericPrefWin):
         or self.app_obj.ytdl_fork == 'youtube-dl':
             self.forks_radiobutton2.set_active(True)
             checkbutton.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
             self.forks_entry.set_sensitive(False)
         elif self.app_obj.ytdl_fork == 'yt-dlp':
             self.forks_radiobutton.set_active(True)
             checkbutton.set_sensitive(True)
+            checkbutton2.set_sensitive(True)
             self.forks_entry.set_sensitive(False)
         else:
             self.forks_radiobutton3.set_active(True)
@@ -26971,6 +26983,7 @@ class SystemPrefWin(GenericPrefWin):
             else:
                 self.forks_entry.set_text('')
             checkbutton.set_sensitive(False)
+            checkbutton2.set_sensitive(False)
             self.forks_entry.set_sensitive(True)
 
         # (Signal connects from above)
@@ -26993,24 +27006,28 @@ class SystemPrefWin(GenericPrefWin):
             'toggled',
             self.on_ytdl_fork_button_toggled,
             checkbutton,
+            checkbutton2,
             'yt-dlp',
         )
         checkbutton.connect('toggled', self.on_ytdlp_install_button_toggled)
+        checkbutton2.connect('toggled', self.on_ytdlp_nightly_button_toggled)
         self.forks_radiobutton2.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
             checkbutton,
+            checkbutton2,
             'youtube-dl',
         )
         self.forks_radiobutton3.connect(
             'toggled',
             self.on_ytdl_fork_button_toggled,
             checkbutton,
+            checkbutton2,
         )
         self.forks_entry.connect('changed', self.on_ytdl_fork_changed)
 
         # Bottom section (always sensitised)
-        checkbutton2 = self.add_checkbutton(grid,
+        checkbutton3 = self.add_checkbutton(grid,
             _(
                 'When using other downloaders, filter out yt-dlp download' \
                 + ' options',
@@ -27019,7 +27036,7 @@ class SystemPrefWin(GenericPrefWin):
             True,                   # Can be toggled by user
             0, 4, 1, 1,
         )
-        checkbutton2.connect('toggled', self.on_filter_options_button_toggled)
+        checkbutton3.connect('toggled', self.on_filter_options_button_toggled)
 
 
     def setup_downloader_paths_tab(self, inner_notebook):
@@ -27192,6 +27209,143 @@ class SystemPrefWin(GenericPrefWin):
 
         if not __main__.__pkg_strict_install_flag__:
             combo2.connect('changed', self.on_update_combo_changed)
+
+
+    def setup_downloader_js_runtime_tab(self, inner_notebook):
+
+        """Called by self.setup_downloader_tab().
+
+        Sets up the 'JavaScript' inner notebook tab.
+
+        Args:
+
+            inner_notebook (Gtk.Notebook): The container for this tab
+
+        """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: System preferences > Downloaders' \
+            + ' > JavaScript'
+        )
+
+        tab, grid = self.add_inner_notebook_tab(
+            _('JavaScript'),
+            inner_notebook,
+        )
+        grid_width = 4
+
+        # JavaScript runtime paths
+        self.add_label(grid,
+            '<u>' + _('JavaScript runtime paths') + '</u>',
+            0, 0, grid_width, 1,
+        )
+
+        checkbutton = self.add_checkbutton(grid,
+            _(
+            'Use a JavaScript runtime during all video downloads (recommended)'
+            ),
+            self.app_obj.js_runtime_flag,
+            True,                   # Can be toggled by user
+            0, 1, grid_width, 1,
+        )
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            'Select runtime',
+            0, 2, 1, 1,
+        )
+
+        combo_list = [
+            [_('deno (recommended)'), 'deno'],
+            [_('node.js (not available by default)'), 'node'],
+            [_('bun (not available by default)'), 'bun'],
+            [_('QuickJS (not available by default)'), 'quickjs'],
+        ]
+        liststore = Gtk.ListStore(str, str)
+        for mini_list in combo_list:
+            liststore.append( [ mini_list[0], mini_list[1] ] )
+
+        combo = Gtk.ComboBox.new_with_model(liststore)
+        grid.attach(combo, 1, 2, (grid_width - 1), 1)
+        renderer_text = Gtk.CellRendererText()
+        combo.pack_start(renderer_text, True)
+        combo.add_attribute(renderer_text, 'text', 0)
+        combo.set_entry_text_column(0)
+        combo.set_active(
+            self.app_obj.js_runtime_list.index(
+                self.app_obj.js_runtime_choice,
+            ),
+        )
+        if not self.app_obj.js_runtime_flag:
+            combo.set_sensitive(False)
+        # (Signal connect appears below)
+
+        self.add_label(grid,
+            'Path to the executable',
+            0, 3, 1, 1,
+        )
+
+        button = Gtk.Button(_('Set'))
+        grid.attach(button, 2, 3, 1, 1)
+        if not self.app_obj.js_runtime_flag:
+            button.set_sensitive(False)
+        # (Signal connect appears below)
+
+        button2 = Gtk.Button(_('Reset'))
+        grid.attach(button2, 3, 3, 1, 1)
+        if not self.app_obj.js_runtime_flag:
+            button2.set_sensitive(False)
+        # (Signal connect appears below)
+
+        entry = self.add_entry(grid,
+            self.app_obj.ffmpeg_path,
+            False,
+            0, 4, grid_width, 1,
+        )
+        entry.set_sensitive(False)
+        entry.set_editable(False)
+        entry.set_hexpand(True)
+        self.setup_downloader_js_runtime_tab_update_entry(entry)
+
+        # (Signal connects from above)
+        checkbutton.connect(
+            'toggled',
+            self.on_js_runtime_button_toggled,
+            combo,
+            entry,
+            button,
+            button2,
+        )
+        combo.connect('changed', self.on_js_runtime_combo_changed, entry)
+        button.connect(
+            'clicked',
+            self.on_set_js_runtime_button_clicked,
+            entry
+        )
+        button2.connect(
+            'clicked',
+            self.on_reset_js_runtime_button_clicked,
+            entry
+        )
+
+
+    def setup_downloader_js_runtime_tab_update_entry(self, entry):
+
+        """Called by self.setup_downloader_js_runtime_tab().
+
+        Updates the entry displaying the path to the JS runtime.
+
+        Args:
+
+            entry (Gtk.Entry): The widget to update
+
+        """
+
+        val = self.app_obj.js_runtime_choice
+        if self.app_obj.js_runtime_path:
+            val += ':' + self.app_obj.js_runtime_path
+
+        entry.set_text(val)
 
 
     def setup_downloader_ffmpeg_tab(self, inner_notebook):
@@ -32100,6 +32254,68 @@ class SystemPrefWin(GenericPrefWin):
         self.app_obj.set_custom_invidious_mirror(entry.get_text())
 
 
+    def on_js_runtime_button_toggled(
+        self, checkbutton, combo, entry, button, button2,
+    ):
+        """Called from callback in self.setup_downloader_javascript_tab().
+
+        Enables/disables use of a JS runtime/engine during downloads.
+
+        Args:
+
+            checkbutton (Gtk.CheckButton): The widget clicked
+
+            combo (Gtk.ComboBox): Another widget to be updated
+
+            entry (Gtk.Entry): Another widget to be updated
+
+            button, button2 (Gtk.Button): Other widgets to be updated
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.js_runtime_flag:
+
+            self.app_obj.set_js_runtime_flag(True)
+            combo.set_sensitive(True)
+            combo.set_active(0)
+            button.set_sensitive(True)
+            button2.set_sensitive(True)
+
+        elif not checkbutton.get_active() \
+        and self.app_obj.js_runtime_flag:
+            self.app_obj.set_js_runtime_flag(False)
+            combo.set_active(0)
+            combo.set_sensitive(False)
+            button.set_sensitive(False)
+            button2.set_sensitive(False)
+
+        self.setup_downloader_js_runtime_tab_update_entry(entry)
+
+
+    def on_js_runtime_combo_changed(self, combo, entry):
+
+        """Called from a callback in self.setup_downloader_js_runtime_tab().
+
+        Extracts the value visible in the combobox, converts it into another
+        value, and uses that value to update the main application's IV.
+
+        Args:
+
+            combo (Gtk.ComboBox): The widget clicked
+
+            entry (Gtk.Entry): Another widget to update
+
+        """
+
+        tree_iter = combo.get_active_iter()
+        model = combo.get_model()
+        choice = model[tree_iter][1]
+
+        self.app_obj.set_js_runtime_choice(choice)
+        self.setup_downloader_js_runtime_tab_update_entry(entry)
+
+
     def on_json_button_toggled(self, checkbutton, spinbutton, spinbutton2):
 
         """Called from callback in self.setup_operations_downloads_tab().
@@ -34206,6 +34422,24 @@ class SystemPrefWin(GenericPrefWin):
         entry.set_text('')
 
 
+    def on_reset_js_runtime_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_downloader_js_runtime_tab().
+
+        Resets the path to the JS runtime binary.
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        self.app_obj.set_js_runtime_path(None)
+        self.setup_downloader_js_runtime_tab_update_entry(entry)
+
+
     def on_reset_invidious_clicked(self, button, entry):
 
         """Called from callback in self.setup_operations_mirrors_tab().
@@ -34827,6 +35061,44 @@ class SystemPrefWin(GenericPrefWin):
 
             self.app_obj.set_ffmpeg_path(new_path)
             entry.set_text(self.app_obj.ffmpeg_path)
+
+
+    def on_set_js_runtime_button_clicked(self, button, entry):
+
+        """Called from callback in self.setup_downloader_js_runtime_tab().
+
+        Opens a window in which the user can select the JS runtime binary, if
+        it is installed (and if the user wants it).
+
+        Args:
+
+            button (Gtk.Button): The widget clicked
+
+            entry (Gtk.Entry): Another widget to be modified by this function
+
+        """
+
+        ignore_me = _(
+            'TRANSLATOR\'S NOTE: Dialogue window, generated by:' \
+            + ' System preferences > Downloaders > JavaScript'
+        )
+
+        dialogue_win = self.app_obj.dialogue_manager_obj.show_file_chooser(
+            _('Please select the JavaScript runtime'),
+            self,
+            'open',
+        )
+
+        response = dialogue_win.run()
+        if response == Gtk.ResponseType.OK:
+            new_path = dialogue_win.get_filename()
+
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.OK:
+
+            self.app_obj.set_js_runtime_path(new_path)
+            self.setup_downloader_js_runtime_tab_update_entry(entry)
 
 
     def on_set_streamlink_button_clicked(self, button, entry):
@@ -35904,7 +36176,7 @@ class SystemPrefWin(GenericPrefWin):
 
 
     def on_ytdl_fork_button_toggled(self, radiobutton, checkbutton, \
-    fork_type=None):
+    checkbutton2, fork_type=None):
 
         """Called from callback in self.setup_downloader_forks_tab().
 
@@ -35915,7 +36187,8 @@ class SystemPrefWin(GenericPrefWin):
 
             radiobutton (Gtk.Radiobutton): The widget clicked
 
-            checkbutton (Gtk.CheckButton): Another widget to be updated
+            checkbutton, checkbutton2 (Gtk.CheckButton): Other widgets to be
+                updated
 
             fork_type (str): 'yt-dlp', 'youtube-dl', or None for any other fork
 
@@ -35934,6 +36207,7 @@ class SystemPrefWin(GenericPrefWin):
                     self.app_obj.set_ytdl_fork(fork_name)
 
                 checkbutton.set_sensitive(False)
+                checkbutton2.set_sensitive(False)
                 self.forks_entry.set_sensitive(True)
 
             elif fork_type == 'youtube-dl':
@@ -35941,6 +36215,7 @@ class SystemPrefWin(GenericPrefWin):
                 fork_name = fork_type
                 self.app_obj.set_ytdl_fork(None)
                 checkbutton.set_sensitive(False)
+                checkbutton2.set_sensitive(False)
                 self.forks_entry.set_text('')
                 self.forks_entry.set_sensitive(False)
 
@@ -35949,6 +36224,7 @@ class SystemPrefWin(GenericPrefWin):
                 fork_name = fork_type
                 self.app_obj.set_ytdl_fork(fork_type)
                 checkbutton.set_sensitive(True)
+                checkbutton2.set_sensitive(True)
                 self.forks_entry.set_text('')
                 self.forks_entry.set_sensitive(False)
 
@@ -36176,6 +36452,26 @@ class SystemPrefWin(GenericPrefWin):
         elif not checkbutton.get_active() \
         and self.app_obj.ytdl_fork_no_dependency_flag:
             self.app_obj.set_ytdl_fork_no_dependency_flag(False)
+
+
+    def on_ytdlp_nightly_button_toggled(self, checkbutton):
+
+        """Called from callback in self.setup_downloader_forks_tab().
+
+        Sets the flag to install nightly builds of yt-dlp.
+
+        Args:
+
+            checkbutton (Gtk.Checkbutton): The widget clicked
+
+        """
+
+        if checkbutton.get_active() \
+        and not self.app_obj.ytdl_fork_nightly_flag:
+            self.app_obj.set_ytdl_fork_nightly_flag(True)
+        elif not checkbutton.get_active() \
+        and self.app_obj.ytdl_fork_nightly_flag:
+            self.app_obj.set_ytdl_fork_nightly_flag(False)
 
 
     # (Callback support functions)

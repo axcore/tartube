@@ -2876,6 +2876,18 @@ custom_dl_obj=None, divert_mode=None):
     if app_obj.ytdl_write_verbose_flag:
         options_list.append('--verbose')
 
+    # Supply youtube-dl with the path to the JavaScript runtime/engine, if the
+    #   user has enabled one
+    if app_obj.js_runtime_flag:
+        js_str = app_obj.js_runtime_choice or 'deno'
+        if app_obj.js_runtime_path:
+            js_str += ':' + app_obj.js_runtime_path
+
+        options_list.append('--js-runtimes')
+        options_list.append(js_str)
+        options_list.append('--remote-components')
+        options_list.append('ejs:github')
+
     # Supply youtube-dl with the path to the ffmpeg/avconv binary, if the
     #   user has provided one
     # If both paths have been set, prefer ffmpeg, unless the 'prefer_avconv'
@@ -3093,6 +3105,18 @@ classic_flag):
         mod_options_list.append('-f')
         mod_options_list.append('(bestvideo+bestaudio/best)[protocol!*=dash]')
 
+    # Supply youtube-dl with the path to the JavaScript runtime/engine, if the
+    #   user has enabled one
+    if app_obj.js_runtime_flag:
+        js_str = app_obj.js_runtime_choice or 'deno'
+        if app_obj.js_runtime_path:
+            js_str += ':' + app_obj.js_runtime_path
+
+        options_list.append('--js-runtimes')
+        options_list.append(js_str)
+        options_list.append('--remote-components')
+        options_list.append('ejs:github')
+
     # On MS Windows and yt-dlp, if --restrict-filenames is not specified, then
     #   insert --windows-filenames. (I can't be sure that yt-dlp knows it is
     #   running on MS Windows, when running inside MSYS2)
@@ -3247,6 +3271,18 @@ dest_dir, temp_dir, output_template, custom_dl_obj, divert_mode, classic_flag):
     and not '--restrict-filenames' in mod_options_list:
         mod_options_list.append('--windows-filenames')
 
+    # Supply youtube-dl with the path to the JavaScript runtime/engine, if the
+    #   user has enabled one
+    if app_obj.js_runtime_flag:
+        js_str = app_obj.js_runtime_choice or 'deno'
+        if app_obj.js_runtime_path:
+            js_str += ':' + app_obj.js_runtime_path
+
+        options_list.append('--js-runtimes')
+        options_list.append(js_str)
+        options_list.append('--remote-components')
+        options_list.append('ejs:github')
+
     # Supply youtube-dl with the path to the ffmpeg binary, if the user has
     #   provided one
     if app_obj.ffmpeg_path is not None:
@@ -3379,6 +3415,18 @@ dest_dir, temp_dir, stamp_list, custom_dl_obj, divert_mode, classic_flag):
     and os.name == 'nt' \
     and not '--restrict-filenames' in mod_options_list:
         mod_options_list.append('--windows-filenames')
+
+    # Supply youtube-dl with the path to the JavaScript runtime/engine, if the
+    #   user has enabled one
+    if app_obj.js_runtime_flag:
+        js_str = app_obj.js_runtime_choice or 'deno'
+        if app_obj.js_runtime_path:
+            js_str += ':' + app_obj.js_runtime_path
+
+        options_list.append('--js-runtimes')
+        options_list.append(js_str)
+        options_list.append('--remote-components')
+        options_list.append('ejs:github')
 
     # Supply youtube-dl with the path to the ffmpeg binary, if the user has
     #   provided one

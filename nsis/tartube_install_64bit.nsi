@@ -1,4 +1,4 @@
-﻿# Tartube v2.5.210 installer script for MS Windows
+﻿# Tartube v2.5.231 installer script for MS Windows
 #
 # Copyright (C) 2019-2026 A S Lewis
 #
@@ -68,7 +68,7 @@
 #   - Navigate to the folder C:\Windows\System32
 #
 #   - Copy all the files whose name starts with 'msvcr' (e.g.
-#       'msvcr1230_clr0400.dll') into the folder C:\testme\msys64\mingw64\bin
+#       'msvcr120_clr0400.dll') into the folder C:\testme\msys64\mingw64\bin
 #
 #   - In the MINGW64 terminal, type the following commands:
 #
@@ -100,16 +100,6 @@
 #       idna
 #       requests
 #       urllib3
-#
-#   - If you want to install Atomic Parsley (from
-#       https://github.com/wez/atomicparsley), copy the MS Windows executable
-#       into the C:\testme\msys64\usr\bin folder
-#
-#   - In the MINGW64 terminal, type the following commands:
-#
-#       pip install feedparser
-#       pip install playsound
-#       pacman -S mingw-w64-x86_64-aria2
 #
 #   - The C:\testme folder now contains about 2GB of data. If you like, you can
 #       use all of it (which would create an installer of about 600MB). In most
@@ -177,32 +167,34 @@
 #       C:\testme\msys64\mingw64\lib\girepository-1.0
 #       C:\testme\msys64\mingw64\lib\glib-2.0
 #       C:\testme\msys64\mingw64\lib\gtk-3.0
-#       C:\testme\msys64\mingw64\lib\python3.9\asyncio
-#       C:\testme\msys64\mingw64\lib\python3.9\collections
-#       C:\testme\msys64\mingw64\lib\python3.9\concurrent
-#       C:\testme\msys64\mingw64\lib\python3.9\ctypes
-#       C:\testme\msys64\mingw64\lib\python3.9\email
-#       C:\testme\msys64\mingw64\lib\python3.9\encodings
-#       C:\testme\msys64\mingw64\lib\python3.9\ensurepip
-#       C:\testme\msys64\mingw64\lib\python3.9\html
-#       C:\testme\msys64\mingw64\lib\python3.9\http
-#       C:\testme\msys64\mingw64\lib\python3.9\importlib
-#       C:\testme\msys64\mingw64\lib\python3.9\json
-#       C:\testme\msys64\mingw64\lib\python3.9\lib2to3
-#       C:\testme\msys64\mingw64\lib\python3.9\lib-dynload
-#       C:\testme\msys64\mingw64\lib\python3.9\logging
-#       C:\testme\msys64\mingw64\lib\python3.9\msilib
-#       C:\testme\msys64\mingw64\lib\python3.9\multiprocessing
-#       C:\testme\msys64\mingw64\lib\python3.9\re
-#       C:\testme\msys64\mingw64\lib\python3.9\site-packages
-#       C:\testme\msys64\mingw64\lib\python3.9\sqlite3
-#       C:\testme\msys64\mingw64\lib\python3.9\tomllib
-#       C:\testme\msys64\mingw64\lib\python3.9\urllib
-#       C:\testme\msys64\mingw64\lib\python3.9\venv
-#       C:\testme\msys64\mingw64\lib\python3.9\xml
-#       C:\testme\msys64\mingw64\lib\python3.9\xmlrpc
-#       C:\testme\msys64\mingw64\lib\python3.9\zipfile
-#       C:\testme\msys64\mingw64\lib\python3.9\*.py
+#       C:\testme\msys64\mingw64\lib\python3.10\asyncio
+#       C:\testme\msys64\mingw64\lib\python3.10\collections
+#       C:\testme\msys64\mingw64\lib\python3.10\compressions
+#       C:\testme\msys64\mingw64\lib\python3.10\concurrent
+#       C:\testme\msys64\mingw64\lib\python3.10\ctypes
+#       C:\testme\msys64\mingw64\lib\python3.10\email
+#       C:\testme\msys64\mingw64\lib\python3.10\encodings
+#       C:\testme\msys64\mingw64\lib\python3.10\ensurepip
+#       C:\testme\msys64\mingw64\lib\python3.10\html
+#       C:\testme\msys64\mingw64\lib\python3.10\http
+#       C:\testme\msys64\mingw64\lib\python3.10\importlib
+#       C:\testme\msys64\mingw64\lib\python3.10\json
+#       C:\testme\msys64\mingw64\lib\python3.10\lib-dynload
+#       C:\testme\msys64\mingw64\lib\python3.10\logging
+#       C:\testme\msys64\mingw64\lib\python3.10\multiprocessing
+#       C:\testme\msys64\mingw64\lib\python3.10\pathlib
+#       C:\testme\msys64\mingw64\lib\python3.10\re
+#       C:\testme\msys64\mingw64\lib\python3.10\site-packages
+#       C:\testme\msys64\mingw64\lib\python3.10\sqlite3
+#       C:\testme\msys64\mingw64\lib\python3.10\string
+#       C:\testme\msys64\mingw64\lib\python3.10\sysconfig
+#       C:\testme\msys64\mingw64\lib\python3.10\tomllib
+#       C:\testme\msys64\mingw64\lib\python3.10\urllib
+#       C:\testme\msys64\mingw64\lib\python3.10\venv
+#       C:\testme\msys64\mingw64\lib\python3.10\xml
+#       C:\testme\msys64\mingw64\lib\python3.10\xmlrpc
+#       C:\testme\msys64\mingw64\lib\python3.10\zipfile
+#       C:\testme\msys64\mingw64\lib\python3.10\*.py
 #       C:\testme\msys64\mingw64\lib\sqlite3.36.0
 #       C:\testme\msys64\mingw64\lib\terminfo
 #       C:\testme\msys64\mingw64\lib\thread2.8.4
@@ -220,15 +212,12 @@
 #       C:\testme\msys64\mingw64\share\thumbnailers
 #       C:\testme\msys64\mingw64\share\xml
 #
-#       C:\testme\msys64\mingw64\ssl
-#
 #       C:\testme\msys64\tmp
 #       C:\testme\msys64\ucrt64
 #
 #       C:\testme\msys64\usr\bin\core_perl
 #       C:\testme\msys64\usr\bin\site_perl
 #       C:\testme\msys64\usr\bin\vendor_perl
-#       C:\testme\msys64\usr\bin\AtomicParsley
 #       C:\testme\msys64\usr\bin\bash
 #       C:\testme\msys64\usr\bin\chmod
 #       C:\testme\msys64\usr\bin\cut
@@ -245,7 +234,6 @@
 #       C:\testme\msys64\usr\bin\grep
 #       C:\testme\msys64\usr\bin\hostid
 #       C:\testme\msys64\usr\bin\hostname
-#       C:\testme\msys64\usr\bin\iconv
 #       C:\testme\msys64\usr\bin\id
 #       C:\testme\msys64\usr\bin\ln
 #       C:\testme\msys64\usr\bin\locale
@@ -282,7 +270,6 @@
 #       C:\testme\msys64\usr\bin\uname
 #       C:\testme\msys64\usr\bin\vercmp
 #       C:\testme\msys64\usr\bin\which
-#       C:\testme\msys64\usr\bin\xml*
 #
 #       C:\testme\msys64\usr\lib\gettext
 #       C:\testme\msys64\usr\lib\openssl
@@ -291,7 +278,7 @@
 #       C:\testme\msys64\usr\lib\thread2.8.5
 #
 #       C:\testme\msys64\usr\share\cygwin
-#       C:\testme\msys64\usr\share\makepkg
+#       C:\testme\msys64\usr\share\makepkg*
 #       C:\testme\msys64\usr\share\mintty
 #       C:\testme\msys64\usr\share\Msys
 #       C:\testme\msys64\usr\share\pacman
@@ -301,16 +288,27 @@
 #
 #       C:\testme\msys64\var\lib\pacman
 #
-#   - The following optional dependencies are required for fetching livestreams.
-#       If you decide to install them (it's recommended that you do), then type
-#       these commands in the MINGW64 terminal
+#   - If you want to install Atomic Parsley (from
+#       https://github.com/wez/atomicparsley), copy the MS Windows executable
+#       into the C:\testme\msys64\usr\bin folder
 #
-#       pip3 install feedparser
-#       pip3 install playsound
+#   - The following dependencies are optional. If you decide to install them,
+#       then type these commands into a new MINGW64 terminal
 #
-#   - In the terminal window, you could add the following optional package:
-#
+#       C:/testme/msys64/home/YOURNAME/ytdl-venv/bin/python3.exe -m pip install playsound3 feedparser
 #       pacman -S mingw-w64-x86_64-aria2
+#
+#   - If you want them, install dark themes (from
+#       https://github.com/B00merang-Project/Windows-10-Dark). Extract the
+#       file, create the folder
+#
+#       ../mingw64/share/themes/Windows10/gtk-3.0/
+#
+#   - ...and copy into it the contents of the extract folder gtk-3.20
+#
+#   - Install Deno (deno-x86_64-pc-windows-msvc.zip, from
+#       https://github.com/denoland/deno/releases). Extract the file, and copy
+#       deno.exe to ../msys64/home/user/ytdl-venv/bin
 #
 #   - Now download the Tartube source code from
 #
@@ -339,34 +337,18 @@
 # -------------------------------
 
     ;Name and file
-    !define PRODUCT_NAME "Tartube"
-    !define PRODUCT_VERSION "2.5.210"
-
-    Name "${PRODUCT_NAME} ${PRODUCT_VERSION} 64bit"
-    OutFile "install-tartube-${PRODUCT_VERSION}-64bit.exe"
+    Name "Tartube"
+    OutFile "install-tartube-2.5.231-64bit.exe"
 
     ;Default installation folder
-    InstallDir "$LOCALAPPDATA\${PRODUCT_NAME}"
+    InstallDir "$LOCALAPPDATA\Tartube"
 
     ;Get installation folder from registry if available
-    InstallDirRegKey HKCU "Software\${PRODUCT_NAME}" ""
+    InstallDirRegKey HKCU "Software\Tartube" ""
 
     ;Request application privileges for Windows Vista
     RequestExecutionLevel user
 
-    ;Installer metadata
-    VIFileVersion   "${PRODUCT_VERSION}"
-    VIAddVersionKey "ProductName"        "${PRODUCT_NAME}"
-    VIAddVersionKey "ProductVersion"     "${PRODUCT_VERSION}"
-    VIAddVersionKey "Comments"           ""
-    VIAddVersionKey "CompanyName"        ""
-    VIAddVersionKey "LegalTrademarks"    ""
-    VIAddVersionKey "LegalCopyright"     ""
-    VIAddVersionKey "FileDescription"    "${PRODUCT_NAME} 64bit Installer"
-    VIAddVersionKey "FileVersion"        "${PRODUCT_VERSION}"
-    ;VIAddVersionKey "DisplayIcon"        "$instdir\\tartube.exe"
-    VIAddVersionKey "InternalName"       "${PRODUCT_NAME}"
-    
     ; Extra stuff here
     BrandingText " "
 
@@ -391,7 +373,7 @@
 
     !insertmacro MUI_PAGE_WELCOME
 
-    !insertmacro MUI_PAGE_LICENSE "license.rtf"
+    !insertmacro MUI_PAGE_LICENSE "license.txt"
 
     !insertmacro MUI_PAGE_DIRECTORY
 

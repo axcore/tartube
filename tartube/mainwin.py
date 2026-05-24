@@ -3075,7 +3075,7 @@ class MainWin(Gtk.ApplicationWindow):
             [
                 'hide', 'hide', 'hide', '', _('Source'), '#', _('Status'),
                 _('Incoming file'), _('Ext'), '%', _('Speed'), _('ETA'),
-                _('Size'),
+                _('Size'), _('Finished at'),
             ]
         ):
             if not column_title:
@@ -3104,7 +3104,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_liststore = Gtk.ListStore(
             int, int, str,
             GdkPixbuf.Pixbuf,
-            str, str, str, str, str, str, str, str, str,
+            str, str, str, str, str, str, str, str, str, str,
         )
         self.progress_list_treeview.set_model(self.progress_list_liststore)
 
@@ -3808,7 +3808,7 @@ class MainWin(Gtk.ApplicationWindow):
             [
                 'hide', 'hide', _('Source'), '#', _('Status'),
                 _('Incoming file'), _('Ext'), '%', _('Speed'), _('ETA'),
-                _('Size'),
+                _('Size'), _('Finished at'),
             ]
         ):
             renderer_text = Gtk.CellRendererText()
@@ -3824,7 +3824,7 @@ class MainWin(Gtk.ApplicationWindow):
                 column_text.set_visible(False)
 
         self.classic_progress_liststore = Gtk.ListStore(
-            int, str, str, str, str, str, str, str, str, str, str,
+            int, str, str, str, str, str, str, str, str, str, str, str,
         )
         self.classic_progress_treeview.set_model(
             self.classic_progress_liststore,
@@ -7829,6 +7829,17 @@ class MainWin(Gtk.ApplicationWindow):
         )
         mark_video_submenu.append(bookmark_video_menu_item)
 
+        dl_video_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
+            _('Video is _downloaded'),
+        )
+        dl_video_menu_item.set_active(video_obj.dl_flag)
+        dl_video_menu_item.connect(
+            'toggled',
+            self.on_video_catalogue_toggle_downloaded_video,
+            video_obj,
+        )
+        mark_video_submenu.append(dl_video_menu_item)
+
         fav_video_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
             _('Video is _favourite'),
         )
@@ -8295,6 +8306,8 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
+        if not dl_flag:
+            archive_menu_item.set_sensitive(False)
         mark_videos_submenu.append(archive_menu_item)
 
         not_archive_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -8306,6 +8319,8 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
+        if not dl_flag:
+            not_archive_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_archive_menu_item)
 
         # Separator
@@ -8320,6 +8335,8 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
+        if not dl_flag:
+            bookmark_menu_item.set_sensitive(False)
         mark_videos_submenu.append(bookmark_menu_item)
 
         not_bookmark_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -8331,7 +8348,34 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
+        if not dl_flag:
+            not_bookmark_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_bookmark_menu_item)
+
+        # Separator
+        mark_videos_submenu.append(Gtk.SeparatorMenuItem())
+
+        dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('_Downloaded'),
+        )
+        dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_toggle_downloaded_video_multi,
+            True,
+            video_list,
+        )
+        mark_videos_submenu.append(dl_menu_item)
+
+        not_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('No_t downloaded'),
+        )
+        not_dl_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_toggle_downloaded_video_multi,
+            False,
+            video_list,
+        )
+        mark_videos_submenu.append(not_dl_menu_item)
 
         # Separator
         mark_videos_submenu.append(Gtk.SeparatorMenuItem())
@@ -8345,6 +8389,8 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
+        if not dl_flag:
+            fav_menu_item.set_sensitive(False)
         mark_videos_submenu.append(fav_menu_item)
 
         not_fav_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -8356,6 +8402,8 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
+        if not dl_flag:
+            not_fav_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_fav_menu_item)
 
         # Separator
@@ -8399,6 +8447,8 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
+        if not dl_flag:
+            new_menu_item.set_sensitive(False)
         mark_videos_submenu.append(new_menu_item)
 
         not_new_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -8410,6 +8460,8 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
+        if not dl_flag:
+            not_new_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_new_menu_item)
 
         # Separator
@@ -8424,10 +8476,12 @@ class MainWin(Gtk.ApplicationWindow):
             True,
             video_list,
         )
+        if not dl_flag:
+            playlist_menu_item.set_sensitive(False)
         mark_videos_submenu.append(playlist_menu_item)
 
         not_playlist_menu_item = Gtk.MenuItem.new_with_mnemonic(
-            _('Not in w_aiting list'),
+            _('Not in waiting _list'),
         )
         not_playlist_menu_item.connect(
             'activate',
@@ -8435,6 +8489,8 @@ class MainWin(Gtk.ApplicationWindow):
             False,
             video_list,
         )
+        if not dl_flag:
+            not_playlist_menu_item.set_sensitive(False)
         mark_videos_submenu.append(not_playlist_menu_item)
 
         mark_videos_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -8442,7 +8498,7 @@ class MainWin(Gtk.ApplicationWindow):
         )
         mark_videos_menu_item.set_submenu(mark_videos_submenu)
         popup_menu.append(mark_videos_menu_item)
-        if live_flag or not dl_flag:
+        if live_flag:
             mark_videos_menu_item.set_sensitive(False)
 
         # Show properties
@@ -9762,6 +9818,31 @@ class MainWin(Gtk.ApplicationWindow):
             media_data_obj,
         )
         submenu.append(mark_not_bookmark_menu_item)
+
+        # Separator
+        submenu.append(Gtk.SeparatorMenuItem())
+
+        mark_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark as _downloaded'),
+        )
+        mark_dl_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_downloaded,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_dl_menu_item)
+
+        mark_not_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Mark a_s not downloaded'),
+        )
+        mark_not_dl_menu_item.connect(
+            'activate',
+            self.on_video_index_mark_not_downloaded,
+            media_data_obj,
+            only_child_videos_flag,
+        )
+        submenu.append(mark_not_dl_menu_item)
 
         # Separator
         submenu.append(Gtk.SeparatorMenuItem())
@@ -12688,12 +12769,13 @@ class MainWin(Gtk.ApplicationWindow):
                     and (
                         (
                             not regex_flag \
+                            and child_obj.name is not None \
                             and child_obj.name.lower().find(lower_text) > -1
                         ) or (
                             regex_flag \
                             and re.search(
                                 search_text,
-                                child_obj.name,
+                                (child_obj.name or ""),
                                 re.IGNORECASE,
                             )
                         )
@@ -12702,27 +12784,34 @@ class MainWin(Gtk.ApplicationWindow):
                     self.app_obj.catalogue_filter_author_flag \
                     and child_obj.author is not None \
                     and (
-                        not regex_flag \
-                        and child_obj.author.lower().find(lower_text) > -1
-                    ) or (
-                        regex_flag \
-                        and re.search(
-                            search_text,
-                            child_obj.author,
-                            re.IGNORECASE,
+                        (
+                            not regex_flag \
+                            and child_obj.author is not None \
+                            and child_obj.author.lower().find(lower_text) > -1
+                        ) or (
+                            regex_flag \
+                            and re.search(
+                                search_text,
+                                (child_obj.author or ""),
+                                re.IGNORECASE,
+                            )
                         )
                     )
+
                 ) or (
                     self.app_obj.catalogue_filter_descrip_flag \
                     and (
-                        not regex_flag \
-                        and child_obj.descrip.lower().find(lower_text) > -1
-                    ) or (
-                        regex_flag \
-                        and re.search(
-                            search_text,
-                            child_obj.descrip,
-                            re.IGNORECASE,
+                        (
+                            not regex_flag \
+                            and child_obj.descrip is not None \
+                            and child_obj.descrip.lower().find(lower_text) > -1
+                        ) or (
+                            regex_flag \
+                            and re.search(
+                                search_text,
+                                (child_obj.descrip or ""),
+                                re.IGNORECASE,
+                            )
                         )
                     )
                 ) or (
@@ -12884,7 +12973,7 @@ class MainWin(Gtk.ApplicationWindow):
         self.progress_list_liststore = Gtk.ListStore(
             int, int, str,
             GdkPixbuf.Pixbuf,
-            str, str, str, str, str, str, str, str, str,
+            str, str, str, str, str, str, str, str, str, str,
         )
         self.progress_list_treeview.set_model(self.progress_list_liststore)
 
@@ -12993,6 +13082,7 @@ class MainWin(Gtk.ApplicationWindow):
         row_list.append(None)
         row_list.append(None)
         row_list.append(None)
+        row_list.append(None)
 
         # Create a new row in the treeview. Doing the .show_all() first
         #   prevents a Gtk error (for unknown reasons)
@@ -13063,7 +13153,8 @@ class MainWin(Gtk.ApplicationWindow):
 
             return
 
-        # Temporarily store the dictionary of download statistics
+        # Compile a new dictionary of download statistics, based on the one
+        #   passed to this function
         if not download_item_obj.item_id in self.progress_list_temp_dict:
             new_dl_stat_dict = {}
         else:
@@ -13073,14 +13164,18 @@ class MainWin(Gtk.ApplicationWindow):
         for key in dl_stat_dict:
             new_dl_stat_dict[key] = dl_stat_dict[key]
 
-        self.progress_list_temp_dict[download_item_obj.item_id] \
-        = new_dl_stat_dict
-
-        # If it's the final set of download statistics, set the time at which
-        #   the row can be hidden (if required)
+        # If it's the final set of download statistics, set the 'finished at'
+        #   time, and the time at which the row can be hidden (if required)
         if finish_flag:
+            new_dl_stat_dict['finished_at'] \
+            = datetime.datetime.now().strftime('%H:%M:%S %d %b %Y')
+
             self.progress_list_finish_dict[download_item_obj.item_id] \
             = time.time() + self.progress_list_hide_time
+
+        # Temporarily store the new dictionary of download statistics
+        self.progress_list_temp_dict[download_item_obj.item_id] \
+        = new_dl_stat_dict
 
 
     def progress_list_display_dl_stats(self):
@@ -13198,6 +13293,7 @@ class MainWin(Gtk.ApplicationWindow):
                 'speed',
                 'eta',
                 'filesize',
+                'finished_at',
             ):
                 column += 1
 
@@ -14055,6 +14151,7 @@ class MainWin(Gtk.ApplicationWindow):
         row_list.append(None)
         row_list.append(None)
         row_list.append(None)
+        row_list.append(None)
 
         # Create a new row in the treeview. Doing the .show_all() first
         #   prevents a Gtk error (for unknown reasons)
@@ -14610,7 +14707,8 @@ class MainWin(Gtk.ApplicationWindow):
         if DEBUG_FUNC_FLAG:
             ttutils.debug_time('mwn 14469 classic_mode_tab_receive_dl_stats')
 
-        # Temporarily store the dictionary of download statistics
+        # Compile a new dictionary of download statistics, based on the one
+        #   passed to this function
         if not download_item_obj.item_id in self.classic_temp_dict:
             new_dl_stat_dict = {}
         else:
@@ -14620,6 +14718,13 @@ class MainWin(Gtk.ApplicationWindow):
         for key in dl_stat_dict:
             new_dl_stat_dict[key] = dl_stat_dict[key]
 
+        # If it's the final set of download statistics, set the 'finished at'
+        #   time
+        if finish_flag:
+            new_dl_stat_dict['finished_at'] \
+            = datetime.datetime.now().strftime('%H:%M:%S %d %b %Y')
+
+        # Temporarily store the new dictionary of download statistics
         self.classic_temp_dict[download_item_obj.item_id] \
         = new_dl_stat_dict
 
@@ -14701,6 +14806,7 @@ class MainWin(Gtk.ApplicationWindow):
                 'speed',
                 'eta',
                 'filesize',
+                'finished_at',
             ):
                 column += 1
 
@@ -17310,6 +17416,68 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def on_video_index_mark_downloaded(self, menu_item, media_data_obj,
+    only_child_videos_flag):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Mark all of the children of this channel, playlist or folder (and all
+        of their children, and so on) as downloaded.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+            only_child_videos_flag (bool): Set to True if only child video
+                objects should be marked; False if all descendants should be
+                marked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('mwn 17133 on_video_index_mark_downloaded')
+
+        self.app_obj.mark_container_downloaded(
+            media_data_obj,
+            True,
+            only_child_videos_flag,
+        )
+
+
+    def on_video_index_mark_not_downloaded(self, menu_item, media_data_obj,
+    only_child_videos_flag):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Mark all videos in this folder (and in any child channels, playlists
+        and folders) as not downloaded.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+            only_child_videos_flag (bool): Set to True if only child video
+                objects should be marked; False if all descendants should be
+                marked
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('mwn 17164 on_video_index_mark_not_downloaded')
+
+        self.app_obj.mark_container_downloaded(
+            media_data_obj,
+            False,
+            only_child_videos_flag,
+        )
+
+
     def on_video_index_mark_favourite(self, menu_item, media_data_obj,
     only_child_videos_flag):
 
@@ -17332,7 +17500,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            ttutils.debug_time('mwn 17133 on_video_index_mark_favourite')
+            ttutils.debug_time('mwn 17134 on_video_index_mark_favourite')
 
         self.app_obj.mark_container_favourite(
             media_data_obj,
@@ -17363,7 +17531,7 @@ class MainWin(Gtk.ApplicationWindow):
         """
 
         if DEBUG_FUNC_FLAG:
-            ttutils.debug_time('mwn 17164 on_video_index_mark_not_favourite')
+            ttutils.debug_time('mwn 17165 on_video_index_mark_not_favourite')
 
         self.app_obj.mark_container_favourite(
             media_data_obj,
@@ -21134,6 +21302,80 @@ class MainWin(Gtk.ApplicationWindow):
         self.video_catalogue_unselect_all()
 
 
+    def on_video_catalogue_toggle_downloaded_video(self, menu_item, \
+    media_data_obj):
+
+        """Called from a callback in self.video_catalogue_popup_menu().
+
+        Marks the video as downloaded or not downloaded.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Video): The clicked video object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time(
+                'mwn 20859 on_video_catalogue_toggle_downloaded_video',
+            )
+
+        if not media_data_obj.dl_flag:
+            self.app_obj.mark_video_downloaded(media_data_obj, True, False)
+        else:
+            self.app_obj.mark_video_downloaded(media_data_obj, False, False)
+
+        # .mark_video_downloaded() doesn't update the Video Catalogue (unlike
+        #   for example .mark_video_favourite() ), so we must do that
+        #   manually
+        GObject.timeout_add(
+            0,
+            self.video_catalogue_update_video,
+            media_data_obj,
+        )
+
+
+    def on_video_catalogue_toggle_downloaded_video_multi(self, menu_item,
+    dl_flag, media_data_list):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+
+        Mark the videos as downloaded or not downloaded.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            dl_flag (bool): True to mark the videos as downloaded, False to
+                mark the videos as not downloaded
+
+            media_data_list (list): List of one or more media.Video objects
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time(
+                'mwn 20888 on_video_catalogue_toggle_downloaded_video_multi',
+            )
+
+        for media_data_obj in media_data_list:
+            self.app_obj.mark_video_downloaded(media_data_obj, dl_flag, False)
+
+        # Standard de-selection of everything in the Video Catalogue
+        self.video_catalogue_unselect_all()
+
+        # .mark_video_downloaded() doesn't update the Video Catalogue (unlike
+        #   for example .mark_video_favourite() ), so we must do that
+        #   manually
+        GObject.timeout_add(
+            0,
+            self.video_catalogue_update_video,
+            media_data_obj,
+        )
+
+
     def on_video_catalogue_toggle_favourite_video(self, menu_item, \
     media_data_obj):
 
@@ -21151,7 +21393,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             ttutils.debug_time(
-                'mwn 20859 on_video_catalogue_toggle_favourite_video',
+                'mwn 20860 on_video_catalogue_toggle_favourite_video',
             )
 
         if not media_data_obj.fav_flag:
@@ -21180,7 +21422,7 @@ class MainWin(Gtk.ApplicationWindow):
 
         if DEBUG_FUNC_FLAG:
             ttutils.debug_time(
-                'mwn 20888 on_video_catalogue_toggle_favourite_video_multi',
+                'mwn 20889 on_video_catalogue_toggle_favourite_video_multi',
             )
 
         for media_data_obj in media_data_list:

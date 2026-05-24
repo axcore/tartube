@@ -5447,6 +5447,11 @@ class VideoDownloader(object):
                                 for this media data object, or False if we
                                 actually downloading videos (set below)
 
+            Other parts of the code may add the following keys:
+
+            'finished_at'    : String describing the time at which the download
+                                finished
+
         """
 
         if DEBUG_FUNC_FLAG:
