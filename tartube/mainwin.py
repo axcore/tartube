@@ -8122,6 +8122,27 @@ class MainWin(Gtk.ApplicationWindow):
             download_menu_item.set_sensitive(False)
         popup_menu.append(download_menu_item)
 
+        re_download_menu_item = Gtk.MenuItem.new_with_mnemonic(
+            _('Re-_download videos')
+        )
+        re_download_menu_item.connect(
+            'activate',
+            self.on_video_catalogue_re_download_multi,
+            video_list,
+            live_wait_flag,
+        )
+        if __main__.__pkg_no_download_flag__ \
+        or (
+            self.app_obj.current_manager_obj \
+            and not self.app_obj.download_manager_obj
+        ) or (
+            self.app_obj.download_manager_obj \
+            and self.app_obj.download_manager_obj.operation_classic_flag
+        ) or live_wait_flag \
+        or unavailable_flag:
+            re_download_menu_item.set_sensitive(False)
+        popup_menu.append(re_download_menu_item)
+
         custom_dl_submenu = self.custom_dl_popup_submenu(video_list)
 
         custom_dl_menu_item = Gtk.MenuItem.new_with_mnemonic(
@@ -19179,6 +19200,100 @@ class MainWin(Gtk.ApplicationWindow):
             )
 
 
+    def on_video_catalogue_re_download_multi(self, menu_item, media_data_list,
+    live_wait_flag):
+
+        """Called from a callback in self.video_catalogue_multi_popup_menu().
+
+        Re-downloads the right-clicked media data objects.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_list (list): List of one or more media.Video objects
+
+            live_wait_flag (bool): True if any of the videos in media_data_list
+                are livestreams that have not started; False otherwise
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('mwn on_video_catalogue_re_download_multi')
+
+        download_manager_obj = self.app_obj.download_manager_obj
+
+        if (
+            self.app_obj.current_manager_obj \
+            and not download_manager_obj
+        ) or (
+            self.app_obj.download_manager_obj \
+            and download_manager_obj.operation_classic_flag
+        ) or live_wait_flag:
+            return self.app_obj.system_error(
+                255,
+                'Callback request denied due to current conditions',
+            )
+
+        dialogue_win = RedownloadOptionsDialogue(self)
+        response = dialogue_win.run()
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
+            return
+
+        for media_data_obj in media_data_list:
+            if response == Gtk.ResponseType.NO:
+                # Replace existing files
+                self.app_obj.move_video_files_before_redownload(media_data_obj)
+            elif response == Gtk.ResponseType.YES:
+                # Keep existing files
+                if media_data_obj.dl_flag is True:
+                    if not media_data_obj.dummy_flag:
+                        self.app_obj.mark_video_downloaded(media_data_obj, False)
+                    else:
+                        media_data_obj.set_dl_flag(False)
+
+        # Temporarily block usage of the archive file
+        self.app_obj.set_block_ytdl_archive_flag(True)
+
+        if download_manager_obj:
+
+            # Download operation already in progress. Add these videos to its
+            #   list
+            return_list = []
+            for media_data_obj in media_data_list:
+
+                return_list \
+                += download_manager_obj.download_list_obj.create_item(
+                    media_data_obj,
+                    None,               # media.Scheduled object
+                    'real',             # override_operation_type
+                    False,              # priority_flag
+                    False,              # ignore_limits_flag
+                )
+
+            for download_item_obj in return_list:
+
+                # Add a row to the Progress List
+                self.progress_list_add_row(
+                    download_item_obj.item_id,
+                    download_item_obj.media_data_obj,
+                )
+
+                # Update the main window's progress bar
+                self.app_obj.download_manager_obj.nudge_progress_bar()
+
+        else:
+
+            # Start a new download operation to download this video
+            self.app_obj.download_manager_start(
+                'real',
+                False,
+                media_data_list,
+            )
+
+
     def on_video_catalogue_download_multi(self, menu_item, media_data_list,
     live_wait_flag):
 
@@ -20552,11 +20667,28 @@ class MainWin(Gtk.ApplicationWindow):
                 'Callback request denied due to current conditions',
             )
 
-        # Move files associated with the video to a temporary directory, so
-        #   they can be recovered if the re-download fails
-        # Also mark the media.Video object as not downloaded (the download
-        #   operation will not start otherwise)
-        self.app_obj.move_video_files_before_redownload(media_data_obj)
+        dialogue_win = RedownloadOptionsDialogue(self)
+        response = dialogue_win.run()
+        dialogue_win.destroy()
+
+        if response == Gtk.ResponseType.CANCEL or response == Gtk.ResponseType.DELETE_EVENT:
+            return
+
+        if response == Gtk.ResponseType.NO:
+            # Replace existing files
+            # Move files associated with the video to a temporary directory, so
+            #   they can be recovered if the re-download fails
+            # Also mark the media.Video object as not downloaded (the download
+            #   operation will not start otherwise)
+            self.app_obj.move_video_files_before_redownload(media_data_obj)
+        elif response == Gtk.ResponseType.YES:
+            # Keep existing files
+            # Do not move files away. Just mark as not downloaded.
+            if media_data_obj.dl_flag is True:
+                if not media_data_obj.dummy_flag:
+                    self.app_obj.mark_video_downloaded(media_data_obj, False)
+                else:
+                    media_data_obj.set_dl_flag(False)
 
         # If mainapp.TartubeApp.allow_ytdl_archive_flag is set, youtube-dl will
         #   have created a ytdl_archive.txt, recording every video ever
@@ -33559,6 +33691,50 @@ class AddVideoDialogue(Gtk.Dialog):
 
         # Return 1 to keep the timer going
         return 1
+
+
+class RedownloadOptionsDialogue(Gtk.Dialog):
+
+    """Prompt the user to specify what to do with existing files when
+    re-downloading one or more videos.
+    """
+
+    def __init__(self, main_win_obj):
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('mwn redownload_options_dialogue __init__')
+
+        self.main_win_obj = main_win_obj
+        self.choice = None
+
+        Gtk.Dialog.__init__(
+            self,
+            _('Re-download video(s)'),
+            main_win_obj,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+        )
+
+        self.add_button(_('Keep existing files'), Gtk.ResponseType.YES)
+        self.add_button(_('Replace existing files'), Gtk.ResponseType.NO)
+        self.add_button(_('Cancel'), Gtk.ResponseType.CANCEL)
+
+        self.set_modal(True)
+        app_obj = self.main_win_obj.app_obj
+
+        box = self.get_content_area()
+        grid = Gtk.Grid()
+        box.add(grid)
+        grid.set_border_width(main_win_obj.spacing_size)
+        grid.set_row_spacing(main_win_obj.spacing_size)
+        grid.set_column_spacing(main_win_obj.spacing_size)
+
+        label = Gtk.Label.new(
+            _('What would you like to do with existing downloaded files?')
+        )
+        label.set_line_wrap(True)
+        label.set_max_width_chars(60)
+        grid.attach(label, 0, 0, 1, 1)
+
+        self.show_all()
 
 
 class ApplyOptionsDialogue(Gtk.Dialog):
