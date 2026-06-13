@@ -4398,7 +4398,7 @@ class TartubeApp(Gtk.Application):
             currently assigned thus:
 
             100-199: mainapp.py     (in use: 101-199)
-            200-299: mainwin.py     (in use: 201-278)
+            200-299: mainwin.py     (in use: 201-279)
             300-399: downloads.py   (in use: 301-310)
             400-499: config.py      (in use: 401-406)
             500-599: ttutils.py     (in use: 501-503)
@@ -15135,7 +15135,7 @@ class TartubeApp(Gtk.Application):
             ttutils.move_thumbnail_to_subdir(self, video_obj)
 
         if 'delete_webp_path' in temp_dict:
-            os.remove(temp_dict['delete_webp_path'])
+            self.remove_file(temp_dict['delete_webp_path'])
 
 
     def remove_other_metadata_files_after_download(self, temp_dict):
@@ -16531,7 +16531,7 @@ class TartubeApp(Gtk.Application):
             file_list = os.listdir(path = temp_dir)
         except:
             return self.system_error(
-                801,
+                802,
                  _(
                 'Following a failed download operation, failed to recover' \
                 + ' the previous version of the downloaded files - folder' \
@@ -22532,7 +22532,8 @@ class TartubeApp(Gtk.Application):
                 config_win_obj.setup_options_dl_list_tab_update_treeview()
 
 
-    def remove_download_options(self, media_data_obj, no_update_flag=False):
+    def remove_download_options(self, media_data_obj, no_update_flag=False, \
+    no_delete_flag=False):
 
         """Can be called by anything.
 
@@ -22548,6 +22549,10 @@ class TartubeApp(Gtk.Application):
 
             no_update_flag (bool): If True, don't update the Video Index or
                 Video Catalogue (because the calling code will do that)
+
+            no_delete_flag (bool): If True, don't delete the
+                options.OptionsManager object, even if it's no longer attached
+                to a media data object
 
         """
 
@@ -22577,7 +22582,8 @@ class TartubeApp(Gtk.Application):
         # If the options.OptionsManager object is no longer attached to a media
         #   data object, and is not visible in the Drag and Drop tab, then
         #   delete it
-        if not options_obj.dbid_list \
+        if not no_delete_flag \
+        and not options_obj.dbid_list \
         and not options_obj.uid in self.classic_dropzone_list \
         and (
             self.general_options_obj is None or

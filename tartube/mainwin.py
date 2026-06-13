@@ -6863,6 +6863,22 @@ class MainWin(Gtk.ApplicationWindow):
             ):
                 remove_options_menu_item.set_sensitive(False)
 
+            detach_options_menu_item = Gtk.MenuItem.new_with_mnemonic(
+                _('Detach download _options'),
+            )
+            detach_options_menu_item.connect(
+                'activate',
+                self.on_video_index_detach_options,
+                media_data_obj,
+            )
+            downloads_submenu.append(detach_options_menu_item)
+            if no_options_flag or self.app_obj.current_manager_obj \
+            or (
+                isinstance(media_data_obj, media.Folder)
+                and media_data_obj.priv_flag
+            ):
+                detach_options_menu_item.set_sensitive(False)
+
         edit_options_menu_item = Gtk.MenuItem.new_with_mnemonic(
             _('_Edit download options...'),
         )
@@ -6955,7 +6971,7 @@ class MainWin(Gtk.ApplicationWindow):
             marker_menu_item.set_sensitive(False)
 
         no_db_menu_item = Gtk.CheckMenuItem.new_with_mnemonic(
-            _('_Don\'t add videos to Tartube\'s database'),
+            _('D_on\'t add videos to Tartube\'s database'),
         )
         no_db_menu_item.set_active(media_data_obj.dl_no_db_flag)
         no_db_menu_item.connect(
@@ -16743,6 +16759,36 @@ class MainWin(Gtk.ApplicationWindow):
             ttutils.debug_time('mwn 16435 on_video_index_delete_container')
 
         self.app_obj.delete_container(media_data_obj)
+
+
+    def on_video_index_detach_options(self, menu_item, media_data_obj):
+
+        """Called from a callback in self.video_index_popup_menu().
+
+        Detaches a set of download options (handled by an
+        options.OptionsManager object) from the specified media data object.
+
+        Args:
+
+            menu_item (Gtk.MenuItem): The clicked menu item
+
+            media_data_obj (media.Channel, media.Playlist or media.Channel):
+                The clicked media data object
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('mwn 16436 on_video_index_detach_options')
+
+        if self.app_obj.current_manager_obj \
+        or not media_data_obj.options_obj:
+            return self.app_obj.system_error(
+                279,
+                'Callback request denied due to current conditions',
+            )
+
+        # Detach download options from the media data object
+        self.app_obj.remove_download_options(media_data_obj, False, True)
 
 
     def on_video_index_dl_no_db(self, menu_item, media_data_obj):
