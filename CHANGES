@@ -1,3 +1,30 @@
+v2.5.253 (27 Oct 2026)
+-------------------------------------------------------------------------------
+
+MAJOR NEW FEATURES
+- Added new Traditional Chinese translation; thanks to arnolam
+
+MINOR NEW FEATURES
+- Many users need to extract cookies from their browser, before downloading
+    videos from YouTube. In Tartube, the settings for this have been moved out
+    of the "Advanced download options" section; click Edit > General download
+    options > Files > Cookies to see them (Git #793)
+- You can now detach download options from a channel, playlist or folder (or
+    even a video), without destroying the channel/playlist/folder itself
+    (Git #790)
+- Changed the default Invidious server, since the old ones is defunct
+    (Git #796)
+
+MAJOR FIXES
+- In the Videos tab, right-clicking a channel/playlist/folder inside another
+    folder, and selecting Channel/Playlist/Folder actions > Move to top level,
+    produced a crash. Fixed it
+- Fixed a crash when creating a video clip from another video clip (Git #803)
+- Added a workaround for an undiagnosed crash (Git #798)
+
+MINOR FIXES
+- Fixed python errors during video downloads (Git #779)
+
 v2.5.231 (24 May 2026)
 -------------------------------------------------------------------------------
 

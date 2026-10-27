@@ -6354,7 +6354,7 @@ class OptionsEditWin(GenericEditWin):
             '<u>' + _('Cookie options') + '</u>' + self.ytdlp_only(),
             0, 0, 1, 1,
         )
-
+            
         if not self.app_obj.simple_options_flag:
 
             checkbutton = self.add_checkbutton(grid2,
@@ -6575,9 +6575,9 @@ class OptionsEditWin(GenericEditWin):
                 entry3,
                 entry4,
             )
-
+            
         else:
-
+            
             combo.connect(
                 'changed',
                 self.setup_files_cookies_tab_update,
@@ -6598,7 +6598,7 @@ class OptionsEditWin(GenericEditWin):
                 None,
                 None,
             )
-
+        
 
     def setup_files_cookies_tab_update(self, widget, checkbutton=None,
     entry=None, combo=None, combo2=None, entry2=None, entry3=None):

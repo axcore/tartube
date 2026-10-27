@@ -3388,7 +3388,7 @@ class MainWin(Gtk.ApplicationWindow):
             self.progress_list_treeview.get_style_context().add_class("treeview-bold")
             self.results_list_treeview.get_style_context().add_class("treeview-bold")
         # !!! DEBUG GIT #788
-
+        
 
     def setup_classic_mode_tab(self):
 
@@ -16809,7 +16809,7 @@ class MainWin(Gtk.ApplicationWindow):
         # Detach download options from the media data object
         self.app_obj.remove_download_options(media_data_obj, False, True)
 
-
+        
     def on_video_index_dl_no_db(self, menu_item, media_data_obj):
 
         """Called from a callback in self.video_index_popup_menu().
