@@ -4528,6 +4528,9 @@ def tidy_up_container_name(app_obj, string, max_length):
     specifies a name like 'Foo / Bar', that would create a directory on the
     filesystem called .../Foo/Bar, which is definitely not what we want).
 
+    Also replaces '%' with a hyphen, as yt-dlp output templates and FFmpeg
+    treat it as a format specifier.
+
     Args:
 
         app_obj (mainapp.TartubeApp): The main application
@@ -4551,6 +4554,10 @@ def tidy_up_container_name(app_obj, string, max_length):
         # Get rid of ASCII control characters (illegal on Windows, a pain in
         #   the behind on POSIX)
         string = re.sub(r'[\x00-\x1F]', '', string)
+
+        # Get rid of '%' (yt-dlp output templates and FFmpeg treat it as a
+        #   format specifier, wherever it appears in a path)
+        string = string.replace('%', '-')
 
         if os.name != 'nt':
             # Forbidden characters on POSIX: /

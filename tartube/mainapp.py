@@ -7085,6 +7085,23 @@ class TartubeApp(Gtk.Application):
             if new_name is not None:
                 self.rename_container_silently(container_obj, new_name)
 
+        # A '%' in a container name ends up in the directory path, where
+        #   yt-dlp output templates and FFmpeg both treat it as a format
+        #   specifier, so rename any container whose name contains one
+        # (The renamed directories have already been moved, so the database
+        #   is saved at the end of this function)
+        percent_rename_flag = False
+        for container_obj in list(self.container_reg_dict.values()):
+            if '%' in container_obj.name \
+            and self.rename_container_silently(
+                container_obj,
+                self.sanitise_container_name(
+                    container_obj.name,
+                    container_obj.parent_obj,
+                ),
+            ):
+                percent_rename_flag = True
+
         # If the locale has changed since the loaded database file was last
         #   saved, update the names of fixed folders
         if self.fixed_folder_locale != self.current_locale:
@@ -7161,6 +7178,10 @@ class TartubeApp(Gtk.Application):
         # Permit scheduled downloads again, if they were disabled in an earlier
         #   unsuccessful call to self.save_db()
         self.disable_scheduled_dl_flag = False
+
+        # Save the database, if any directories were renamed above
+        if percent_rename_flag:
+            self.save_db()
 
         return True
 
@@ -15571,6 +15592,9 @@ class TartubeApp(Gtk.Application):
                 'Illegal channel name',
             )
 
+        # A '%' in the name would end up in the directory path
+        name = self.sanitise_container_name(name, parent_obj)
+
         # Create a new media.Channel object
         channel_obj = media.Channel(
             self,
@@ -15659,6 +15683,9 @@ class TartubeApp(Gtk.Application):
                 146,
                 'Illegal playlist name',
             )
+
+        # A '%' in the name would end up in the directory path
+        name = self.sanitise_container_name(name, parent_obj)
 
         # Create a new media.Playlist object
         playlist_obj = media.Playlist(
@@ -15756,6 +15783,9 @@ class TartubeApp(Gtk.Application):
                 149,
                 'Illegal folder name',
             )
+
+        # A '%' in the name would end up in the directory path
+        name = self.sanitise_container_name(name, parent_obj)
 
         folder_obj = media.Folder(
             self,
@@ -19874,6 +19904,48 @@ class TartubeApp(Gtk.Application):
         media_data_obj.set_name(new_name)
 
         return True
+
+
+    def sanitise_container_name(self, name, parent_obj):
+
+        """Called by self.load_db(), .add_channel(), .add_playlist() and
+        .add_folder().
+
+        A channel, playlist or folder's name is used as its directory name. A
+        '%' in that directory path is treated as a format specifier by yt-dlp
+        output templates and by FFmpeg (for example, when converting .webp
+        thumbnails), so replace it with a hyphen.
+
+        If the modified name is already used by another container in the same
+        parent folder, a different name is chosen.
+
+        Args:
+
+            name (str): A proposed name for a media.Channel, media.Playlist or
+                media.Folder object
+
+            parent_obj (media.Folder or None): The container's parent folder
+
+        Return values:
+
+            The modified name (or the unmodified name, if it doesn't contain a
+                '%')
+
+        """
+
+        if DEBUG_FUNC_FLAG:
+            ttutils.debug_time('app 18870 sanitise_container_name')
+
+        if '%' not in name:
+            return name
+
+        new_name = name.replace('%', '-')
+        if self.find_duplicate_name_in_container(parent_obj, new_name):
+            available_name = ttutils.find_available_name(self, new_name)
+            if available_name is not None:
+                new_name = available_name
+
+        return new_name
 
 
     def check_container_name_is_legal(self, name):
