@@ -184,13 +184,7 @@ class FFmpegManager(object):
 
             # NB: % is supposed to be escaped with %% but this does not work
             #   for input files so working around with standard substitution
-            # Only the file name is escaped; escaping a '%' in a parent
-            #   directory's name would make the rename below fail
-            thumbnail_dir, thumbnail_name = os.path.split(thumbnail_filename)
-            escaped_thumbnail_filename = os.path.join(
-                thumbnail_dir,
-                thumbnail_name.replace('%', '#'),
-            )
+            escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
             escaped_thumbnail_jpg_filename = self.replace_extension(
                 escaped_thumbnail_filename,
                 'jpg',
