@@ -1868,6 +1868,10 @@ class OptionsParser(object):
 
         """
 
+        # The directory path becomes part of the output template, so any '%'
+        #   in it must be escaped
+        template_dir_path = ttutils.escape_template_dir(dir_path)
+
         # (When 'output_format_list' is specified, then 'output_format' and
         #   'output_template' are ignored. However, 'output_format_list' is
         #   normally only used with yt-dlp)
@@ -1890,7 +1894,9 @@ class OptionsParser(object):
                 options_list.append(template)
             else:
                 options_list.append(
-                    os.path.abspath(os.path.join(dir_path, template)),
+                    os.path.abspath(
+                        os.path.join(template_dir_path, template),
+                    ),
                 )
 
         else:
@@ -1916,7 +1922,9 @@ class OptionsParser(object):
             name = self.app_obj.temp_output_override_dict[media_data_obj.dbid]
             options_list.append('--output')
             options_list.append(
-                os.path.abspath(os.path.join(dir_path, name + '.%(ext)s')),
+                os.path.abspath(
+                    os.path.join(template_dir_path, name + '.%(ext)s'),
+                ),
             )
 
         return options_list
