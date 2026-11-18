@@ -1822,7 +1822,7 @@ The source file can be a video, or a thumbnail. If you select **Thumbnail**, the
 
 The **Output** setting defines whatever you're trying to achieve. If you want **FFmpeg** to produce a video, then **H.264** is the most useful setting (but you could also choose **GIF**).
 
-When youtube-dl downloads a video, it often downloads the video and audio components seperately. The two pieces are then merged by FFmpeg. Usually, all of this happens automatically, but if the merge didn't succeed (or wasn't attempted), you can try again by selecting **Merge video/audio**. This settings expects to find a video file and an audio file with the same name (but with different file extensions).
+When youtube-dl downloads a video, it often downloads the video and audio components separately. The two pieces are then merged by FFmpeg. Usually, all of this happens automatically, but if the merge didn't succeed (or wasn't attempted), you can try again by selecting **Merge video/audio**. This settings expects to find a video file and an audio file with the same name (but with different file extensions).
 
 If the source file is a thumbnail, then the output file must also be a thumbnail.
 
