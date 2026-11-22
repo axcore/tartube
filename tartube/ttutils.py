@@ -786,11 +786,12 @@ def clip_prepare_chapter_output_template(app_obj, video_obj, dest_dir):
         mod_title = '%(section_number)s'
 
     # Set the output template with its correct file path
+    template_dir = escape_template_dir(dest_dir)
     if video_obj.file_ext is None:
 
         return os.path.abspath(
             os.path.join(
-                dest_dir,
+                template_dir,
                 mod_title + '.%(ext)s',
             ),
         )
@@ -799,7 +800,7 @@ def clip_prepare_chapter_output_template(app_obj, video_obj, dest_dir):
 
         return os.path.abspath(
             os.path.join(
-                dest_dir,
+                template_dir,
                 mod_title + video_obj.file_ext,
             ),
         )
@@ -808,8 +809,8 @@ def clip_prepare_chapter_output_template(app_obj, video_obj, dest_dir):
 
         return os.path.abspath(
             os.path.join(
-                dest_dir,
-                video_obj.file_name,
+                template_dir,
+                escape_template_dir(video_obj.file_name),
                 mod_title + video_obj.file_ext,
             ),
         )
@@ -1738,6 +1739,30 @@ def disk_get_used_space(path=None, bytes_flag=False):
             return round( (used_bytes / 1000000000), 3)
         else:
             return used_bytes
+
+
+def escape_template_dir(dir_path):
+
+    """Called by options.OptionsParser.build_paths(),
+    ttutils.clip_prepare_chapter_output_template(),
+    .generate_ffmpeg_split_system_cmd() and .generate_slice_system_cmd().
+
+    youtube-dl output templates use '%' as a format specifier. When a
+    directory path is used as part of an output template, any '%' in it must
+    be escaped as '%%' (otherwise a directory called, for example,
+    'Foo %(id)s' would be expanded as a template field).
+
+    Args:
+
+        dir_path (str): The full path to a directory
+
+    Return values:
+
+        The escaped path
+
+    """
+
+    return dir_path.replace('%', '%%')
 
 
 def extract_dummy_format(format_str):
@@ -3153,7 +3178,10 @@ classic_flag):
     mod_options_list.append('-o')
     mod_options_list.append(
         os.path.abspath(
-            os.path.join(temp_dir, 'clip_' + str(clip_count) + '.%(ext)s'),
+            os.path.join(
+                escape_template_dir(temp_dir),
+                'clip_' + str(clip_count) + '.%(ext)s',
+            ),
         )
     )
 
@@ -3625,13 +3653,19 @@ classic_flag):
     if not classic_flag:
 
         template = os.path.abspath(
-            os.path.join(dest_dir, clip_title + '.%(ext)s'),
+            os.path.join(
+                escape_template_dir(dest_dir),
+                clip_title + '.%(ext)s',
+            ),
         )
 
     else:
 
         template = os.path.abspath(
-            os.path.join(orig_video_obj.dummy_dir, clip_title + '.%(ext)s'),
+            os.path.join(
+                escape_template_dir(orig_video_obj.dummy_dir),
+                clip_title + '.%(ext)s',
+            ),
         )
 
     mod_options_list.append('-o')

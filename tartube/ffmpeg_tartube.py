@@ -182,61 +182,32 @@ class FFmpegManager(object):
         #   (youtube-dl #25687, #25717)
         if thumbnail_ext not in ['jpg', 'png']:
 
-            # NB: % is supposed to be escaped with %% but this does not work
-            #   for input files so working around with standard substitution
-            escaped_thumbnail_filename = thumbnail_filename.replace('%', '#')
-            escaped_thumbnail_jpg_filename = self.replace_extension(
-                escaped_thumbnail_filename,
+            thumbnail_jpg_filename = self.replace_extension(
+                thumbnail_filename,
                 'jpg',
             )
 
-            # Handle special characters
-            try:
-                os.rename(thumbnail_filename, escaped_thumbnail_filename)
-            except:
-                return False
-
             # Run FFmpeg to convert the thumbnail(s)
+            # FFmpeg treats a '%' sequence anywhere in an image output path
+            #   (e.g. '%d' in a directory name) as an image sequence pattern;
+            #   '-update 1' makes it use the path exactly as given, so the
+            #   files don't need to be renamed first
             success_flag, msg = self.run_ffmpeg(
-                escaped_thumbnail_filename,
-                escaped_thumbnail_jpg_filename,
-                ['-bsf:v', 'mjpeg2jpeg'],
+                thumbnail_filename,
+                thumbnail_jpg_filename,
+                ['-bsf:v', 'mjpeg2jpeg', '-update', '1'],
             )
 
             if not success_flag:
 
                 # Conversion failed; most likely because FFmpeg is not
                 #   installed
-                # Rename back to unescaped
-                try:
-                    os.rename(escaped_thumbnail_filename, thumbnail_filename)
-                except:
-                    pass
-
                 return False
 
-            else:
+            elif not retain_flag:
 
-                # Conversion succeeded
-                # Rename the (converted file) to unescaped for further
-                #   processing
-                thumbnail_jpg_filename = self.replace_extension(
-                    thumbnail_filename,
-                    'jpg',
-                )
-
-                try:
-                    os.rename(
-                        escaped_thumbnail_jpg_filename,
-                        thumbnail_jpg_filename
-                    )
-                except:
-                    return False
-
-                if not retain_flag:
-
-                    # The original .webp file is not retained
-                    self.app_obj.remove_file(escaped_thumbnail_filename)
+                # The original .webp file is not retained
+                self.app_obj.remove_file(thumbnail_filename)
 
         # Procedure complete
         return True
@@ -1294,6 +1265,10 @@ class FFmpegOptionsManager(object):
 
             return_list.append(binary)
             return_list.extend(opt_list)
+            # (Don't treat a '%' sequence in the output path as an image
+            #   sequence pattern; see FFmpegManager.convert_webp() )
+            return_list.append('-update')
+            return_list.append('1')
             return_list.append(output_path)
 
         # All done
